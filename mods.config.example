@@ -1,0 +1,40 @@
+# this section contains the available expansions, i.e. the mods you want to be able to (de)activate 
+[Expansions]
+Stardew Valley Expanded
+Grandpa's Farm
+
+# for evenry expansion there's a section containing the names of the mods it depends on
+[Grandpa's Farm]
+Stardew Valley Expanded
+
+# if mod A depends on mod B that itself depends on several mods you can mention mod B without
+# mentioning the mods it depends on, provided you also include an entry for mod B
+[Stardew Valley Expanded]
+Content Patcher
+Custom NPC Exclusions
+Extra Map Layers
+Farm Type Manager (FTM)
+Json Assets
+SAAT - Audio API and Toolkit
+Shop Tile Framework
+
+# only mods that don't depend on other mods need a section of their own
+[JSON Assets]
+Expanded Preconditions Utility
+SpaceCore
+
+# this section contains the directories used by each mod
+# the SMAPI entry contains directories belonging to the mod API program, they're here because they never should be deactivated
+[Mod Directories]
+SMAPI: ConsoleCommands, ErrorHandler, SaveBackup           
+Content Patcher: ContentPatcher
+Custom NPC Exclusions: CustomNPCExclusions
+Expanded Preconditions Utility: ExpandedPreconditionsUtility
+Extra Map Layers: ExtraMapLayers
+Farm Type Manager (FTM): FarmTypeManager
+Grandpa's Farm: Grandpa's Farm
+Json Assets: JsonAssets
+SAAT - Audio API and Toolkit: SAAT
+Shop Tile Framework: ShopTileFramework
+SpaceCore: SpaceCore
+Stardew Valley Expanded: Stardew Valley Expanded
