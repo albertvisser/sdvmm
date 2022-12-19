@@ -38,6 +38,7 @@ class Activate:
         self.conf.optionxform = str
         self.conf.read(config)
         self.modnames = []
+        self.modbase = MODBASE
         self.directories = set()
 
     def select_expansions(self):
@@ -73,20 +74,20 @@ class Activate:
 
     def activate(self):
         "activate by making directories hidden or not"
-        for entry in os.scandir(MODBASE):
+        for entry in os.scandir(self.modbase):
             # if smapi, do not deactivate
             if entry.name in self.conf['Mod Directories']['SMAPI']:
                 continue
             # if in list and deactivated, re-activate
             if entry.name.startswith('.'):
                 if entry.name[1:] in self.directories:
-                    os.rename(entry, os.path.join(MODBASE, entry.name[1:]))
-                    # print(f'os.rename({entry}, {os.path.join(MODBASE, entry.name[1:])})')
+                    os.rename(entry, os.path.join(self.modbase, entry.name[1:]))
+                    # print(f'os.rename({entry}, {os.path.join(self.modbase, entry.name[1:])})')
             # if not in list and activated, deactivate
             else:
                 if entry.name not in self.directories:
-                    os.rename(entry, os.path.join(MODBASE, '.' + entry.name))
-                    # print(f"os.rename({entry}, {os.path.join(MODBASE, '.' + entry.name)})")
+                    os.rename(entry, os.path.join(self.modbase, '.' + entry.name))
+                    # print(f"os.rename({entry}, {os.path.join(self.modbase, '.' + entry.name)})")
 
     def check_config(self):
         "check names in config files for spelling errors etc."

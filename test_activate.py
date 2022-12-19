@@ -4,6 +4,8 @@ import activate
 
 def mock_init(self, *args):
     self.conf = {}
+    self.modnames = []
+    self.modbase = 'modbase'
     self.directories = set()
 
 def test_check_config(monkeypatch, capsys):
@@ -30,12 +32,11 @@ def test_check_config(monkeypatch, capsys):
 def test_activate(monkeypatch, capsys):
     def mock_rename(*args):
         print('called os.rename() with args', args)
-    monkeypatch.setattr(activate, 'MODBASE', 'test')
-    monkeypatch.setattr(activate.os, 'scandir', lambda x: [pathlib.Path('test/test'),
-                                                           pathlib.Path('test/.no'),
-                                                           pathlib.Path('test/yes'),
-                                                           pathlib.Path('test/on'),
-                                                           pathlib.Path('test/.off')])
+    monkeypatch.setattr(activate.os, 'scandir', lambda x: [pathlib.Path('modbase/test'),
+                                                           pathlib.Path('modbase/.no'),
+                                                           pathlib.Path('modbase/yes'),
+                                                           pathlib.Path('modbase/on'),
+                                                           pathlib.Path('modbase/.off')])
     monkeypatch.setattr(activate.os, 'rename', mock_rename)
     monkeypatch.setattr(activate.Activate, '__init__', mock_init)
     testobj = activate.Activate()
@@ -43,10 +44,10 @@ def test_activate(monkeypatch, capsys):
     testobj.directories |= {'yes', 'off'}
     assert testobj.directories == {'yes', 'off'}
     testobj.activate()
-    assert capsys.readouterr().out == ("called os.rename() with args (PosixPath('test/on'),"
-                                       " 'test/.on')\n"
-                                       "called os.rename() with args (PosixPath('test/.off'),"
-                                       " 'test/off')\n")
+    assert capsys.readouterr().out == ("called os.rename() with args (PosixPath('modbase/on'),"
+                                       " 'modbase/.on')\n"
+                                       "called os.rename() with args (PosixPath('modbase/.off'),"
+                                       " 'modbase/off')\n")
 
 def test_add_activations(monkeypatch):
     monkeypatch.setattr(activate.Activate, '__init__', mock_init)

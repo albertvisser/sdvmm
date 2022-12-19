@@ -128,7 +128,10 @@ def test_setup_screen(monkeypatch, capsys):
     monkeypatch.setattr(gui.qtw, 'QLabel', MockLabel)
     monkeypatch.setattr(gui.qtw, 'QCheckBox', MockCheckBox)
     monkeypatch.setattr(gui.qtw, 'QPushButton', MockPushButton)
-    me = types.SimpleNamespace(conf={'Expansions': ['one', 'two']})
+    monkeypatch.setattr(gui.os.path, 'exists', lambda x: True)
+    me = types.SimpleNamespace(conf={'Expansions': ['one', 'two'],
+                                     'Mod Directories': {'one': 'one, eno', 'two': 'two'}},
+                               modbase='modbase')
     testobj = gui.ShowMods(me)  # setup_screen wordt door deze aangeroepen
     assert len(testobj.widgets) == 2
     assert isinstance(testobj.widgets[0], gui.qtw.QCheckBox)
@@ -145,12 +148,14 @@ def test_setup_screen(monkeypatch, capsys):
                                        'called MockCheckBox.__init__()\n'
                                        'called hbox.addSpacing()\n'
                                        'called hbox.addWidget()\n'
+                                       'called check.setChecked(True)\n'
                                        'called hbox.addStretch()\n'
                                        'called vbox.addLayout()\n'
                                        'called MockHBoxLayout.__init__()\n'
                                        'called MockCheckBox.__init__()\n'
                                        'called hbox.addSpacing()\n'
                                        'called hbox.addWidget()\n'
+                                       'called check.setChecked(True)\n'
                                        'called hbox.addStretch()\n'
                                        'called vbox.addLayout()\n'
                                        'called MockHBoxLayout.__init__()\n'
@@ -265,4 +270,4 @@ def test_check(monkeypatch, capsys):
                                        'called ShowMods.setup_screen()\n'
                                        'called Activate.check_config()\n'
                                        "called MessageBox.information with args"
-                                       " ('result\\nanother result',)\n")
+                                       " ('Check Config', 'result\\nanother result')\n")

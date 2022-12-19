@@ -1,6 +1,7 @@
 """Stardew Valley Expansion manager - gui toolkit specific code
 """
 import sys
+import os.path
 import PyQt6.QtWidgets as qtw
 import PyQt6.QtGui as qgui
 
@@ -20,7 +21,8 @@ class ShowMods(qtw.QWidget):
         vbox = qtw.QVBoxLayout()
         hbox = qtw.QHBoxLayout()
         hbox.addWidget(qtw.QLabel('\n'.join((
-            'Dit overzicht toont de namen van expansies die je kunt activeren.',
+            'Dit overzicht toont de namen van expansies die je kunt activeren',
+            '(inclusief die al geactiveerd zijn).',
             'In de achterliggende configuratie is geregeld',
             'welke mods hiervoor aangezet moeten worden'))))
         vbox.addLayout(hbox)
@@ -30,6 +32,9 @@ class ShowMods(qtw.QWidget):
             check = qtw.QCheckBox(item)
             hbox.addSpacing(100)
             hbox.addWidget(check)
+            loc = self.master.conf['Mod Directories'][item].split(', ')[0]
+            if os.path.exists(os.path.join(self.master.modbase, loc)):
+                check.setChecked(True)
             hbox.addStretch()
             vbox.addLayout(hbox)
             self.widgets.append(check)
