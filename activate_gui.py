@@ -35,6 +35,9 @@ class ShowMods(qtw.QWidget):
             self.widgets.append(check)
         hbox = qtw.QHBoxLayout()
         hbox.addStretch()
+        btn = qtw.QPushButton('&Check config', self)
+        btn.clicked.connect(self.check)
+        hbox.addWidget(btn)
         btn = qtw.QPushButton('&Klaar, activeren maar', self)
         btn.clicked.connect(self.confirm)
         hbox.addWidget(btn)
@@ -62,3 +65,8 @@ class ShowMods(qtw.QWidget):
         "build a list from the checked entriesi and pass it back to the caller, then close the gui"
         self.master.modnames = [x.text() for x in self.widgets if x.isChecked()]
         self.close()
+
+    def check(self):
+        "check for non-matching names in config file"
+        results = self.master.check_config()
+        qtw.QMessageBox.information(self, 'Check Config', '\n'.join(results))

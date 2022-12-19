@@ -22,11 +22,13 @@ def main():
     "main line"
     DoIt = Activate(CONFIG)
     DoIt.select_expansions()  # result of selection process
-    # print('gekozen expansions:', expansions_to_activate)
+    # print('gekozen expansions:', DoIt.modnames)
     DoIt.select_activations()
     # print('bijbehorende directories', DoIt.directories)
     if DoIt.directories:
+        # print('vóór (de)activeren:', os.listdir(MODBASE))
         DoIt.activate()
+        # print('na   (de)activeren:', os.listdir(MODBASE))
 
 
 class Activate:
@@ -49,9 +51,10 @@ class Activate:
         # determine which directories should be activated
         # conf['item'] is een lijst van modules bij een expansie
         for item in self.modnames:
-            print(item, self.conf[item], self.conf.options(item))
+            # print(item, self.conf[item])  #, self.conf.options(item))
+            self.directories |= set(self.conf['Mod Directories'][item].split(', '))
             for entry in self.conf[item]:
-                print(entry)
+                # print(entry)
                 self.add_activations(item, entry)
 
     def add_activations(self, section_name, entry):
@@ -59,9 +62,11 @@ class Activate:
         # conf['item'] is een lijst van modules bij een expansie
         # conf['item']['entry'] is een string van één of meer directories bij een module
         # directories = self.conf[item][entry].split(', ')
-        directories = self.conf['Mod Directories'][entry].split(', ')
+        directories = []
+        for dirname in self.conf[section_name]:
+            directories.extend(self.conf['Mod Directories'][entry].split(', '))
         self.directories |= set(directories)
-        for dirname in directories:
+        for dirname in self.conf[section_name]:
             if dirname in self.conf:
                 for item in self.conf[dirname]:
                     self.add_activations(dirname, item)
@@ -76,7 +81,23 @@ class Activate:
             if entry.name.startswith('.'):
                 if entry.name[1:] in self.directories:
                     os.rename(entry, os.path.join(MODBASE, entry.name[1:]))
+                    # print(f'os.rename({entry}, {os.path.join(MODBASE, entry.name[1:])})')
             # if not in list and activated, deactivate
             else:
                 if entry.name not in self.directories:
                     os.rename(entry, os.path.join(MODBASE, '.' + entry.name))
+                    # print(f"os.rename({entry}, {os.path.join(MODBASE, '.' + entry.name)})")
+
+    def check_config(self):
+        "check names in config files for spelling errors etc."
+        modnames = self.conf.options('Mod Directories')
+        errors = []
+        for name in self.conf.sections():
+            if name == 'Mod Directories':
+                continue
+            if name not in modnames and name != 'Expansions':
+                errors.append(f'Unknown expansion / mod name: `{name}`')
+            for name2 in self.conf.options(name):
+                if name2 not in modnames:
+                    errors.append(f'Unknown mod name `{name2}` for expansion/mod `{name}`')
+        return errors or ['No errors']
