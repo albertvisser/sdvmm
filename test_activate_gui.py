@@ -1,5 +1,6 @@
-import pytest
 import types
+import configparser
+import pytest
 import activate_gui as gui
 
 
@@ -129,9 +130,12 @@ def test_setup_screen(monkeypatch, capsys):
     monkeypatch.setattr(gui.qtw, 'QCheckBox', MockCheckBox)
     monkeypatch.setattr(gui.qtw, 'QPushButton', MockPushButton)
     monkeypatch.setattr(gui.os.path, 'exists', lambda x: True)
-    me = types.SimpleNamespace(conf={'Expansions': ['one', 'two'],
-                                     'Mod Directories': {'one': 'one, eno', 'two': 'two'}},
-                               modbase='modbase')
+    me = types.SimpleNamespace(modbase='modbase')
+    me.conf = configparser.ConfigParser(allow_no_value=True)
+    me.conf.optionxform = str
+    me.conf.read_string( '\n'.join(('[one]', 'first', '', '[two]', '',
+                                    '[Mod Directories]', 'one: one, eno', 'two: two',
+                                    'first: first')))
     testobj = gui.ShowMods(me)  # setup_screen wordt door deze aangeroepen
     assert len(testobj.widgets) == 2
     assert isinstance(testobj.widgets[0], gui.qtw.QCheckBox)
@@ -197,7 +201,7 @@ def test_show_screen(monkeypatch, capsys):
     monkeypatch.setattr(gui.qtw.QWidget, 'show', mock_show)
     monkeypatch.setattr(gui.qgui, 'QAction', MockAction)
     monkeypatch.setattr(gui.ShowMods, 'setup_screen', mock_setup)
-    me = types.SimpleNamespace(conf={'Expansions': ['one', 'two']})
+    me = types.SimpleNamespace(conf={})
     testobj = gui.ShowMods(me)
     assert testobj.show_screen() == 'okcode'
     assert capsys.readouterr().out == ('called QApplication.__init__()\n'
@@ -228,7 +232,7 @@ def test_confirm(monkeypatch, capsys):
     monkeypatch.setattr(gui.qtw.QWidget, 'close', mock_close)
     monkeypatch.setattr(gui.qtw, 'QCheckBox', MockCheckBox)
     monkeypatch.setattr(gui.ShowMods, 'setup_screen', mock_setup)
-    me = types.SimpleNamespace(conf={'Expansions': ['one', 'two']})
+    me = types.SimpleNamespace(conf={})
     testobj = gui.ShowMods(me)
     check1 = gui.qtw.QCheckBox('check1', testobj)
     check1.setChecked(True)
@@ -262,7 +266,7 @@ def test_check(monkeypatch, capsys):
     monkeypatch.setattr(gui.qtw.QWidget, '__init__', mock_init)
     monkeypatch.setattr(gui.qtw.QMessageBox, 'information', mock_information)
     monkeypatch.setattr(gui.ShowMods, 'setup_screen', mock_setup)
-    me = types.SimpleNamespace(conf={'Expansions': ['one', 'two']}, check_config=mock_check)
+    me = types.SimpleNamespace(check_config=mock_check)
     testobj = gui.ShowMods(me)
     testobj.check()
     assert capsys.readouterr().out == ('called QApplication.__init__()\n'

@@ -1,9 +1,4 @@
-# this section contains the available expansions, i.e. the mods you want to be able to (de)activate 
-[Expansions]
-Stardew Valley Expanded
-Grandpa's Farm
-
-# for evenry expansion there's a section containing the names of the mods it depends on
+# for every expansion there's a section containing the names of the mods it depends on
 [Grandpa's Farm]
 Stardew Valley Expanded
 
@@ -18,10 +13,14 @@ Json Assets
 SAAT - Audio API and Toolkit
 Shop Tile Framework
 
-# only mods that don't depend on other mods need a section of their own
-[JSON Assets]
+# mods that depend on other mods need a section of their own
+[Json Assets]
 Expanded Preconditions Utility
 SpaceCore
+
+# mods that aren't used by an expansion but need to be activatable also need a section of their own
+# They get only a section header if there are no dependencies
+[NPC Map Locations]
 
 # this section contains the directories used by each mod
 # the SMAPI entry contains directories belonging to the mod API program, they're here because they never should be deactivated
@@ -34,6 +33,7 @@ Extra Map Layers: ExtraMapLayers
 Farm Type Manager (FTM): FarmTypeManager
 Grandpa's Farm: Grandpa's Farm
 Json Assets: JsonAssets
+NPC Map Locations: NPCMapLocations
 SAAT - Audio API and Toolkit: SAAT
 Shop Tile Framework: ShopTileFramework
 SpaceCore: SpaceCore

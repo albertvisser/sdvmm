@@ -17,7 +17,7 @@ class ShowMods(qtw.QWidget):
 
     def setup_screen(self):
         "define the screen elements"
-        self.setWindowTitle('Select Expansions to activate')
+        self.setWindowTitle('Select expansions/mods to activate')
         vbox = qtw.QVBoxLayout()
         hbox = qtw.QHBoxLayout()
         hbox.addWidget(qtw.QLabel('\n'.join((
@@ -27,7 +27,10 @@ class ShowMods(qtw.QWidget):
             'welke mods hiervoor aangezet moeten worden'))))
         vbox.addLayout(hbox)
         self.widgets = []
-        for item in self.master.conf['Expansions']:
+        # for item in self.master.conf['Expansions']:
+        for item in self.master.conf.sections():
+            if item == 'Mod Directories':
+                continue
             hbox = qtw.QHBoxLayout()
             check = qtw.QCheckBox(item)
             hbox.addSpacing(100)

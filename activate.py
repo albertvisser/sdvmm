@@ -42,8 +42,10 @@ class Activate:
         self.directories = set()
 
     def select_expansions(self):
-        "make the user select from a list which expansions the want to have active"
-        # expansions = list(self.conf['Expansions'])   # list of expansions to activate or not
+        """make the user select from a list which expansions the want to have active
+
+        the result is returned in self.modnames
+        """
         doit = gui.ShowMods(self)
         doit.show_screen()
 
@@ -62,7 +64,6 @@ class Activate:
         "expand an item with a list of subitems"
         # conf['item'] is een lijst van modules bij een expansie
         # conf['item']['entry'] is een string van één of meer directories bij een module
-        # directories = self.conf[item][entry].split(', ')
         directories = []
         for dirname in self.conf[section_name]:
             directories.extend(self.conf['Mod Directories'][entry].split(', '))
@@ -96,7 +97,7 @@ class Activate:
         for name in self.conf.sections():
             if name == 'Mod Directories':
                 continue
-            if name not in modnames and name != 'Expansions':
+            if name not in modnames:
                 errors.append(f'Unknown expansion / mod name: `{name}`')
             for name2 in self.conf.options(name):
                 if name2 not in modnames:

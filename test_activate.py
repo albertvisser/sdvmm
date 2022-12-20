@@ -80,16 +80,16 @@ def test_select_activations(monkeypatch, capsys):
 def test_select_expansions(monkeypatch, capsys):
     class MockShowMods:
         def __init__(self, master):
-            master.modnames = master.conf['Expansions']
+            master.modnames = ['one', 'two', 'three']
         def show_screen(self):
             print('called gui.ShowMods.show_screen()')
     monkeypatch.setattr(activate.Activate, '__init__', mock_init)
     monkeypatch.setattr(activate.gui, 'ShowMods', MockShowMods)
     testobj = activate.Activate()
-    testobj.conf = {'Expansions': ('one', 'two', 'three')}
+    testobj.conf = {}
     testobj.modnames = []
     testobj.select_expansions()
-    assert testobj.modnames == ('one', 'two', 'three')
+    assert testobj.modnames == ['one', 'two', 'three']
     assert capsys.readouterr().out == 'called gui.ShowMods.show_screen()\n'
 
 
