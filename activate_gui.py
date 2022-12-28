@@ -23,8 +23,8 @@ class ShowMods(qtw.QWidget):
         hbox.addWidget(qtw.QLabel('\n'.join((
             'Dit overzicht toont de namen van expansies die je kunt activeren',
             '(inclusief die al geactiveerd zijn).',
-            'In de achterliggende configuratie is geregeld',
-            'welke mods hiervoor aangezet moeten worden'))))
+            'In de achterliggende configuratie is geregeld welke mods',
+            'hiervoor eventueel nog meer aangezet moeten worden'))))
         vbox.addLayout(hbox)
         self.widgets = []
         # for item in self.master.conf['Expansions']:
