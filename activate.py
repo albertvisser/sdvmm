@@ -14,7 +14,7 @@ werkwijze:
 import os
 import configparser
 import activate_gui as gui
-CONFIG = 'sdv_mods.config'
+CONFIG = os.path.join(os.path.dirname(__file__), 'sdv_mods.config')
 MODBASE = os.path.expanduser('~/.steam/steam/steamapps/common/Stardew Valley/Mods')
 
 
