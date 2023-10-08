@@ -16,19 +16,13 @@ import configparser
 import activate_gui as gui
 CONFIG = os.path.join(os.path.dirname(__file__), 'sdv_mods.config')
 MODBASE = os.path.expanduser('~/.steam/steam/steamapps/common/Stardew Valley/Mods')
+# is een logischer plek voor de config niet IN de mods directory?
 
 
 def main():
     "main line"
     DoIt = Activate(CONFIG)
-    DoIt.select_expansions()  # result of selection process
-    # print('gekozen expansions:', DoIt.modnames)
-    DoIt.select_activations()
-    # print('bijbehorende directories', DoIt.directories)
-    if DoIt.directories:
-        # print('vóór (de)activeren:', os.listdir(MODBASE))
-        DoIt.activate()
-        # print('na   (de)activeren:', os.listdir(MODBASE))
+    DoIt.build_and_start_gui()
 
 
 class Activate:
@@ -41,24 +35,24 @@ class Activate:
         self.modbase = MODBASE
         self.directories = set()
 
-    def select_expansions(self):
-        """make the user select from a list which expansions the want to have active
-
-        the result is returned in self.modnames
+    def build_and_start_gui(self):
+        """build screen: make the user select from a list which expansions they want to have active
         """
         doit = gui.ShowMods(self)
+        doit.setup_screen()
+        doit.setup_actions()
         doit.show_screen()
 
     def select_activations(self):
         "expand the selection to a list of directories"
         # determine which directories should be activated
         # conf['item'] is een lijst van modules bij een expansie
+        self.directories.clear()
         for item in self.modnames:
-            # print(item, self.conf[item])  #, self.conf.options(item))
             self.directories |= set(self.conf['Mod Directories'][item].split(', '))
             for entry in self.conf[item]:
-                # print(entry)
                 self.add_activations(item, entry)
+
 
     def add_activations(self, section_name, entry):
         "expand an item with a list of subitems"
@@ -83,12 +77,10 @@ class Activate:
             if entry.name.startswith('.'):
                 if entry.name[1:] in self.directories:
                     os.rename(entry, os.path.join(self.modbase, entry.name[1:]))
-                    # print(f'os.rename({entry}, {os.path.join(self.modbase, entry.name[1:])})')
             # if not in list and activated, deactivate
             else:
                 if entry.name not in self.directories:
                     os.rename(entry, os.path.join(self.modbase, '.' + entry.name))
-                    # print(f"os.rename({entry}, {os.path.join(self.modbase, '.' + entry.name)})")
 
     def check_config(self):
         "check names in config files for spelling errors etc."

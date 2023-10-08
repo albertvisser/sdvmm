@@ -2,10 +2,10 @@
 .
 
 [testscripts]
-act: test_activate.py
+main: test_activate.py
 gui: test_activate_gui.py
 
 [testees]
-act: activate.py
+main: activate.py
 gui: activate_gui.py
 

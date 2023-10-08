@@ -13,51 +13,37 @@ class ShowMods(qtw.QWidget):
         self.master.modnames = []
         self.app = qtw.QApplication(sys.argv)
         super().__init__()
-        self.setup_screen()
 
     def setup_screen(self):
         "define the screen elements"
         self.setWindowTitle('Select expansions/mods to activate')
-        vbox = qtw.QVBoxLayout()
+        self.vbox = qtw.QVBoxLayout()
         hbox = qtw.QHBoxLayout()
         hbox.addWidget(qtw.QLabel('\n'.join((
             'Dit overzicht toont de namen van expansies die je kunt activeren',
             '(inclusief die al geactiveerd zijn).',
             'In de achterliggende configuratie is geregeld welke mods',
             'hiervoor eventueel nog meer aangezet moeten worden'))))
-        vbox.addLayout(hbox)
-        self.widgets = []
-        # for item in self.master.conf['Expansions']:
-        for item in self.master.conf.sections():
-            if item == 'Mod Directories':
-                continue
-            hbox = qtw.QHBoxLayout()
-            check = qtw.QCheckBox(item)
-            hbox.addSpacing(100)
-            hbox.addWidget(check)
-            loc = self.master.conf['Mod Directories'][item].split(', ')[0]
-            if os.path.exists(os.path.join(self.master.modbase, loc)):
-                check.setChecked(True)
-            hbox.addStretch()
-            vbox.addLayout(hbox)
-            self.widgets.append(check)
+        self.vbox.addLayout(hbox)
+        self.widgets = {}
+        self.refresh_widgets(first_time=True)
         hbox = qtw.QHBoxLayout()
         hbox.addStretch()
         btn = qtw.QPushButton('&Check config', self)
         btn.clicked.connect(self.check)
         hbox.addWidget(btn)
-        btn = qtw.QPushButton('&Klaar, activeren maar', self)
+        btn = qtw.QPushButton('&Activeer wijzigingen', self)
         btn.clicked.connect(self.confirm)
         hbox.addWidget(btn)
-        btn = qtw.QPushButton('&Afbreken', self)
+        btn = qtw.QPushButton('&Klaar', self)
         btn.clicked.connect(self.close)
         hbox.addWidget(btn)
         hbox.addStretch()
-        vbox.addLayout(hbox)
-        self.setLayout(vbox)
+        self.vbox.addLayout(hbox)
+        self.setLayout(self.vbox)
 
-    def show_screen(self):
-        "finish the screen setup, show the screen and start the event loop"
+    def setup_actions(self):
+        "define hotkey actions"
         do = qgui.QAction('Done', self)
         do.triggered.connect(self.confirm)
         do.setShortcut('Ctrl+Enter')
@@ -66,13 +52,39 @@ class ShowMods(qtw.QWidget):
         dont.triggered.connect(self.close)
         dont.setShortcut('Escape')
         self.addAction(dont)
+
+    def show_screen(self):
+        "show the screen and start the event loop"
         self.show()
         return self.app.exec()  # niet via sys.exit() want we zijn nog niet klaar
 
     def confirm(self):
         "build a list from the checked entriesi and pass it back to the caller, then close the gui"
-        self.master.modnames = [x.text() for x in self.widgets if x.isChecked()]
-        self.close()
+        self.master.modnames = [x.text() for x in self.widgets.values() if x.isChecked()]
+        self.master.select_activations()
+        if self.master.directories:   # is deze conditie nog nodig of misschien zelfs te beperkend?
+            self.master.activate()
+        self.refresh_widgets()  # is eigenlijk niet nodig
+        qtw.QMessageBox.information(self, 'Change Config', 'wijzigingen zijn doorgevoerd')
+
+
+    def refresh_widgets(self, first_time=False):
+        "set the checkboxes to the right values (first time: also create them)"
+        # for item in self.master.conf['Expansions']:
+        for item in self.master.conf.sections():
+            if item == 'Mod Directories':
+                continue
+            if first_time:
+                hbox = qtw.QHBoxLayout()
+                check = qtw.QCheckBox(item)
+                hbox.addSpacing(100)
+                hbox.addWidget(check)
+                hbox.addStretch()
+                self.vbox.addLayout(hbox)
+                self.widgets[item] = check
+            loc = os.path.join(self.master.modbase,
+                               self.master.conf['Mod Directories'][item].split(', ')[0])
+            self.widgets[item].setChecked(os.path.exists(loc))
 
     def check(self):
         "check for non-matching names in config file"
