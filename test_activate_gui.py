@@ -1,89 +1,9 @@
 import types
 import configparser
 import pytest
+# import mockqtwidgets as mockqtw
+import mockgui.mockqtwidgets as mockqtw
 import activate_gui as gui
-
-
-class MockSignal:
-    def __init__(self, *args):
-        print('called signal.__init__()')
-    def connect(self, *args):
-        print('called signal.connect()')
-
-
-class MockAction:
-    triggered = MockSignal()
-    def __init__(self, text, func):
-        print('called action.__init__()')
-        self.label = text
-        self.callback = func
-        self.shortcuts = []
-        self.checkable = self.checked = False
-        self.statustip = ''
-    def setCheckable(self, state):
-        self.checkable = state
-    def setChecked(self, state):
-        self.checked = state
-    def setShortcut(self, data):
-        print('call action.setShortcut with arg `{}`'.format(data))
-    def setShortcuts(self, data):
-        self.shortcuts = data
-    def setStatusTip(self, data):
-        self.statustip = data
-
-
-class MockVBoxLayout:
-    def __init__(self, *args):
-        print('called MockVBoxLayout.__init__()')
-    def addWidget(self, *args):
-        print('called vbox.addWidget()')
-    def addLayout(self, *args):
-        print('called vbox.addLayout()')
-    def addStretch(self, *args):
-        print('called vbox.addStretch()')
-    def addSpacing(self, *args):
-        print('called vbox.addSpacing()')
-
-
-class MockHBoxLayout:
-    def __init__(self, *args):
-        print('called MockHBoxLayout.__init__()')
-    def addWidget(self, *args):
-        print('called hbox.addWidget()')
-    def addLayout(self, *args):
-        print('called hbox.addLayout()')
-    def addSpacing(self, *args):
-        print('called hbox.addSpacing()')
-    def addStretch(self, *args):
-        print('called hbox.addStretch()')
-    def insertStretch(self, *args):
-        print('called hbox.insertStretch()')
-
-
-class MockLabel:
-    def __init__(self, *args):
-        print('called MockLabel.__init__()')
-
-
-class MockCheckBox:
-    def __init__(self, *args):
-        print('called MockCheckBox.__init__()')
-        self.checked = None
-        self.textvalue = args[0] if args else ''
-    def setChecked(self, value):
-        print('called check.setChecked({})'.format(value))
-        self.checked = value
-    def isChecked(self):
-        print('called check.isChecked()')
-        return self.checked
-    def text(self):
-        return self.textvalue
-
-
-class MockPushButton:
-    def __init__(self, *args):
-        print('called MockPushButton.__init__()')
-        self.clicked = MockSignal()
 
 
 def test_showmods_init(monkeypatch, capsys):
@@ -126,11 +46,11 @@ def test_setup_screen(monkeypatch, capsys):
     monkeypatch.setattr(gui.qtw.QWidget, '__init__', mock_init)
     monkeypatch.setattr(gui.qtw.QWidget, 'setWindowTitle', mock_setWindowTitle)
     monkeypatch.setattr(gui.qtw.QWidget, 'setLayout', mock_setLayout)
-    monkeypatch.setattr(gui.qtw, 'QVBoxLayout', MockVBoxLayout)
-    monkeypatch.setattr(gui.qtw, 'QHBoxLayout', MockHBoxLayout)
-    monkeypatch.setattr(gui.qtw, 'QLabel', MockLabel)
-    monkeypatch.setattr(gui.qtw, 'QCheckBox', MockCheckBox)
-    monkeypatch.setattr(gui.qtw, 'QPushButton', MockPushButton)
+    monkeypatch.setattr(gui.qtw, 'QVBoxLayout', mockqtw.MockVBoxLayout)
+    monkeypatch.setattr(gui.qtw, 'QHBoxLayout', mockqtw.MockHBoxLayout)
+    monkeypatch.setattr(gui.qtw, 'QLabel', mockqtw.MockLabel)
+    monkeypatch.setattr(gui.qtw, 'QCheckBox', mockqtw.MockCheckBox)
+    monkeypatch.setattr(gui.qtw, 'QPushButton', mockqtw.MockPushButton)
     me = types.SimpleNamespace(modbase='modbase')
     testobj = gui.ShowMods(me)  # setup_screen wordt door deze aangeroepen
     monkeypatch.setattr(testobj, 'refresh_widgets', mock_refresh)
@@ -138,29 +58,39 @@ def test_setup_screen(monkeypatch, capsys):
     assert capsys.readouterr().out == ('called QApplication.__init__()\n'
                                        'called QWidget.__init__()\n'
                                        'called QWidget.setWindowTitle()\n'
-                                       'called MockVBoxLayout.__init__()\n'
-                                       'called MockHBoxLayout.__init__()\n'
-                                       'called MockLabel.__init__()\n'
-                                       'called hbox.addWidget()\n'
-                                       'called vbox.addLayout()\n'
+                                       'called VBox.__init__\n'
+                                       'called HBox.__init__\n'
+                                       "called Label.__init__ with args"
+                                       " ('Dit overzicht toont de namen van expansies die je"
+                                       " kunt activeren\\n(inclusief die al geactiveerd zijn).\\nIn"
+                                       " de achterliggende configuratie is geregeld welke mods\\n"
+                                       "hiervoor eventueel nog meer aangezet moeten worden',)\n"
+                                       "called HBox.addWidget with arg of type"
+                                       " <class 'mockgui.mockqtwidgets.MockLabel'>\n"
+                                       "called VBox.addLayout with arg of type"
+                                       " <class 'mockgui.mockqtwidgets.MockHBoxLayout'>\n"
                                        'called ShowMods.refresh_widgets with args'
                                        " () {'first_time': True}\n"
-                                       'called MockHBoxLayout.__init__()\n'
-                                       'called hbox.addStretch()\n'
-                                       'called MockPushButton.__init__()\n'
-                                       'called signal.__init__()\n'
-                                       'called signal.connect()\n'
-                                       'called hbox.addWidget()\n'
-                                       'called MockPushButton.__init__()\n'
-                                       'called signal.__init__()\n'
-                                       'called signal.connect()\n'
-                                       'called hbox.addWidget()\n'
-                                       'called MockPushButton.__init__()\n'
-                                       'called signal.__init__()\n'
-                                       'called signal.connect()\n'
-                                       'called hbox.addWidget()\n'
-                                       'called hbox.addStretch()\n'
-                                       'called vbox.addLayout()\n'
+                                       'called HBox.__init__\n'
+                                       'called HBox.addStretch\n'
+                                       "called PushButton.__init__ with args"
+                                       f" ('&Check config', {testobj})\n"
+                                       f"called Signal.connect with args ({testobj.check},)\n"
+                                       "called HBox.addWidget with arg of type"
+                                       " <class 'mockgui.mockqtwidgets.MockPushButton'>\n"
+                                       "called PushButton.__init__ with args"
+                                       f" ('&Activeer wijzigingen', {testobj})\n"
+                                       f"called Signal.connect with args ({testobj.confirm},)\n"
+                                       "called HBox.addWidget with arg of type"
+                                       " <class 'mockgui.mockqtwidgets.MockPushButton'>\n"
+                                       "called PushButton.__init__ with args"
+                                       f" ('&Klaar', {testobj})\n"
+                                       f"called Signal.connect with args ({testobj.close},)\n"
+                                       "called HBox.addWidget with arg of type"
+                                       " <class 'mockgui.mockqtwidgets.MockPushButton'>\n"
+                                       'called HBox.addStretch\n'
+                                       "called VBox.addLayout with arg of type"
+                                       " <class 'mockgui.mockqtwidgets.MockHBoxLayout'>\n"
                                        'called QWidget.setLayout()\n')
 
 def test_refresh_widgets(monkeypatch, capsys):
@@ -170,8 +100,8 @@ def test_refresh_widgets(monkeypatch, capsys):
         counter += 1
         if counter == 1: return False
         return True
-    monkeypatch.setattr(gui.qtw, 'QHBoxLayout', MockHBoxLayout)
-    monkeypatch.setattr(gui.qtw, 'QCheckBox', MockCheckBox)
+    monkeypatch.setattr(gui.qtw, 'QHBoxLayout', mockqtw.MockHBoxLayout)
+    monkeypatch.setattr(gui.qtw, 'QCheckBox', mockqtw.MockCheckBox)
     monkeypatch.setattr(gui.os.path, 'exists', mock_path)
     me = types.SimpleNamespace(modbase='modbase')
     me.conf = configparser.ConfigParser(allow_no_value=True)
@@ -180,34 +110,38 @@ def test_refresh_widgets(monkeypatch, capsys):
                                     '[Mod Directories]', 'one: one, eno', 'two: two',
                                     'first: first')))
     testobj = gui.ShowMods(me)  # setup_screen wordt door deze aangeroepen
-    testobj.vbox  = MockVBoxLayout()
+    testobj.vbox  = mockqtw.MockVBoxLayout()
     testobj.widgets = {}
     testobj.refresh_widgets(first_time=True)
     assert len(testobj.widgets) == 2
     assert isinstance(testobj.widgets['one'], gui.qtw.QCheckBox)
     assert isinstance(testobj.widgets['two'], gui.qtw.QCheckBox)
-    assert capsys.readouterr().out == ('called MockVBoxLayout.__init__()\n'
-                                       'called MockHBoxLayout.__init__()\n'
-                                       'called MockCheckBox.__init__()\n'
-                                       'called hbox.addSpacing()\n'
-                                       'called hbox.addWidget()\n'
-                                       'called hbox.addStretch()\n'
-                                       'called vbox.addLayout()\n'
-                                       'called check.setChecked(False)\n'
-                                       'called MockHBoxLayout.__init__()\n'
-                                       'called MockCheckBox.__init__()\n'
-                                       'called hbox.addSpacing()\n'
-                                       'called hbox.addWidget()\n'
-                                       'called hbox.addStretch()\n'
-                                       'called vbox.addLayout()\n'
-                                       'called check.setChecked(True)\n')
+    assert capsys.readouterr().out == ('called VBox.__init__\n'
+                                       'called HBox.__init__\n'
+                                       'called CheckBox.__init__\n'
+                                       'called HBox.addSpacing\n'
+                                       "called HBox.addWidget with arg of type"
+                                       " <class 'mockgui.mockqtwidgets.MockCheckBox'>\n"
+                                       'called HBox.addStretch\n'
+                                       "called VBox.addLayout with arg of type"
+                                       " <class 'mockgui.mockqtwidgets.MockHBoxLayout'>\n"
+                                       'called CheckBox.setChecked with arg False\n'
+                                       'called HBox.__init__\n'
+                                       'called CheckBox.__init__\n'
+                                       'called HBox.addSpacing\n'
+                                       "called HBox.addWidget with arg of type"
+                                       " <class 'mockgui.mockqtwidgets.MockCheckBox'>\n"
+                                       'called HBox.addStretch\n'
+                                       "called VBox.addLayout with arg of type"
+                                       " <class 'mockgui.mockqtwidgets.MockHBoxLayout'>\n"
+                                       'called CheckBox.setChecked with arg True\n')
     counter = 0
     testobj.widgets = {'one': gui.qtw.QCheckBox(), 'two': gui.qtw.QCheckBox()}
-    assert capsys.readouterr().out == ('called MockCheckBox.__init__()\n'
-                                       'called MockCheckBox.__init__()\n')
+    assert capsys.readouterr().out == ('called CheckBox.__init__\n'
+                                       'called CheckBox.__init__\n')
     testobj.refresh_widgets()
-    assert capsys.readouterr().out == ('called check.setChecked(False)\n'
-                                       'called check.setChecked(True)\n')
+    assert capsys.readouterr().out == ('called CheckBox.setChecked with arg False\n'
+                                       'called CheckBox.setChecked with arg True\n')
 
 def test_setup_actions(monkeypatch, capsys):
     def mock_app_init(self, *args):
@@ -216,23 +150,30 @@ def test_setup_actions(monkeypatch, capsys):
         print('called QWidget.__init__()')
     def mock_addAction(self, *args):
         print('called QWidget.addAction()')
+    def mock_confirm(self, *args):
+        pass
+    def mock_close(self, *args):
+        pass
     monkeypatch.setattr(gui.qtw.QApplication, '__init__', mock_app_init)
     monkeypatch.setattr(gui.qtw.QWidget, '__init__', mock_init)
     monkeypatch.setattr(gui.qtw.QWidget, 'addAction', mock_addAction)
-    monkeypatch.setattr(gui.qgui, 'QAction', MockAction)
+    monkeypatch.setattr(gui.qgui, 'QAction', mockqtw.MockAction)
+    monkeypatch.setattr(gui.ShowMods, 'confirm', mock_confirm)
+    monkeypatch.setattr(gui.ShowMods, 'close', mock_close)
     me = types.SimpleNamespace(conf={})
     testobj = gui.ShowMods(me)
     testobj.setup_actions()
     assert capsys.readouterr().out == ('called QApplication.__init__()\n'
                                        'called QWidget.__init__()\n'
-                                       'called action.__init__()\n'
-                                       'called signal.connect()\n'
-                                       'call action.setShortcut with arg `Ctrl+Enter`\n'
+                                       'called Action.__init__ with text `Done`\n'
+                                       f"called Signal.connect with args ({testobj.confirm},)\n"
+                                       'called Action.setShortcut with arg `Ctrl+Enter`\n'
                                        'called QWidget.addAction()\n'
-                                       'called action.__init__()\n'
-                                       'called signal.connect()\n'
-                                       'call action.setShortcut with arg `Escape`\n'
-                                       'called QWidget.addAction()\n')
+                                       'called Action.__init__ with text `Cancel`\n'
+                                       f"called Signal.connect with args ({testobj.close},)\n"
+                                       'called Action.setShortcut with arg `Escape`\n'
+                                       'called QWidget.addAction()\n'
+                                       )
 
 def test_show_screen(monkeypatch, capsys):
     def mock_app_init(self, *args):
@@ -272,7 +213,7 @@ def test_confirm(monkeypatch, capsys):
     monkeypatch.setattr(gui.qtw.QApplication, '__init__', mock_app_init)
     monkeypatch.setattr(gui.qtw.QWidget, '__init__', mock_init)
     monkeypatch.setattr(gui.qtw.QMessageBox, 'information', mock_information)
-    monkeypatch.setattr(gui.qtw, 'QCheckBox', MockCheckBox)
+    monkeypatch.setattr(gui.qtw, 'QCheckBox', mockqtw.MockCheckBox)
     me = types.SimpleNamespace(conf={}, select_activations=mock_select, activate=mock_activate,
                                directories=['x'])
     testobj = gui.ShowMods(me)
@@ -285,11 +226,11 @@ def test_confirm(monkeypatch, capsys):
     assert me.modnames == ['check1']
     assert capsys.readouterr().out == ('called QApplication.__init__()\n'
                                        'called QWidget.__init__()\n'
-                                       'called MockCheckBox.__init__()\n'
-                                       'called check.setChecked(True)\n'
-                                       'called MockCheckBox.__init__()\n'
-                                       'called check.isChecked()\n'
-                                       'called check.isChecked()\n'
+                                       'called CheckBox.__init__\n'
+                                       'called CheckBox.setChecked with arg True\n'
+                                       'called CheckBox.__init__\n'
+                                       'called CheckBox.isChecked\n'
+                                       'called CheckBox.isChecked\n'
                                        'called Activate.select_activations\n'
                                        'called Activate.activate\n'
                                        'called Activate.refresh_widgets\n'
