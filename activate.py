@@ -14,9 +14,8 @@ werkwijze:
 import os
 import configparser
 import activate_gui as gui
-CONFIG = os.path.join(os.path.dirname(__file__), 'sdv_mods.config')
 MODBASE = os.path.expanduser('~/.steam/steam/steamapps/common/Stardew Valley/Mods')
-# is een logischer plek voor de config niet IN de mods directory?
+CONFIG = os.path.join(MODBASE, 'sdv_mods.config')
 
 
 def main():
@@ -70,6 +69,9 @@ class Activate:
     def activate(self):
         "activate by making directories hidden or not"
         for entry in os.scandir(self.modbase):
+            # leave my files alone!
+            if entry.is_file():
+                continue
             # if smapi, do not deactivate
             if entry.name in self.conf['Mod Directories']['SMAPI']:
                 continue

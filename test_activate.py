@@ -32,12 +32,16 @@ def test_check_config(monkeypatch, capsys):
 def test_activate(monkeypatch, capsys):
     def mock_rename(*args):
         print('called os.rename() with args', args)
+    def mock_isfile(arg):
+        return arg.stem == 'file'
     monkeypatch.setattr(testee.os, 'scandir', lambda x: [pathlib.Path('modbase/test'),
                                                          pathlib.Path('modbase/.no'),
                                                          pathlib.Path('modbase/yes'),
                                                          pathlib.Path('modbase/on'),
+                                                         pathlib.Path('modbase/file'),
                                                          pathlib.Path('modbase/.off')])
     monkeypatch.setattr(testee.os, 'rename', mock_rename)
+    monkeypatch.setattr(pathlib.Path, 'is_file', mock_isfile)
     monkeypatch.setattr(testee.Activate, '__init__', mock_init)
     testobj = testee.Activate()
     testobj.conf['Mod Directories'] = {'SMAPI': ['test']}
