@@ -11,15 +11,14 @@ def mock_init(self, *args):
 def test_check_config(monkeypatch, capsys):
     monkeypatch.setattr(testee.Activate, '__init__', mock_init)
     testobj = testee.Activate()
-    conf_ok = '\n'.join(('[test]', 'this', 'these', '', '[this]', 'those', '',
-                         '[Mod Directories]', 'test: x', 'this: that, another', 'those: thoze',
-                         'these: theze'))
+    conf_ok = ('[test]\nthis\nthese\n\n[this]\nthose\n\n'
+               '[Mod Directories]\ntest: x\nthis: that, another\nthose: thoze\nthese: theze')
     testobj.conf = testee.configparser.ConfigParser(allow_no_value=True)
     testobj.conf.optionxform = str
     testobj.conf.read_string(conf_ok)
     assert testobj.check_config() == ['No errors']
-    conf_nok = '\n'.join(('[test]', 'this', 'these', '', '[this]', 'those', '',
-                         '[Mod Directories]', 'test: x', 'This: that, another', 'Those: thoze'))
+    conf_nok = ('[test]\nthis\nthese\n\n[this]\nthose\n\n'
+                '[Mod Directories]\ntest: x\nThis: that, another\nThose: thoze')
     testobj.conf = testee.configparser.ConfigParser(allow_no_value=True)
     testobj.conf.optionxform = str
     testobj.conf.read_string(conf_nok)
@@ -69,9 +68,8 @@ def test_select_activations(monkeypatch, capsys):
     monkeypatch.setattr(testee.Activate, '__init__', mock_init)
     monkeypatch.setattr(testee.Activate, 'add_activations', mock_add)
     testobj = testee.Activate()
-    conf = '\n'.join(('[test]', 'this', '', '[other]', 'they', 'them', '', '[third]', 'oink', '',
-                      '[Mod Directories]', 'test: x', 'this: y', 'other: z', 'they: a', 'them: b',
-                      'third: c', 'oink: d'))
+    conf = ('[test]\nthis\n\n[other]\nthey\nthem\n\n[third]\noink\n\n'
+            '[Mod Directories]\ntest: x\nthis: y\nother: z\nthey: a\nthem: b\n\nthird: c\noink: d')
     testobj.conf = testee.configparser.ConfigParser(allow_no_value=True)
     testobj.conf.optionxform = str
     testobj.conf.read_string(conf)
@@ -119,7 +117,7 @@ def test_init(monkeypatch, capsys):
             "called ConfigParser.read() with args ('config',)\n")
     assert conf.conf.optionxform == str
     assert not conf.directories
-    assert type(conf.directories) == set
+    assert isinstance(conf.directories, set)
 
 class MockActivate:
     def __init__(self, args):

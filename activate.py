@@ -52,7 +52,6 @@ class Activate:
             for entry in self.conf[item]:
                 self.add_activations(item, entry)
 
-
     def add_activations(self, section_name, entry):
         "expand an item with a list of subitems"
         # conf['item'] is een lijst van modules bij een expansie
@@ -80,9 +79,8 @@ class Activate:
                 if entry.name[1:] in self.directories:
                     os.rename(entry, os.path.join(self.modbase, entry.name[1:]))
             # if not in list and activated, deactivate
-            else:
-                if entry.name not in self.directories:
-                    os.rename(entry, os.path.join(self.modbase, '.' + entry.name))
+            elif entry.name not in self.directories:
+                os.rename(entry, os.path.join(self.modbase, '.' + entry.name))
 
     def check_config(self):
         "check names in config files for spelling errors etc."

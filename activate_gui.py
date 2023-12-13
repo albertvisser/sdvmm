@@ -19,11 +19,10 @@ class ShowMods(qtw.QWidget):
         self.setWindowTitle('Select expansions/mods to activate')
         self.vbox = qtw.QVBoxLayout()
         hbox = qtw.QHBoxLayout()
-        hbox.addWidget(qtw.QLabel('\n'.join((
-            'Dit overzicht toont de namen van expansies die je kunt activeren',
-            '(inclusief die al geactiveerd zijn).',
-            'In de achterliggende configuratie is geregeld welke mods',
-            'hiervoor eventueel nog meer aangezet moeten worden'))))
+        hbox.addWidget(qtw.QLabel('Dit overzicht toont de namen van expansies die je kunt activeren\n'
+                                  '(inclusief die al geactiveerd zijn).\n'
+                                  'In de achterliggende configuratie is geregeld welke mods\n'
+                                  'hiervoor eventueel nog meer aangezet moeten worden'))
         self.vbox.addLayout(hbox)
         self.widgets = {}
         self.refresh_widgets(first_time=True)

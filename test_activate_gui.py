@@ -98,7 +98,8 @@ def test_refresh_widgets(monkeypatch, capsys):
     def mock_path(*args):
         nonlocal counter
         counter += 1
-        if counter == 1: return False
+        if counter == 1:
+            return False
         return True
     monkeypatch.setattr(gui.qtw, 'QHBoxLayout', mockqtw.MockHBoxLayout)
     monkeypatch.setattr(gui.qtw, 'QCheckBox', mockqtw.MockCheckBox)
@@ -106,14 +107,13 @@ def test_refresh_widgets(monkeypatch, capsys):
     me = types.SimpleNamespace(modbase='modbase')
     me.conf = configparser.ConfigParser(allow_no_value=True)
     me.conf.optionxform = str
-    me.conf.read_string( '\n'.join(('[one]', 'first', '', '[two]', '',
-                                    '[Mod Directories]', 'one: one, eno', 'two: two',
-                                    'first: first')))
+    me.conf.read_string('[one]\nfirst\n\n[two]\n\n'
+                        '[Mod Directories]\none: one, eno\ntwo: two\nfirst: first')
     testobj = gui.ShowMods(me)  # setup_screen wordt door deze aangeroepen
     testobj.vbox  = mockqtw.MockVBoxLayout()
     testobj.widgets = {}
     testobj.refresh_widgets(first_time=True)
-    assert len(testobj.widgets) == 2
+    assert len(testobj.widgets) == len(testobj.master.conf.sections()) - 1
     assert isinstance(testobj.widgets['one'], gui.qtw.QCheckBox)
     assert isinstance(testobj.widgets['two'], gui.qtw.QCheckBox)
     assert capsys.readouterr().out == ('called VBox.__init__\n'
