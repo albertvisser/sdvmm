@@ -1,19 +1,28 @@
+"""unittests for ./activate_gui.py
+"""
 import types
 import configparser
-import pytest
 # import mockqtwidgets as mockqtw
 import mockgui.mockqtwidgets as mockqtw
 import activate_gui as gui
 
 
 def test_showmods_init(monkeypatch, capsys):
+    """unittest for activate_gui.ShowMods.init
+    """
     def mock_app_init(self, *args):
+        """stub
+        """
         print('called qtw.QApplication.__init__()')
     def mock_init(self, *args):
+        """stub
+        """
         print('called qtw.QWidget.__init__()')
     # def mock_setup(self, *args):
     #     print('called ShowMods.setup_screen()')
     def mock_show(self, *args):
+        """stub
+        """
         print('called ShowMods.show_screen()')
     monkeypatch.setattr(gui.qtw.QApplication, '__init__', mock_app_init)
     monkeypatch.setattr(gui.qtw.QWidget, '__init__', mock_init)
@@ -32,15 +41,27 @@ def test_showmods_init(monkeypatch, capsys):
         # 'called ShowMods.setup_screen()\n')
 
 def test_setup_screen(monkeypatch, capsys):
+    """unittest for activate_gui.ShowMods.setup_screen
+    """
     def mock_app_init(self, *args):
+        """stub
+        """
         print('called QApplication.__init__()')
     def mock_init(self, *args):
+        """stub
+        """
         print('called QWidget.__init__()')
     def mock_setWindowTitle(self, *args):
+        """stub
+        """
         print('called QWidget.setWindowTitle()')
     def mock_refresh(*args, **kwargs):
+        """stub
+        """
         print('called ShowMods.refresh_widgets with args', args, kwargs)
     def mock_setLayout(self, *args):
+        """stub
+        """
         print('called QWidget.setLayout()')
     monkeypatch.setattr(gui.qtw.QApplication, '__init__', mock_app_init)
     monkeypatch.setattr(gui.qtw.QWidget, '__init__', mock_init)
@@ -94,8 +115,12 @@ def test_setup_screen(monkeypatch, capsys):
                                        'called QWidget.setLayout()\n')
 
 def test_refresh_widgets(monkeypatch, capsys):
+    """unittest for activate_gui.ShowMods.refresh_widgets
+    """
     counter = 0
     def mock_path(*args):
+        """stub
+        """
         nonlocal counter
         counter += 1
         if counter == 1:
@@ -110,7 +135,7 @@ def test_refresh_widgets(monkeypatch, capsys):
     me.conf.read_string('[one]\nfirst\n\n[two]\n\n'
                         '[Mod Directories]\none: one, eno\ntwo: two\nfirst: first')
     testobj = gui.ShowMods(me)  # setup_screen wordt door deze aangeroepen
-    testobj.vbox  = mockqtw.MockVBoxLayout()
+    testobj.vbox = mockqtw.MockVBoxLayout()
     testobj.widgets = {}
     testobj.refresh_widgets(first_time=True)
     assert len(testobj.widgets) == len(testobj.master.conf.sections()) - 1
@@ -144,16 +169,26 @@ def test_refresh_widgets(monkeypatch, capsys):
                                        'called CheckBox.setChecked with arg True\n')
 
 def test_setup_actions(monkeypatch, capsys):
+    """unittest for activate_gui.ShowMods.setup_actions
+    """
     def mock_app_init(self, *args):
+        """stub
+        """
         print('called QApplication.__init__()')
     def mock_init(self, *args):
+        """stub
+        """
         print('called QWidget.__init__()')
     def mock_addAction(self, *args):
+        """stub
+        """
         print('called QWidget.addAction()')
     def mock_confirm(self, *args):
-        pass
+        """stub
+        """
     def mock_close(self, *args):
-        pass
+        """stub
+        """
     monkeypatch.setattr(gui.qtw.QApplication, '__init__', mock_app_init)
     monkeypatch.setattr(gui.qtw.QWidget, '__init__', mock_init)
     monkeypatch.setattr(gui.qtw.QWidget, 'addAction', mock_addAction)
@@ -175,14 +210,24 @@ def test_setup_actions(monkeypatch, capsys):
                                        'called QWidget.addAction()\n')
 
 def test_show_screen(monkeypatch, capsys):
+    """unittest for activate_gui.ShowMods.show_screen
+    """
     def mock_app_init(self, *args):
+        """stub
+        """
         print('called QApplication.__init__()')
     def mock_app_exec(self, *args):
+        """stub
+        """
         print('called QApplication.exec()')
         return 'okcode'
     def mock_init(self, *args):
+        """stub
+        """
         print('called QWidget.__init__()')
     def mock_show(self, *args):
+        """stub
+        """
         print('called QWidget.show()')
     monkeypatch.setattr(gui.qtw.QApplication, '__init__', mock_app_init)
     monkeypatch.setattr(gui.qtw.QApplication, 'exec', mock_app_exec)
@@ -197,17 +242,31 @@ def test_show_screen(monkeypatch, capsys):
                                        'called QApplication.exec()\n')
 
 def test_confirm(monkeypatch, capsys):
+    """unittest for activate_gui.ShowMods.confirm
+    """
     def mock_app_init(self, *args):
+        """stub
+        """
         print('called QApplication.__init__()')
     def mock_init(self, *args):
+        """stub
+        """
         print('called QWidget.__init__()')
     def mock_select():
+        """stub
+        """
         print('called Activate.select_activations')
     def mock_activate():
+        """stub
+        """
         print('called Activate.activate')
     def mock_refresh():
+        """stub
+        """
         print('called Activate.refresh_widgets')
     def mock_information(self, *args):
+        """stub
+        """
         print('called MessageBox.information with args', args)
     monkeypatch.setattr(gui.qtw.QApplication, '__init__', mock_app_init)
     monkeypatch.setattr(gui.qtw.QWidget, '__init__', mock_init)
@@ -237,13 +296,23 @@ def test_confirm(monkeypatch, capsys):
                                        " ('Change Config', 'wijzigingen zijn doorgevoerd')\n")
 
 def test_check(monkeypatch, capsys):
+    """unittest for activate_gui.ShowMods.check
+    """
     def mock_app_init(self, *args):
+        """stub
+        """
         print('called QApplication.__init__()')
     def mock_init(self, *args):
+        """stub
+        """
         print('called QWidget.__init__()')
     def mock_information(self, *args):
+        """stub
+        """
         print('called MessageBox.information with args', args)
-    def mock_check(): #  self, *args):
+    def mock_check():  # self, *args):
+        """stub
+        """
         print('called Activate.check_config()')
         return ['result', 'another result']
     monkeypatch.setattr(gui.qtw.QApplication, '__init__', mock_app_init)

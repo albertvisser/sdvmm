@@ -1,15 +1,22 @@
+"""unittests for ./activate.py
+"""
 import pathlib
 import activate as testee
 
 def mock_init(self, *args):
+    """stub for setting up activate.Activate class
+    """
     self.conf = {}
     self.modnames = []
     self.modbase = 'modbase'
     self.directories = set()
 
-def test_check_config(monkeypatch, capsys):
+
+def test_check_config(monkeypatch):
+    """unittest for activate.check_config
+    """
     monkeypatch.setattr(testee.Activate, '__init__', mock_init)
-    testobj = testee.Activate()
+    testobj = testee.Activate('')
     conf_ok = ('[test]\nthis\nthese\n\n[this]\nthose\n\n'
                '[Mod Directories]\ntest: x\nthis: that, another\nthose: thoze\nthese: theze')
     testobj.conf = testee.configparser.ConfigParser(allow_no_value=True)
@@ -28,9 +35,15 @@ def test_check_config(monkeypatch, capsys):
 
 
 def test_activate(monkeypatch, capsys):
+    """unittest for activate.activate
+    """
     def mock_rename(*args):
+        """stub
+        """
         print('called os.rename() with args', args)
     def mock_isfile(arg):
+        """stub
+        """
         return arg.stem == 'file'
     monkeypatch.setattr(testee.os, 'scandir', lambda x: [pathlib.Path('modbase/test'),
                                                          pathlib.Path('modbase/.no'),
@@ -41,7 +54,7 @@ def test_activate(monkeypatch, capsys):
     monkeypatch.setattr(testee.os, 'rename', mock_rename)
     monkeypatch.setattr(pathlib.Path, 'is_file', mock_isfile)
     monkeypatch.setattr(testee.Activate, '__init__', mock_init)
-    testobj = testee.Activate()
+    testobj = testee.Activate('')
     testobj.conf['Mod Directories'] = {'SMAPI': ['test']}
     testobj.directories |= {'yes', 'off'}
     assert testobj.directories == {'yes', 'off'}
@@ -51,9 +64,12 @@ def test_activate(monkeypatch, capsys):
                                        "called os.rename() with args (PosixPath('modbase/.off'),"
                                        " 'modbase/off')\n")
 
+
 def test_add_activations(monkeypatch):
+    """unittest for activate.add_activations
+    """
     monkeypatch.setattr(testee.Activate, '__init__', mock_init)
-    testobj = testee.Activate()
+    testobj = testee.Activate('')
     testobj.conf = {'test': {'this': '', 'that': ''}, 'this': {'those': ''},
                     'Mod Directories': {'this': 'that, another', 'those': 'thoze'}}
     testobj.directories.add('that')
@@ -61,12 +77,17 @@ def test_add_activations(monkeypatch):
     testobj.add_activations('test', 'this')
     assert testobj.directories == {'that', 'another', 'thoze'}
 
+
 def test_select_activations(monkeypatch, capsys):
+    """unittest for activate.select_activations
+    """
     def mock_add(self, *args):
+        """stub
+        """
         print('called self.add_activations with args', args)
     monkeypatch.setattr(testee.Activate, '__init__', mock_init)
     monkeypatch.setattr(testee.Activate, 'add_activations', mock_add)
-    testobj = testee.Activate()
+    testobj = testee.Activate('')
     conf = ('[test]\nthis\n\n[other]\nthey\nthem\n\n[third]\noink\n\n'
             '[Mod Directories]\ntest: x\nthis: y\nother: z\nthey: a\nthem: b\n\nthird: c\noink: d')
     testobj.conf = testee.configparser.ConfigParser(allow_no_value=True)
@@ -80,19 +101,30 @@ def test_select_activations(monkeypatch, capsys):
                                        "called self.add_activations with args ('other', 'they')\n"
                                        "called self.add_activations with args ('other', 'them')\n")
 
+
 def test_build_and_start_gui(monkeypatch, capsys):
+    """unittest for activate.build_and_start_gui
+    """
     class MockShowMods:
+        """stub
+        """
         def __init__(self, master):
             master.modnames = ['one', 'two', 'three']
         def setup_screen(self):
+            """stub
+            """
             print('called gui.ShowMods.setup_screen()')
         def setup_actions(self):
+            """stub
+            """
             print('called gui.ShowMods.setup_actions()')
         def show_screen(self):
+            """stub
+            """
             print('called gui.ShowMods.show_screen()')
     monkeypatch.setattr(testee.Activate, '__init__', mock_init)
     monkeypatch.setattr(testee.gui, 'ShowMods', MockShowMods)
-    testobj = testee.Activate()
+    testobj = testee.Activate('')
     testobj.conf = {}
     testobj.modnames = []
     testobj.build_and_start_gui()
@@ -103,12 +135,19 @@ def test_build_and_start_gui(monkeypatch, capsys):
 
 
 class MockParser:
+    """testdouble object mimicking configparser.ConfigParser class
+    """
     def __init__(self, *args, **kwargs):
         print('called ConfigParser() with args', args, kwargs)
     def read(self, *args):
+        """stub
+        """
         print('called ConfigParser.read() with args', args)
 
+
 def test_init(monkeypatch, capsys):
+    """unittest for activate.init
+    """
     monkeypatch.setattr(testee.configparser, 'ConfigParser', MockParser)
     conf = testee.Activate('config')
     assert capsys.readouterr().out == (
@@ -118,20 +157,34 @@ def test_init(monkeypatch, capsys):
     assert not conf.directories
     assert isinstance(conf.directories, set)
 
+
 class MockActivate:
+    """testdouble object mimicking activate.Activate class
+    """
     def __init__(self, args):
         print('called Activate() with args', args)
         self.directories = []
         self.modnames = []
     def build_and_start_gui(self):
+        """stub
+        """
         print('called Activate.build_and_start_gui()')
     def select_activations(self):
+        """stub
+        """
         print('called Activate.select_activations()')
     def activate(self):
+        """stub
+        """
         print('called Activate.activate()')
 
+
 def test_main(monkeypatch, capsys):
+    """unittest for activate.main
+    """
     def mock_select(self):
+        """stub
+        """
         self.directories = 'anything'
     monkeypatch.setattr(testee, 'Activate', MockActivate)
     monkeypatch.setattr(testee, 'CONFIG', 'filename')
