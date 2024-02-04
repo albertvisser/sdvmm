@@ -76,43 +76,34 @@ def test_setup_screen(monkeypatch, capsys):
     testobj = gui.ShowMods(me)  # setup_screen wordt door deze aangeroepen
     monkeypatch.setattr(testobj, 'refresh_widgets', mock_refresh)
     testobj.setup_screen()
-    assert capsys.readouterr().out == ('called QApplication.__init__()\n'
-                                       'called QWidget.__init__()\n'
-                                       'called QWidget.setWindowTitle()\n'
-                                       'called VBox.__init__\n'
-                                       'called HBox.__init__\n'
-                                       "called Label.__init__ with args"
-                                       " ('Dit overzicht toont de namen van expansies die je"
-                                       " kunt activeren\\n(inclusief die al geactiveerd zijn).\\nIn"
-                                       " de achterliggende configuratie is geregeld welke mods\\n"
-                                       "hiervoor eventueel nog meer aangezet moeten worden',)\n"
-                                       "called HBox.addWidget with arg of type"
-                                       " <class 'mockgui.mockqtwidgets.MockLabel'>\n"
-                                       "called VBox.addLayout with arg of type"
-                                       " <class 'mockgui.mockqtwidgets.MockHBoxLayout'>\n"
-                                       'called ShowMods.refresh_widgets with args'
-                                       " () {'first_time': True}\n"
-                                       'called HBox.__init__\n'
-                                       'called HBox.addStretch\n'
-                                       "called PushButton.__init__ with args"
-                                       f" ('&Check config', {testobj})\n"
-                                       f"called Signal.connect with args ({testobj.check},)\n"
-                                       "called HBox.addWidget with arg of type"
-                                       " <class 'mockgui.mockqtwidgets.MockPushButton'>\n"
-                                       "called PushButton.__init__ with args"
-                                       f" ('&Activeer wijzigingen', {testobj})\n"
-                                       f"called Signal.connect with args ({testobj.confirm},)\n"
-                                       "called HBox.addWidget with arg of type"
-                                       " <class 'mockgui.mockqtwidgets.MockPushButton'>\n"
-                                       "called PushButton.__init__ with args"
-                                       f" ('&Klaar', {testobj})\n"
-                                       f"called Signal.connect with args ({testobj.close},)\n"
-                                       "called HBox.addWidget with arg of type"
-                                       " <class 'mockgui.mockqtwidgets.MockPushButton'>\n"
-                                       'called HBox.addStretch\n'
-                                       "called VBox.addLayout with arg of type"
-                                       " <class 'mockgui.mockqtwidgets.MockHBoxLayout'>\n"
-                                       'called QWidget.setLayout()\n')
+    assert capsys.readouterr().out == (
+            'called QApplication.__init__()\n'
+            'called QWidget.__init__()\n'
+            'called QWidget.setWindowTitle()\n'
+            'called VBox.__init__\n'
+            'called HBox.__init__\n'
+            "called Label.__init__ with args"
+            " ('Dit overzicht toont de namen van expansies die je"
+            " kunt activeren\\n(inclusief die al geactiveerd zijn).\\nIn"
+            " de achterliggende configuratie is geregeld welke mods\\n"
+            "hiervoor eventueel nog meer aangezet moeten worden',)\n"
+            "called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLabel'>\n"
+            "called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>\n"
+            "called ShowMods.refresh_widgets with args () {'first_time': True}\n"
+            'called HBox.__init__\n'
+            'called HBox.addStretch\n'
+            f"called PushButton.__init__ with args ('&Check config', {testobj}) {{}}\n"
+            f"called Signal.connect with args ({testobj.check},)\n"
+            "called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>\n"
+            f"called PushButton.__init__ with args ('&Activeer wijzigingen', {testobj}) {{}}\n"
+            f"called Signal.connect with args ({testobj.confirm},)\n"
+            "called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>\n"
+            f"called PushButton.__init__ with args ('&Klaar', {testobj}) {{}}\n"
+            f"called Signal.connect with args ({testobj.close},)\n"
+            "called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>\n"
+            'called HBox.addStretch\n'
+            "called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>\n"
+            'called QWidget.setLayout()\n')
 
 def test_refresh_widgets(monkeypatch, capsys):
     """unittest for activate_gui.ShowMods.refresh_widgets
