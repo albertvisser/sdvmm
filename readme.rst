@@ -13,7 +13,12 @@ Dependencies are defined by naming the dependent mod's display name under the he
 
 Because names are important, there's also an option to check the configuration for (non-)matching names (spelling and case).
 
+How to set up
+-------------
+
+Modify the file `sdv_mods.config.example` to your needs and rename it removing the .example suffix. Either leave it in this directory or (what I did on my Linux system) move it to the mods installation directory and make a symlink to it here.
+
 Dependencies of the project:
 ----------------------------
 - Python
-- PyQt6
+- PyQt(6)
