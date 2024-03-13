@@ -13,6 +13,8 @@ werkwijze:
 """
 import os
 import configparser
+import shutil
+import subprocess
 import activate_gui as gui
 MODBASE = os.path.expanduser('~/.steam/steam/steamapps/common/Stardew Valley/Mods')
 CONFIG = os.path.join(MODBASE, 'sdv_mods.config')
@@ -27,9 +29,10 @@ def main():
 class Activate:
     "Processing class (the one that contains the application logic (except the GUI stuff)"
     def __init__(self, config):
-        self.conf = configparser.ConfigParser(allow_no_value=True)
+        self.config = config
+        self.conf = configparser.ConfigParser(delimiters=(':',), allow_no_value=True)
         self.conf.optionxform = str
-        self.conf.read(config)
+        self.conf.read(self.config)
         self.modnames = []
         self.modbase = MODBASE
         self.directories = set()
@@ -37,10 +40,10 @@ class Activate:
     def build_and_start_gui(self):
         """build screen: make the user select from a list which expansions they want to have active
         """
-        doit = gui.ShowMods(self)
-        doit.setup_screen()
-        doit.setup_actions()
-        doit.show_screen()
+        self.doit = gui.ShowMods(self)
+        self.doit.setup_screen()
+        self.doit.setup_actions()
+        self.doit.show_screen()
 
     def select_activations(self):
         "expand the selection to a list of directories"
@@ -82,6 +85,11 @@ class Activate:
             elif entry.name not in self.directories:
                 os.rename(entry, os.path.join(self.modbase, '.' + entry.name))
 
+    def edit_config(self):
+        "open config file for editing"
+        # subprocess.run(['scite', CONFIG])
+        subprocess.run(['gnome-terminal', '--geometry=102x54+1072+0', '--', 'vim', CONFIG])
+
     def check_config(self):
         "check names in config files for spelling errors etc."
         modnames = self.conf.options('Mod Directories')
@@ -95,3 +103,28 @@ class Activate:
                 if name2 not in modnames:
                     errors.append(f'Unknown mod name `{name2}` for expansion/mod `{name}`')
         return errors or ['No errors']
+
+    def add_to_config(self):
+        "add a new mod (with dependencies if any) to the configuration"
+        ok, new_entries = gui.show_dialog(gui.NewModDialog, self.doit, self.conf['Mod Directories'],
+                                          first_time=True)
+        if ok:
+            # print(new_entries)
+            for name, other in new_entries['mods']:
+                self.conf.set('Mod Directories', name, other)
+            for name, other in new_entries['deps'].items():
+                if other:
+                    self.conf.add_section(name)
+                    for item in other:
+                        self.conf.set(name, item, '')
+            for name in new_entries['set_active']:
+                try:
+                    self.conf.add_section(name)
+                except configparser.DuplicateSectionError:
+                    pass
+                else:
+                    self.doit.add_checkbox(name)
+            shutil.copyfile(self.config, self.config + '~')
+            with open(self.config, 'w') as cfg:
+                self.conf.write(cfg)
+            self.doit.refresh_widgets()
