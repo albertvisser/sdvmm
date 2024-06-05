@@ -14,19 +14,21 @@ werkwijze:
 import os
 import configparser
 import shutil
+import zipfile
 import subprocess
 import activate_gui as gui
 MODBASE = os.path.expanduser('~/.steam/steam/steamapps/common/Stardew Valley/Mods')
 CONFIG = os.path.join(MODBASE, 'sdv_mods.config')
+DOWNLOAD = os.path.expanduser('~/Downloads/Stardew Valley Mods')
 
 
 def main():
     "main line"
-    DoIt = Activate(CONFIG)
+    DoIt = Activater(CONFIG)
     DoIt.build_and_start_gui()
 
 
-class Activate:
+class Activater:
     "Processing class (the one that contains the application logic (except the GUI stuff)"
     def __init__(self, config):
         self.config = config
@@ -35,6 +37,7 @@ class Activate:
         self.conf.read(self.config)
         self.modnames = []
         self.modbase = MODBASE
+        self.downloads = DOWNLOAD
         self.directories = set()
 
     def build_and_start_gui(self):
@@ -128,3 +131,53 @@ class Activate:
             with open(self.config, 'w') as cfg:
                 self.conf.write(cfg)
             self.doit.refresh_widgets()
+
+    def update_mods(self, names):
+        "installeer de aangegeven mod files"
+        report = []
+        for zipfilename in names:
+            archive = zipfile.ZipFile(zipfilename)
+            root = get_archive_root(archive.namelist())
+            if len(root) != 1:
+                report.append(f'{zipfilename}: zipfile should contain only one base directory')
+                archive.close()
+                continue
+            root = root.pop()
+            if os.path.exists(os.path.join(self.modbase, root)):
+                mod_was_active = True
+                if os.path.exists(os.path.join(self.modbase, f'.{root}~')):
+                    shutil.rmtree(os.path.join(self.modbase, f'.{root}~'))
+                os.rename(os.path.join(self.modbase, f'{root}'),
+                          os.path.join(self.modbase, f'.{root}~'))
+            elif os.path.exists(os.path.join(self.modbase, f'.{root}')):
+                mod_was_active = False
+                if os.path.exists(os.path.join(self.modbase, f'.{root}~')):
+                    shutil.rmtree(os.path.join(self.modbase, f'.{root}~'))
+                os.rename(os.path.join(self.modbase, f'.{root}'),
+                          os.path.join(self.modbase, f'.{root}~'))
+            else:
+                mod_was_active = True  # strictly speaking: should be "not applicable"
+            archive.extractall(self.modbase)
+            if not mod_was_active:
+                os.rename(os.path.join(self.modbase, f'{root}'),
+                          os.path.join(self.modbase, f'.{root}'))
+            zipfilepath = os.path.abspath(zipfilename)
+            os.rename(zipfilepath, os.path.join(os.path.dirname(zipfilepath), 'installed',
+                                                os.path.basename(zipfilepath)))
+            archive.close()
+            report.append(f'{zipfilename} is successfully installed')
+        return report
+
+
+def get_archive_root(namelist):
+    "determine base directories for a list of filenames"
+    roots = set()
+    for name in namelist:
+        parent = os.path.dirname(name)
+        while parent:
+            test = os.path.dirname(parent)
+            if not test:
+                break
+            parent = test
+        roots.add(parent)
+    return roots

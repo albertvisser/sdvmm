@@ -16,7 +16,11 @@ called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLay
 called ShowMods.refresh_widgets with args () {{'first_time': True}}
 called HBox.__init__
 called HBox.addStretch
-called PushButton.__init__ with args ('add &Mod', {testobj}) {{}}
+called PushButton.__init__ with args ('&Install / update', {testobj}) {{}}
+called PushButton.setToolTip with arg `Selecteer uit een lijst met recent gedownloade mods één of meer om te installeren`
+called Signal.connect with args ({testobj.update},)
+called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
+called PushButton.__init__ with args ('add &Mod to config', {testobj}) {{}}
 called Signal.connect with args ({testobj.master.add_to_config},)
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
 called PushButton.__init__ with args ('&Edit config', {testobj}) {{}}
@@ -89,11 +93,12 @@ def expected_output():
     return results
 
 
-class MockActivate:
-    """stub for ./activate.Activate
+class MockActivater:
+    """stub for ./activate.Activater
     """
     def __init__(self):
         self.modbase = 'modbase'
+        self.downloads = 'Downloads'
         self.conf = {}
         self.directories = ['x']
     def add_to_config(self):
@@ -105,15 +110,15 @@ class MockActivate:
     def select_activations(self):
         """stub
         """
-        print('called Activate.select_activations')
+        print('called Activater.select_activations')
     def activate(self):
         """stub
         """
-        print('called Activate.activate')
+        print('called Activater.activate')
     def check_config(self):
         """stub
         """
-        print('called Activate.check_config()')
+        print('called Activater.check_config()')
         return ['result', 'another result']
 
 
@@ -165,7 +170,7 @@ class TestShowMods:
             print('called QWidget.__init__()')
         monkeypatch.setattr(testee.qtw.QApplication, '__init__', mock_app_init)
         monkeypatch.setattr(testee.qtw.QWidget, '__init__', mock_init)
-        testobj = testee.ShowMods(MockActivate())
+        testobj = testee.ShowMods(MockActivater())
         assert capsys.readouterr().out == (
             'called QApplication.__init__()\n'
             'called QWidget.__init__()\n')
@@ -283,7 +288,7 @@ class TestShowMods:
         def mock_refresh():
             """stub
             """
-            print('called Activate.refresh_widgets')
+            print('called Activater.refresh_widgets')
         def mock_information(self, *args):
             """stub
             """
@@ -303,9 +308,9 @@ class TestShowMods:
                                            'called CheckBox.__init__\n'
                                            'called CheckBox.isChecked\n'
                                            'called CheckBox.isChecked\n'
-                                           'called Activate.select_activations\n'
-                                           'called Activate.activate\n'
-                                           'called Activate.refresh_widgets\n'
+                                           'called Activater.select_activations\n'
+                                           'called Activater.activate\n'
+                                           'called Activater.refresh_widgets\n'
                                            "called MessageBox.information with args"
                                            " ('Change Config', 'wijzigingen zijn doorgevoerd')\n")
 
@@ -372,9 +377,34 @@ class TestShowMods:
         monkeypatch.setattr(testee.qtw.QMessageBox, 'information', mock_information)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.check()
-        assert capsys.readouterr().out == ('called Activate.check_config()\n'
+        assert capsys.readouterr().out == ('called Activater.check_config()\n'
                                            "called MessageBox.information with args"
                                            " ('Check Config', 'result\\nanother result')\n")
+
+    def test_update(self, monkeypatch, capsys):
+        """unittest for ShowMods.update
+        """
+        def mock_open(parent, *args, **kwargs):
+            print('called FileDialog.getOpenFileNames with args', parent, args, kwargs)
+            return ['name1', 'name2'], True
+        def mock_update(arg):
+            print(f"called Activater.update_mods with arg {arg}")
+        monkeypatch.setattr(testee.qtw, 'QFileDialog', mockqtw.MockFileDialog)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.master.update_mods = mock_update
+        testobj.update()
+        assert capsys.readouterr().out == (
+                f"called FileDialog.getOpenFileNames with args {testobj} ()"
+                " {'caption': 'Install downloaded mods', 'directory': 'Downloads',"
+                " 'filter': 'Zip files (*.zip)'}\n")
+
+        monkeypatch.setattr(mockqtw.MockFileDialog, 'getOpenFileNames', mock_open)
+        testobj.update()
+        assert capsys.readouterr().out == (
+                f"called FileDialog.getOpenFileNames with args {testobj} ()"
+                " {'caption': 'Install downloaded mods', 'directory': 'Downloads',"
+                " 'filter': 'Zip files (*.zip)'}\n"
+                "called Activater.update_mods with arg ['name1', 'name2']\n")
 
 
 class TestNewModDialog:

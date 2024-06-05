@@ -5,6 +5,7 @@ import os.path
 import functools
 import PyQt6.QtWidgets as qtw
 import PyQt6.QtGui as qgui
+download_dir = ''
 
 
 def show_dialog(cls, parent, modnames, first_time):
@@ -36,7 +37,12 @@ class ShowMods(qtw.QWidget):
         self.refresh_widgets(first_time=True)
         hbox = qtw.QHBoxLayout()
         hbox.addStretch()
-        btn = qtw.QPushButton('add &Mod', self)
+        btn = qtw.QPushButton('&Install / update', self)
+        btn.setToolTip('Selecteer uit een lijst met recent gedownloade mods één of meer om te'
+                       ' installeren')
+        btn.clicked.connect(self.update)
+        hbox.addWidget(btn)
+        btn = qtw.QPushButton('add &Mod to config', self)
         btn.clicked.connect(self.master.add_to_config)
         hbox.addWidget(btn)
         btn = qtw.QPushButton('&Edit config', self)
@@ -107,6 +113,15 @@ class ShowMods(qtw.QWidget):
         "check for non-matching names in config file"
         results = self.master.check_config()
         qtw.QMessageBox.information(self, 'Check Config', '\n'.join(results))
+
+    def update(self):
+        "(re)install downloaded mods"
+        filenames, ok = qtw.QFileDialog.getOpenFileNames(self, caption="Install downloaded mods",
+                                                         directory=self.master.downloads,
+                                                         filter='Zip files (*.zip)')
+        if ok:
+            report = self.master.update_mods(filenames)
+            qtw.QMessageBox.information(self, 'Change Config', '\n'.join(report))
 
 
 class NewModDialog(qtw.QDialog):
