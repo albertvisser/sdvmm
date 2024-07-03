@@ -88,16 +88,20 @@ class ShowMods(qtw.QWidget):
 
     def refresh_widgets(self, first_time=False):
         "set the checkboxes to the right values (first time: also create them)"
-        # for item in self.master.conf['Expansions']:
-        for item in self.master.conf.sections():
-            if item == 'Mod Directories':
-                continue
-            if first_time:
-                self.add_checkbox(item)
-            loc = os.path.join(self.master.modbase,
-                               self.master.conf['Mod Directories'][item].split(', ')[0])
-            # print(item, loc)
-            self.widgets[item].setChecked(os.path.exists(loc))
+        # for item in self.master.conf.sections():
+        #     if item == 'Mod Directories':
+        #         continue
+        #     if first_time:
+        #         self.add_checkbox(item)
+        #     loc = os.path.join(self.master.modbase,
+        #                        self.master.conf['Mod Directories'][item].split(', ')[0])
+        #     # print(item, loc)
+        #     self.widgets[item].setChecked(os.path.exists(loc))
+        xmax, ymax = 0, 0
+        texts = []
+        for item, scrpos in sorted(self.master.screenpos.items(), key=lambda x: x[1]):
+            # regel voor regel grid opbouwen
+            texts[x][y] = item
 
     def add_checkbox(self, text):
         "add a checkbox with the given text"
