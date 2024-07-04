@@ -389,7 +389,13 @@ class TestShowMods:
             return ['name1', 'name2'], True
         def mock_update(arg):
             print(f"called Activater.update_mods with arg {arg}")
+            return ['xxx', 'yyy']
+        def mock_information(self, *args):
+            """stub
+            """
+            print('called MessageBox.information with args', args)
         monkeypatch.setattr(testee.qtw, 'QFileDialog', mockqtw.MockFileDialog)
+        monkeypatch.setattr(testee.qtw.QMessageBox, 'information', mock_information)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.master.update_mods = mock_update
         testobj.update()
@@ -404,7 +410,10 @@ class TestShowMods:
                 f"called FileDialog.getOpenFileNames with args {testobj} ()"
                 " {'caption': 'Install downloaded mods', 'directory': 'Downloads',"
                 " 'filter': 'Zip files (*.zip)'}\n"
-                "called Activater.update_mods with arg ['name1', 'name2']\n")
+                "called Activater.update_mods with arg ['name1', 'name2']\n"
+                "called MessageBox.information with args"
+                " ('Change Config', 'xxx\\nyyy')\n")
+
 
 
 class TestNewModDialog:
