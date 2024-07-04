@@ -120,6 +120,7 @@ def test_extract_screen_locations(monkeypatch, capsys):
     assert testobj.conf.options('other') == ['they', 'them']
     assert testobj.screenpos == {'test': 'x,y', 'other': ''}
 
+
 def test_select_activations(monkeypatch, capsys):
     """unittest for Activater.select_activations
     """

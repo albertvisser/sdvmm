@@ -3,16 +3,20 @@
 import sys
 import os.path
 import functools
+import collections
 import PyQt6.QtWidgets as qtw
 import PyQt6.QtGui as qgui
 download_dir = ''
+maxpercol = 10
 
-
-def show_dialog(cls, parent, modnames, first_time):
+# def show_dialog(cls, parent, modnames, first_time):
+def show_dialog(cls, parent, *args):
     "generic function for handling a dialog (instead of calling it directly"
-    parent.dialog_data = {'mods': [], 'deps': {}, 'set_active': []}
-    ok = cls(parent, modnames, first_time).exec()
-    return ok == qtw.QDialog.DialogCode.Accepted, parent.dialog_data
+    # parent.dialog_data = {'mods': [], 'deps': {}, 'set_active': []}
+    # ok = cls(parent, modnames, first_time).exec()
+    ok = cls(parent, *args).exec()
+    # return ok == qtw.QDialog.DialogCode.Accepted, parent.dialog_data
+    return ok == qtw.QDialog.DialogCode.Accepted # , parent.dialog_data
 
 
 class ShowMods(qtw.QWidget):
@@ -34,13 +38,20 @@ class ShowMods(qtw.QWidget):
                                   ' hiervoor eventueel nog meer aangezet moeten worden'))
         self.vbox.addLayout(hbox)
         self.widgets = {}
+        self.containers = {}
+        self.positions = {}
+        self.gbox = qtw.QGridLayout()
         self.refresh_widgets(first_time=True)
+        self.vbox.addLayout(self.gbox)
         hbox = qtw.QHBoxLayout()
         hbox.addStretch()
         btn = qtw.QPushButton('&Install / update', self)
         btn.setToolTip('Selecteer uit een lijst met recent gedownloade mods één of meer om te'
                        ' installeren')
         btn.clicked.connect(self.update)
+        hbox.addWidget(btn)
+        btn = qtw.QPushButton('&Reorder mods on screen', self)
+        btn.clicked.connect(self.reorder_gui)
         hbox.addWidget(btn)
         btn = qtw.QPushButton('add &Mod to config', self)
         btn.clicked.connect(self.master.add_to_config)
@@ -78,40 +89,48 @@ class ShowMods(qtw.QWidget):
         return self.app.exec()  # niet via sys.exit() want we zijn nog niet klaar
 
     def confirm(self):
-        "build a list from the checked entriesi and pass it back to the caller, then close the gui"
+        "build a list from the checked entries and pass it back to the caller, then close the gui"
         self.master.modnames = [x.text() for x in self.widgets.values() if x.isChecked()]
         self.master.select_activations()
         if self.master.directories:   # is deze conditie nog nodig of misschien zelfs te beperkend?
             self.master.activate()
-        self.refresh_widgets()  # is eigenlijk niet nodig
+        self.refresh_widgets(reorder_widgets=False)  # is eigenlijk niet nodig?
         qtw.QMessageBox.information(self, 'Change Config', 'wijzigingen zijn doorgevoerd')
 
-    def refresh_widgets(self, first_time=False):
+    def refresh_widgets(self, first_time=False, reorder_widgets=True):
         "set the checkboxes to the right values (first time: also create them)"
-        # for item in self.master.conf.sections():
-        #     if item == 'Mod Directories':
-        #         continue
-        #     if first_time:
-        #         self.add_checkbox(item)
-        #     loc = os.path.join(self.master.modbase,
-        #                        self.master.conf['Mod Directories'][item].split(', ')[0])
-        #     # print(item, loc)
-        #     self.widgets[item].setChecked(os.path.exists(loc))
-        xmax, ymax = 0, 0
-        texts = []
-        for item, scrpos in sorted(self.master.screenpos.items(), key=lambda x: x[1]):
-            # regel voor regel grid opbouwen
-            texts[x][y] = item
+        # on first-time we build all the checkbox containers
+        if first_time:
+            rownum, colnum = 0, 0
+            # for text, scrpos in sorted(self.master.screenpos.items(), key=lambda x: x[1]):
+            for text, scrpos in self.master.screenpos.items():
+                self.containers[text], self.widgets[text] = self.add_checkbox(text)
+                if scrpos:
+                    row, col = [int(y) for y in scrpos.split('x', 1)]
+                else:   # fallback voor als het scherm nog niet eerder geordend was
+                    maxcol = len(self.master.screenpos) // maxpercol
+                    row, col = rownum, colnum
+                    colnum +=1
+                    if colnum == maxcol:
+                        rownum += 1
+                        colnum = 0
+                self.positions[(row, col)] = text
+        if reorder_widgets:
+            for pos, text in self.positions.items():
+                self.gbox.addLayout(self.containers[text], pos[0], pos[1])
+        for text, check in self.widgets.items():
+            loc = os.path.join(self.master.modbase,
+                               self.master.conf['Mod Directories'][text].split(', ')[0])
+            check.setChecked(os.path.exists(loc))
 
     def add_checkbox(self, text):
         "add a checkbox with the given text"
         hbox = qtw.QHBoxLayout()
         check = qtw.QCheckBox(text)
-        hbox.addSpacing(100)
+        hbox.addSpacing(50)
         hbox.addWidget(check)
-        hbox.addStretch()
-        self.vbox.addLayout(hbox)
-        self.widgets[text] = check
+        hbox.addSpacing(50)
+        return hbox, check
 
     def check(self):
         "check for non-matching names in config file"
@@ -127,6 +146,17 @@ class ShowMods(qtw.QWidget):
             report = self.master.update_mods(filenames)
             qtw.QMessageBox.information(self, 'Change Config', '\n'.join(report))
 
+    def reorder_gui(self):
+        ""
+        ok = show_dialog(ReorderDialog, self)
+        if ok:
+            for pos in range(self.gbox.count()):
+                self.gbox.takeAt(pos)
+            self.widgets = {}
+            self.containers = {}
+            self.positions = {}
+            self.refresh_widgets()
+
 
 class NewModDialog(qtw.QDialog):
     """Dialog for adding a new mod with dependencies (if any)
@@ -135,6 +165,7 @@ class NewModDialog(qtw.QDialog):
     """
     def __init__(self, parent, modnames, first_time):
         self.parent = parent
+        self.parent.dialog_data = {'mods': [], 'deps': {}, 'set_active': []}
         self.modnames = modnames
         super().__init__(parent)
         gbox = qtw.QGridLayout()
@@ -232,3 +263,115 @@ class NewModDialog(qtw.QDialog):
         self.parent.dialog_data['deps'][modname] = [x[1] for x in self.deps]
         self.parent.dialog_data['set_active'].append(modname if self.can_activate.isChecked() else '')
         self.accept()
+
+
+class ReorderDialog(qtw.QDialog):
+    "Mod volgorde op scherm veranderen"
+    # toon tablewidget met buttons voor toevoegen/weghalen kolommen en rijen (vgl HtmlEdit)
+    # bij refreshen laden met namen uit self.master.screenpos
+    # t.z.t. misschien direct in de main gui, met drag en drop o.i.d.i
+    def __init__(self, parent):
+        self._parent = parent
+        self.data = parent.master.screenpos
+        # self.headings = ['']
+        colcount, rowcount = 1, 1
+        super().__init__(parent)
+        # self.setWindowTitle('Screen Setup')
+        # self.setWindowIcon(self._parent.appicon)
+        vbox = qtw.QVBoxLayout()
+
+        self.table = qtw.QTableWidget(self)
+        self.table.setRowCount(rowcount)     # de eerste rij is voor de kolomtitels
+        self.table.setColumnCount(colcount)  # de eerste rij is voor de rijtitels
+        # self.table_table.setHorizontalHeaderLabels(self.headings)
+        # self.hdr = self.table_table.horizontalHeader()
+        # self.table_table.verticalHeader().setVisible(False)
+        # self.hdr.setSectionsClickable(True)
+        # self.hdr.sectionClicked.connect(self.on_title)
+        hbox = qtw.QHBoxLayout()
+        hbox.addWidget(self.table)
+        vbox.addLayout(hbox)
+
+        hbox = qtw.QHBoxLayout()
+        hbox.addStretch()
+        button = qtw.QPushButton('&> Add Column', self)
+        button.clicked.connect(self.add_column)
+        hbox.addWidget(button)
+        button = qtw.QPushButton('&< Remove Last Column', self)
+        button.clicked.connect(self.remove_column)
+        hbox.addWidget(button)
+        button = qtw.QPushButton('&Repopulate with texts', self)
+        button.clicked.connect(self.repopulate)
+        hbox.addWidget(button)
+        button = qtw.QPushButton('&+ Add Row', self)
+        button.clicked.connect(self.add_row)
+        hbox.addWidget(button)
+        button = qtw.QPushButton('&- Remove Last Row', self)
+        button.clicked.connect(self.remove_row)
+        hbox.addWidget(button)
+        hbox.addStretch()
+        vbox.addLayout(hbox)
+
+        hbox = qtw.QHBoxLayout()
+        self.ok_button = qtw.QPushButton('&Save', self)
+        self.ok_button.clicked.connect(self.accept)
+        self.ok_button.setDefault(True)
+        self.cancel_button = qtw.QPushButton('&Cancel', self)
+        self.cancel_button.clicked.connect(self.reject)
+        hbox.addStretch()
+        hbox.addWidget(self.ok_button)
+        hbox.addWidget(self.cancel_button)
+        hbox.addStretch()
+        vbox.addLayout(hbox)
+
+        self.setLayout(vbox)
+
+    def add_column(self):
+        "new column at the end"
+        self.table.insertColumn(self.table.columnCount())
+
+    def remove_column(self):
+        "remove last column"
+        self.table.removeColumn(self.table.columnCount())
+
+    def add_row(self):
+        "new row at the bottom"
+        self.table.insertRow(self.table.rowCount())
+
+    def remove_row(self):
+        "remove last roeself."
+        self.table.removeRow(self.table.rowCount())
+
+    def repopulate(self):
+        if not list(self.data.values())[0]:
+            texts = list(self.data.keys())
+            textindex = 0
+            for colnum in range(self.table.columnCount()):
+                for rownum in range(self.table.rowCount()):
+                    item = qtw.QTableWidgetItem(texts[textindex])
+                    textindex += 1
+                    self.table.setItem(rownum, colnum, item)
+            return
+        for text, scrpos in sorted(self.data.items(), key=lambda x: (x[1], x[0])):
+            row, col = scrpos.split('x')
+            item = qtw.QTableWidgetItem(text)
+            self.table.setItem(int(row), int(col), item)
+
+    def accept(self):
+        """bij OK: de opgebouwde tabel via self.dialog_data doorgeven
+        aan het mainwindow
+        """
+        rows = self.table.rowCount()
+        cols = self.table.columnCount()
+        items = []
+        for row in range(rows):
+            for col in range(cols):
+                # try:
+                #     rowitems.append(str(self.table_table.item(row, col).text()))
+                # except AttributeError:
+                #     self._parent.meld('Graag nog even het laatste item bevestigen (...)')
+                #     return
+                item = self.table.ItemAt(row, col)
+                self.data[item.text()] = f'{row}x{col}'
+        self._parent.master.screenpos = self.data
+        super().accept()

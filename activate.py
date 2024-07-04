@@ -125,9 +125,10 @@ class Activater:
     def add_to_config(self):
         "add a new mod (with dependencies if any) to the configuration"
         # TODO: do not forget to add the screen locations
-        ok, new_entries = gui.show_dialog(gui.NewModDialog, self.doit, self.conf['Mod Directories'],
-                                          first_time=True)
+        ok = gui.show_dialog(gui.NewModDialog, self.doit, self.conf['Mod Directories'],
+                             first_time=True)
         if ok:
+            new_entries = self.doit.dialog_data
             # print(new_entries)
             for name, other in new_entries['mods']:
                 self.conf.set('Mod Directories', name, other)
