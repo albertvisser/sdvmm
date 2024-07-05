@@ -92,15 +92,18 @@ called NewModDialog.update
 reorder = """\
 called Widget.__init__
 called Dialog.__init__ with args {testobj.parent} () {{}}
+called ReorderDialog.determine_rows_cols
 called VBox.__init__
 called Table.__init__ with arg {testobj}
 called Header.__init__
 called Header.__init__
 called Table.setRowCount with arg '1'
 called Table.setColumnCount with arg '1'
+called Table.setColumnWidth with args (-1, 200)
 called HBox.__init__
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockTable'>
-called VBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>
+called ReorderDialog.populate
+called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>
 called HBox.__init__
 called HBox.addStretch
 called PushButton.__init__ with args ('&> Add Column', {testobj}) {{}}
@@ -109,8 +112,8 @@ called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushBut
 called PushButton.__init__ with args ('&< Remove Last Column', {testobj}) {{}}
 called Signal.connect with args ({testobj.remove_column},)
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
-called PushButton.__init__ with args ('&Repopulate with texts', {testobj}) {{}}
-called Signal.connect with args ({testobj.repopulate},)
+called PushButton.__init__ with args ('(Re)&Position texts in grid', {testobj}) {{}}
+called Signal.connect with args ({testobj.populate},)
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
 called PushButton.__init__ with args ('&+ Add Row', {testobj}) {{}}
 called Signal.connect with args ({testobj.add_row},)
@@ -132,6 +135,10 @@ called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushBut
 called HBox.addStretch
 called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>
 called Dialog.setLayout
+"""
+populate = """\
+called TableItem.__init__ with arg {}
+called Table.setItem with args ({}, item of <class 'mockgui.mockqtwidgets.MockTableItem'>)
 """
 
 
@@ -189,18 +196,22 @@ def test_show_dialog(capsys):
     cls = mockqtw.MockDialog
     modnames = ['x', 'y']
     cls.exec = mock_exec
-    assert testee.show_dialog(cls, parent, modnames, True) == (False, {'mods': [], 'deps': {},
-                                                                       'set_active': []})
+    # assert testee.show_dialog(cls, parent, modnames, True) == (False, {'mods': [], 'deps': {},
+    #                                                                    'set_active': []})
+    assert not testee.show_dialog(cls, parent, modnames, True)
     assert capsys.readouterr().out == (
         "called Dialog.__init__ with args"
-        " namespace(dialog_data={'mods': [], 'deps': {}, 'set_active': []}) (['x', 'y'], True) {}\n"
+        # " namespace(dialog_data={'mods': [], 'deps': {}, 'set_active': []}) (['x', 'y'], True) {}\n"
+        " namespace() (['x', 'y'], True) {}\n"
         "called Dialog.exec\n")
     cls.exec = mock_exec_2
-    assert testee.show_dialog(cls, parent, modnames, False) == (True, {'mods': [], 'deps': {},
-                                                                       'set_active': []})
+    # assert testee.show_dialog(cls, parent, modnames, False) == (True, {'mods': [], 'deps': {},
+    #                                                                    'set_active': []})
+    assert testee.show_dialog(cls, parent, modnames, False)
     assert capsys.readouterr().out == (
         "called Dialog.__init__ with args"
-        " namespace(dialog_data={'mods': [], 'deps': {}, 'set_active': []}) (['x', 'y'], False) {}\n"
+        # " namespace(dialog_data={'mods': [], 'deps': {}, 'set_active': []}) (['x', 'y'], False) {}\n"
+        " namespace() (['x', 'y'], False) {}\n"
         "called Dialog.exec\n")
 
 
@@ -503,8 +514,8 @@ class TestShowMods:
         for x in testobj.containers.values():
             assert isinstance(x, mockqtw.MockHBoxLayout)
         assert len(testobj.positions) == len(testobj.master.screenpos)
-        assert list(testobj.positions.keys()) == [(0, 0), (0, 1), (1, 0), (1, 1),
-                                                  (2, 0), (2, 1), (3, 0), (3, 1)]
+        assert list(testobj.positions.keys()) == [(0, 0), (0, 1), (0, 2), (1, 0),
+                                                  (1, 1), (1, 2), (2, 0), (2, 1)]
         assert list(testobj.positions.values()) == list(testobj.master.screenpos.keys())
         assert capsys.readouterr().out == (
                 "called Grid.addLayout with arg of type"
@@ -512,17 +523,17 @@ class TestShowMods:
                 "called Grid.addLayout with arg of type"
                 " <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (0, 1)\n"
                 "called Grid.addLayout with arg of type"
+                " <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (0, 2)\n"
+                "called Grid.addLayout with arg of type"
                 " <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (1, 0)\n"
                 "called Grid.addLayout with arg of type"
                 " <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (1, 1)\n"
                 "called Grid.addLayout with arg of type"
+                " <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (1, 2)\n"
+                "called Grid.addLayout with arg of type"
                 " <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (2, 0)\n"
                 "called Grid.addLayout with arg of type"
                 " <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (2, 1)\n"
-                "called Grid.addLayout with arg of type"
-                " <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (3, 0)\n"
-                "called Grid.addLayout with arg of type"
-                " <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (3, 1)\n"
                 "called CheckBox.setChecked with arg False\n"
                 "called CheckBox.setChecked with arg True\n"
                 "called CheckBox.setChecked with arg False\n"
@@ -562,8 +573,7 @@ class TestShowMods:
                 "called CheckBox.setChecked with arg False\n"
                 "called CheckBox.setChecked with arg True\n"
                 "called CheckBox.setChecked with arg False\n"
-                "called CheckBox.setChecked with arg True\n"
-                )
+                "called CheckBox.setChecked with arg True\n")
 
     def test_add_checkbox(self, monkeypatch, capsys):
         """unittest for ShowMods.add_checkbox
@@ -574,7 +584,7 @@ class TestShowMods:
         obj1, obj2 = testobj.add_checkbox('xxxx')
         assert isinstance(obj1, testee.qtw.QHBoxLayout)
         assert isinstance(obj2, testee.qtw.QCheckBox)
-        assert capsys.readouterr().out ==(
+        assert capsys.readouterr().out == (
             "called HBox.__init__\n"
             "called CheckBox.__init__\n"
             "called HBox.addSpacing\n"
@@ -625,22 +635,25 @@ class TestShowMods:
                 " {'caption': 'Install downloaded mods', 'directory': 'Downloads',"
                 " 'filter': 'Zip files (*.zip)'}\n"
                 "called Activater.update_mods with arg ['name1', 'name2']\n"
-                                           "called MessageBox.information with args"
-                                           " ('Change Config', 'xxx\\nyyy')\n")
+                "called MessageBox.information with args ('Change Config', 'xxx\\nyyy')\n")
 
     def test_reorder_gui(self, monkeypatch, capsys):
         """unittest for ShowMods.reorder_gui
         """
         def mock_show(*args, **kwargs):
             print("called gui.show_dialog with args", args, kwargs)
-            return False, {}
+            return False  # , {}
         def mock_show_2(*args, **kwargs):
             print("called gui.show_dialog with args", args, kwargs)
-            return True, {r'reordered': 'widgets'}
+            return True  # , {r'reordered': 'widgets'}
         def mock_refresh():
-            print('called Activater.refresh_widgets')
+            print('called ActivateGui.refresh_widgets')
+        def mock_update():
+            print('called Activater.update_config_from_screenpos')
         monkeypatch.setattr(testee, 'show_dialog', mock_show)
         testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.refresh_widgets = mock_refresh
+        testobj.master.update_config_from_screenpos = mock_update
         testobj.gbox = mockqtw.MockGridLayout()
         assert capsys.readouterr().out == "called Grid.__init__\n"
         testobj.reorder_gui()
@@ -655,10 +668,12 @@ class TestShowMods:
         assert capsys.readouterr().out == (
                 "called gui.show_dialog with args"
                 f" (<class 'activate_gui.ReorderDialog'>, {testobj}) {{}}\n"
+                "called Activater.update_config_from_screenpos\n"
                 "called Grid.count\n"
                 "called Grid.takeAt with args (0,)\n"
                 "called Grid.takeAt with args (1,)\n"
-                "called Grid.takeAt with args (2,)\n")
+                "called Grid.takeAt with args (2,)\n"
+                "called ActivateGui.refresh_widgets\n")
 
 
 class TestNewModDialog:
@@ -847,10 +862,7 @@ class TestReorderDialog:
         """
         def mock_init(self, *args):
             print('called ReorderDialog.__init__ with args', args)
-        def mock_accept(self):
-            print('called ReorderDialog.accept')
         monkeypatch.setattr(testee.ReorderDialog, '__init__', mock_init)
-        monkeypatch.setattr(testee.ReorderDialog, 'accept', mock_accept)
         testobj = testee.ReorderDialog()
         assert capsys.readouterr().out == 'called ReorderDialog.__init__ with args ()\n'
         return testobj
@@ -858,8 +870,15 @@ class TestReorderDialog:
     def test_init(self, monkeypatch, capsys, expected_output):
         """unittest for ReorderDialog.__init__
         """
+        def mock_determine(self):
+            print('called ReorderDialog.determine_rows_cols')
+            return 1, 1
+        def mock_populate(self):
+            print('called ReorderDialog.populate')
         monkeypatch.setattr(testee.qtw.QDialog, '__init__', mockqtw.MockDialog.__init__)
         monkeypatch.setattr(testee.qtw.QDialog, 'setLayout', mockqtw.MockDialog.setLayout)
+        monkeypatch.setattr(testee.ReorderDialog, 'determine_rows_cols', mock_determine)
+        monkeypatch.setattr(testee.ReorderDialog, 'populate', mock_populate)
         monkeypatch.setattr(testee.qtw, 'QGridLayout', mockqtw.MockGridLayout)
         monkeypatch.setattr(testee.qtw, 'QVBoxLayout', mockqtw.MockVBoxLayout)
         monkeypatch.setattr(testee.qtw, 'QHBoxLayout', mockqtw.MockHBoxLayout)
@@ -878,27 +897,51 @@ class TestReorderDialog:
         assert capsys.readouterr().out == expected_output['reorder'].format(testobj=testobj)
 
     def setup_table(self, testobj, capsys):
+        """stub for table widget
+        """
         testobj.table = mockqtw.MockTable(testobj)
         assert capsys.readouterr().out == (f"called Table.__init__ with arg {testobj}\n"
                                            "called Header.__init__\n"
                                            "called Header.__init__\n")
         return testobj.table
 
+    def test_determine_rows_cols(self, monkeypatch, capsys):
+        """unittest for ReorderDialog.determine_rows_cols
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.data = {'xxx': '', 'yyy': '', 'zzz': '', 'qqq': '', 'rrr': ''}
+        assert testobj.determine_rows_cols() == (2, 3)
+        testobj.data = {'xxx': '', 'yyy': '', 'zzz': '', 'qqq': '', 'rrr': '', 'sss': ''}
+        assert testobj.determine_rows_cols() == (2, 3)
+        testobj.data = {'xxx': '', 'yyy': '', 'zzz': '', 'qqq': '', 'rrr': '', 'sss': '', 'ttt': ''}
+        assert testobj.determine_rows_cols() == (3, 3)
+        testobj.data = {'xxx': '1x1', 'yyy': '2x1', 'zzz': '0x0'}
+        assert testobj.determine_rows_cols() == (3, 2)
+
     def test_add_column(self, monkeypatch, capsys):
+        """unittest for ReorderDialog.add_column
+        """
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.table = self.setup_table(testobj, capsys)
+        testobj.colwidth = 100
         testobj.add_column()
         assert capsys.readouterr().out == ("called Table.columnCount\n"
-                                           "called Table.insertColumn with arg '0'\n")
+                                           "called Table.insertColumn with arg '0'\n"
+                                           "called Table.columnCount\n"
+                                           "called Table.setColumnWidth with args (0, 100)\n")
 
     def test_remove_column(self, monkeypatch, capsys):
+        """unittest for ReorderDialog.remove_column
+        """
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.table = self.setup_table(testobj, capsys)
         testobj.remove_column()
         assert capsys.readouterr().out == ("called Table.columnCount\n"
-                                           "called Table.removeColumn with arg '0'\n")
+                                           "called Table.removeColumn with arg '-1'\n")
 
     def test_add_row(self, monkeypatch, capsys):
+        """unittest for ReorderDialog.add_row
+        """
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.table = self.setup_table(testobj, capsys)
         testobj.add_row()
@@ -906,22 +949,118 @@ class TestReorderDialog:
                                            "called Table.insertRow with arg '0'\n")
 
     def test_remove_row(self, monkeypatch, capsys):
+        """unittest for ReorderDialog.remove_row
+        """
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.table = self.setup_table(testobj, capsys)
         testobj.remove_row()
         assert capsys.readouterr().out == ("called Table.rowCount\n"
-                                           "called Table.removeRow with arg '0'\n")
+                                           "called Table.removeRow with arg '-1'\n")
 
-    def _test_repopulate(self, monkeypatch, capsys):
+    def test_populate(self, monkeypatch, capsys):
+        """unittest for ReorderDialog.populate
+        """
+        monkeypatch.setattr(testee.qtw, 'QTableWidgetItem', mockqtw.MockTableItem)
         testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.data = {'aaa': '', 'bbb': '', 'ccc': '', 'ddd': '', 'eee': '', 'fff': '', 'ggg': ''}
         testobj.table = self.setup_table(testobj, capsys)
-        testobj.repopulate()
-        assert capsys.readouterr().out == ("")
+        testobj.table.setRowCount(3)
+        testobj.table.setColumnCount(2)
+        assert capsys.readouterr().out == ("called Table.setRowCount with arg '3'\n"
+                                           "called Table.setColumnCount with arg '2'\n")
+        testobj.populate()
+        assert capsys.readouterr().out == ("called Table.clear\n"
+                                           "called Table.columnCount\n"
+                                           "called Table.rowCount\n"
+                                           + populate.format('aaa', '0, 0')
+                                           + populate.format('bbb', '1, 0')
+                                           + populate.format('ccc', '2, 0')
+                                           + "called Table.rowCount\n"
+                                           + populate.format('ddd', '0, 1')
+                                           + populate.format('eee', '1, 1')
+                                           + populate.format('fff', '2, 1'))
+        testobj.table.setColumnCount(3)
+        assert capsys.readouterr().out == ("called Table.setColumnCount with arg '3'\n")
+        testobj.populate()
+        assert capsys.readouterr().out == ("called Table.clear\n"
+                                           "called Table.columnCount\n"
+                                           "called Table.rowCount\n"
+                                           + populate.format('aaa', '0, 0')
+                                           + populate.format('bbb', '1, 0')
+                                           + populate.format('ccc', '2, 0')
+                                           + "called Table.rowCount\n"
+                                           + populate.format('ddd', '0, 1')
+                                           + populate.format('eee', '1, 1')
+                                           + populate.format('fff', '2, 1')
+                                           + "called Table.rowCount\n"
+                                           + populate.format('ggg', '0, 2'))
+        testobj.data = {'aaa': '1x1', 'bbb': '0x0', 'ccc': '0x1', 'ddd': '1x2', 'eee': '3x1',
+                        'fff': '1x0', 'ggg': '2x2'}
+        testobj.populate()
+        assert capsys.readouterr().out == ("called Table.clear\n"
+                                           + populate.format('bbb', '0, 0')
+                                           + populate.format('ccc', '0, 1')
+                                           + populate.format('fff', '1, 0')
+                                           + populate.format('aaa', '1, 1')
+                                           + populate.format('ddd', '1, 2')
+                                           + populate.format('ggg', '2, 2')
+                                           + populate.format('eee', '3, 1'))
 
-    def _test_accept(self, monkeypatch, capsys):
+    def test_accept(self, monkeypatch, capsys):
+        """unittest for ReorderDialog.accept
+        """
+        def mock_accept(self):
+            print('called Dialog.accept')
+        def mock_information(self, *args):
+            print('called MessageBox.information with args', args)
+        monkeypatch.setattr(testee.qtw.QDialog, 'accept', mock_accept)
+        monkeypatch.setattr(testee.qtw.QMessageBox, 'information', mock_information)
         testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj._parent = mockqtw.MockWidget()
+        testobj._parent.master = MockActivater()
+        assert capsys.readouterr().out == "called Widget.__init__\n"
+        testobj.data = {'aaa': '', 'bbb': '', 'ccc': '', 'ddd': '', 'eee': '', 'fff': '', 'ggg': ''}
         testobj.table = self.setup_table(testobj, capsys)
+        testobj.table.setRowCount(2)
+        testobj.table.setColumnCount(2)
+        assert capsys.readouterr().out == ("called Table.setRowCount with arg '2'\n"
+                                           "called Table.setColumnCount with arg '2'\n")
         testobj.accept()
-        assert capsys.readouterr().out == ("")
-
-
+        assert capsys.readouterr().out == ("called Table.rowCount\n"
+                                           "called Table.columnCount\n"
+                                           "called MessageBox.information with args"
+                                           " ('Reorder names', 'not enough room for all entries')\n")
+        testobj.table.setRowCount(3)
+        testobj.table.setColumnCount(3)
+        testobj.table.setItem(0, 0, mockqtw.MockTableItem('bbb'))
+        testobj.table.setItem(1, 0, mockqtw.MockTableItem('fff'))
+        testobj.table.setItem(2, 0, mockqtw.MockTableItem('ddd'))
+        testobj.table.setItem(0, 1, mockqtw.MockTableItem('ccc'))
+        testobj.table.setItem(1, 1, mockqtw.MockTableItem('aaa'))
+        testobj.table.setItem(2, 1, mockqtw.MockTableItem('eee'))
+        testobj.table.setItem(0, 2, mockqtw.MockTableItem('ggg'))
+        assert capsys.readouterr().out == ("called Table.setRowCount with arg '3'\n"
+                                           "called Table.setColumnCount with arg '3'\n"
+                                           + populate.format('bbb', '0, 0')
+                                           + populate.format('fff', '1, 0')
+                                           + populate.format('ddd', '2, 0')
+                                           + populate.format('ccc', '0, 1')
+                                           + populate.format('aaa', '1, 1')
+                                           + populate.format('eee', '2, 1')
+                                           + populate.format('ggg', '0, 2'))
+        testobj.accept()
+        assert testobj.data == {'aaa': '1x1', 'bbb': '0x0', 'ccc': '0x1', 'ddd': '2x0', 'eee': '2x1',
+                                'fff': '1x0', 'ggg': '0x2'}
+        assert testobj._parent.master.screenpos == testobj.data
+        assert capsys.readouterr().out == ("called Table.rowCount\n"
+                                           "called Table.columnCount\n"
+                                           "called Table.item with args (0, 0)\n"
+                                           "called Table.item with args (0, 1)\n"
+                                           "called Table.item with args (0, 2)\n"
+                                           "called Table.item with args (1, 0)\n"
+                                           "called Table.item with args (1, 1)\n"
+                                           "called Table.item with args (1, 2)\n"
+                                           "called Table.item with args (2, 0)\n"
+                                           "called Table.item with args (2, 1)\n"
+                                           "called Table.item with args (2, 2)\n"
+                                           "called Dialog.accept\n")

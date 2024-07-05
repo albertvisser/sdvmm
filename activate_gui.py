@@ -3,20 +3,20 @@
 import sys
 import os.path
 import functools
-import collections
 import PyQt6.QtWidgets as qtw
 import PyQt6.QtGui as qgui
 download_dir = ''
 maxpercol = 10
 
+
 # def show_dialog(cls, parent, modnames, first_time):
-def show_dialog(cls, parent, *args):
+def show_dialog(cls, parent, *args, **kwargs):
     "generic function for handling a dialog (instead of calling it directly"
     # parent.dialog_data = {'mods': [], 'deps': {}, 'set_active': []}
     # ok = cls(parent, modnames, first_time).exec()
-    ok = cls(parent, *args).exec()
+    ok = cls(parent, *args, **kwargs).exec()
     # return ok == qtw.QDialog.DialogCode.Accepted, parent.dialog_data
-    return ok == qtw.QDialog.DialogCode.Accepted # , parent.dialog_data
+    return ok == qtw.QDialog.DialogCode.Accepted  # , parent.dialog_data
 
 
 class ShowMods(qtw.QWidget):
@@ -89,7 +89,7 @@ class ShowMods(qtw.QWidget):
         return self.app.exec()  # niet via sys.exit() want we zijn nog niet klaar
 
     def confirm(self):
-        "build a list from the checked entries and pass it back to the caller, then close the gui"
+        "build a list from the checked entries and pass it back to the caller"
         self.master.modnames = [x.text() for x in self.widgets.values() if x.isChecked()]
         self.master.select_activations()
         if self.master.directories:   # is deze conditie nog nodig of misschien zelfs te beperkend?
@@ -108,9 +108,9 @@ class ShowMods(qtw.QWidget):
                 if scrpos:
                     row, col = [int(y) for y in scrpos.split('x', 1)]
                 else:   # fallback voor als het scherm nog niet eerder geordend was
-                    maxcol = len(self.master.screenpos) // maxpercol
+                    maxcol = 3  # len(self.master.screenpos) // maxpercol
                     row, col = rownum, colnum
-                    colnum +=1
+                    colnum += 1
                     if colnum == maxcol:
                         rownum += 1
                         colnum = 0
@@ -147,9 +147,10 @@ class ShowMods(qtw.QWidget):
             qtw.QMessageBox.information(self, 'Change Config', '\n'.join(report))
 
     def reorder_gui(self):
-        ""
+        "Bring up a dialog to reodere the names on the screen and process the results"
         ok = show_dialog(ReorderDialog, self)
         if ok:
+            self.master.update_config_from_screenpos()
             for pos in range(self.gbox.count()):
                 self.gbox.takeAt(pos)
             self.widgets = {}
@@ -274,8 +275,9 @@ class ReorderDialog(qtw.QDialog):
         self._parent = parent
         self.data = parent.master.screenpos
         # self.headings = ['']
-        colcount, rowcount = 1, 1
         super().__init__(parent)
+        rowcount, colcount = self.determine_rows_cols()
+        self.colwidth = 200
         # self.setWindowTitle('Screen Setup')
         # self.setWindowIcon(self._parent.appicon)
         vbox = qtw.QVBoxLayout()
@@ -283,6 +285,8 @@ class ReorderDialog(qtw.QDialog):
         self.table = qtw.QTableWidget(self)
         self.table.setRowCount(rowcount)     # de eerste rij is voor de kolomtitels
         self.table.setColumnCount(colcount)  # de eerste rij is voor de rijtitels
+        for col in range(colcount):
+            self.table.setColumnWidth(col - 1, self.colwidth)
         # self.table_table.setHorizontalHeaderLabels(self.headings)
         # self.hdr = self.table_table.horizontalHeader()
         # self.table_table.verticalHeader().setVisible(False)
@@ -290,6 +294,7 @@ class ReorderDialog(qtw.QDialog):
         # self.hdr.sectionClicked.connect(self.on_title)
         hbox = qtw.QHBoxLayout()
         hbox.addWidget(self.table)
+        self.populate()
         vbox.addLayout(hbox)
 
         hbox = qtw.QHBoxLayout()
@@ -300,8 +305,8 @@ class ReorderDialog(qtw.QDialog):
         button = qtw.QPushButton('&< Remove Last Column', self)
         button.clicked.connect(self.remove_column)
         hbox.addWidget(button)
-        button = qtw.QPushButton('&Repopulate with texts', self)
-        button.clicked.connect(self.repopulate)
+        button = qtw.QPushButton('(Re)&Position texts in grid', self)
+        button.clicked.connect(self.populate)
         hbox.addWidget(button)
         button = qtw.QPushButton('&+ Add Row', self)
         button.clicked.connect(self.add_row)
@@ -326,13 +331,31 @@ class ReorderDialog(qtw.QDialog):
 
         self.setLayout(vbox)
 
+    def determine_rows_cols(self):
+        """derive number of rows and columns from texts to lay out
+        """
+        colcount = rowcount = 0
+        for pos in self.data.values():
+            if not pos:
+                break
+            row, col = [int(x) + 1 for x in pos.split('x')]
+            rowcount = max(rowcount, row)
+            colcount = max(colcount, col)
+        if colcount == 0:
+            colcount = 3
+            rowcount = len(self.data) // colcount
+            if len(self.data) % colcount > 0:
+                rowcount += 1
+        return rowcount, colcount
+
     def add_column(self):
         "new column at the end"
         self.table.insertColumn(self.table.columnCount())
+        self.table.setColumnWidth(self.table.columnCount() - 1, self.colwidth)
 
     def remove_column(self):
         "remove last column"
-        self.table.removeColumn(self.table.columnCount())
+        self.table.removeColumn(self.table.columnCount() - 1)
 
     def add_row(self):
         "new row at the bottom"
@@ -340,17 +363,20 @@ class ReorderDialog(qtw.QDialog):
 
     def remove_row(self):
         "remove last roeself."
-        self.table.removeRow(self.table.rowCount())
+        self.table.removeRow(self.table.rowCount() - 1)
 
-    def repopulate(self):
+    def populate(self):
+        """(re)distribute texts over the table cells"""
+        self.table.clear()
         if not list(self.data.values())[0]:
             texts = list(self.data.keys())
             textindex = 0
             for colnum in range(self.table.columnCount()):
                 for rownum in range(self.table.rowCount()):
-                    item = qtw.QTableWidgetItem(texts[textindex])
-                    textindex += 1
-                    self.table.setItem(rownum, colnum, item)
+                    if textindex < len(texts):
+                        item = qtw.QTableWidgetItem(texts[textindex])
+                        textindex += 1
+                        self.table.setItem(rownum, colnum, item)
             return
         for text, scrpos in sorted(self.data.items(), key=lambda x: (x[1], x[0])):
             row, col = scrpos.split('x')
@@ -363,6 +389,9 @@ class ReorderDialog(qtw.QDialog):
         """
         rows = self.table.rowCount()
         cols = self.table.columnCount()
+        if rows * cols < len(self.data):
+            qtw.QMessageBox.information(self, 'Reorder names', "not enough room for all entries")
+            return
         items = []
         for row in range(rows):
             for col in range(cols):
@@ -371,7 +400,8 @@ class ReorderDialog(qtw.QDialog):
                 # except AttributeError:
                 #     self._parent.meld('Graag nog even het laatste item bevestigen (...)')
                 #     return
-                item = self.table.ItemAt(row, col)
-                self.data[item.text()] = f'{row}x{col}'
+                item = self.table.item(row, col)
+                if item:
+                    self.data[item.text()] = f'{row}x{col}'
         self._parent.master.screenpos = self.data
         super().accept()
