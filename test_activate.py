@@ -53,9 +53,13 @@ def test_init(monkeypatch, capsys):
     assert capsys.readouterr().out == (
             "called ConfigParser() with args () {'delimiters': (':',), 'allow_no_value': True}\n"
             "called ConfigParser.read with args ('config',)\n")
+    assert isinstance(testobj.conf, testee.configparser.ConfigParser)
     assert testobj.conf.optionxform == str
-    assert not testobj.directories
-    assert isinstance(testobj.directories, set)
+    assert testobj.modnames == []
+    assert testobj.modbase == testee.MODBASE
+    assert testobj.downloads == testee.DOWNLOAD
+    assert testobj.directories == set()
+    assert testobj.screenpos == {}
 
 
 def test_build_and_start_gui(monkeypatch, capsys):
@@ -65,6 +69,7 @@ def test_build_and_start_gui(monkeypatch, capsys):
         """stub
         """
         def __init__(self, master):
+            print(f"called gui.ShowMods.__init__() with arg '{master}'")
             master.modnames = ['one', 'two', 'three']
         def setup_screen(self):
             """stub
@@ -78,16 +83,42 @@ def test_build_and_start_gui(monkeypatch, capsys):
             """stub
             """
             print('called gui.ShowMods.show_screen()')
+    def mock_extract():
+        print('called Activater.extract_screen_locations')
     monkeypatch.setattr(testee.Activater, '__init__', mock_init)
     monkeypatch.setattr(testee.gui, 'ShowMods', MockShowMods)
     testobj = testee.Activater('')
+    testobj.extract_screen_locations = mock_extract
     testobj.conf = {}
     testobj.modnames = []
     testobj.build_and_start_gui()
     assert testobj.modnames == ['one', 'two', 'three']
-    assert capsys.readouterr().out == ('called gui.ShowMods.setup_screen()\n'
+    assert capsys.readouterr().out == ('called Activater.extract_screen_locations\n'
+                                       f"called gui.ShowMods.__init__() with arg '{testobj}'\n"
+                                       'called gui.ShowMods.setup_screen()\n'
                                        'called gui.ShowMods.setup_actions()\n'
                                        'called gui.ShowMods.show_screen()\n')
+
+
+def test_extract_screen_locations(monkeypatch, capsys):
+    """unittest for Activater.extract_screen_locations
+    """
+    monkeypatch.setattr(testee.Activater, '__init__', mock_init)
+    testobj = testee.Activater('')
+    testobj.screenpos = {}
+    conf = (f'[test]\nthis\n{testee.SCRPOS}: x,y\n\n[other]\nthey\nthem\n\n'
+            '[Mod Directories]\ntest: x\nthis: y')
+    testobj.conf = testee.configparser.ConfigParser(allow_no_value=True)
+    testobj.conf.optionxform = str
+    testobj.conf.read_string(conf)
+    assert testobj.conf.sections() == ['test', 'other', 'Mod Directories']
+    assert testobj.conf.options('test') == ['this', f'{testee.SCRPOS}']
+    assert testobj.conf.options('other') == ['they', 'them']
+    testobj.extract_screen_locations()
+    assert testobj.conf.sections() == ['test', 'other', 'Mod Directories']
+    assert testobj.conf.options('test') == ['this']
+    assert testobj.conf.options('other') == ['they', 'them']
+    assert testobj.screenpos == {'test': 'x,y', 'other': ''}
 
 
 def test_select_activations(monkeypatch, capsys):
@@ -250,6 +281,31 @@ def test_add_to_config(monkeypatch, capsys, tmp_path):
             "called ConfigParser.write with args ({'Mod Directories': 'mods'},"
             f" <_io.TextIOWrapper name='{conffile}' mode='w' encoding='UTF-8'>)\n"
             "called ShowMods.refresh_widgets\n")
+
+
+def test_update_config_from_screenpos(monkeypatch, capsys, tmp_path):
+    """unittest for Activater.update_config_from_screenpos
+    """
+    monkeypatch.setattr(testee.Activater, '__init__', mock_init)
+    testobj = testee.Activater('')
+    testobj.screenpos = {}
+    configfile = tmp_path / 'testconf'
+    backupfile = tmp_path / 'testconf~'
+    configfile.touch()
+    testobj.config = str(configfile)
+    conf = (f'[test]\nthis\n\n[other]\nthey\nthem\n\n'
+            '[Mod Directories]\ntest: x\nthis: y')
+    testobj.conf = testee.configparser.ConfigParser(delimiters=(':',), allow_no_value=True)
+    testobj.conf.optionxform = str
+    testobj.conf.read_string(conf)
+    oldconf = testobj.conf
+    testobj.screenpos['test'] = 'x,y'
+    testobj.screenpos['other'] = ''
+    testobj.update_config_from_screenpos()
+    assert testobj.conf == oldconf
+    assert configfile.read_text() == ("[test]\nthis\n_ScreenPos : x,y\n\n[other]\nthey\nthem\n\n"
+                                      "[Mod Directories]\ntest : x\nthis : y\n\n")
+    assert backupfile.read_text() == ""
 
 
 def test_update_mods(monkeypatch, capsys, tmp_path):

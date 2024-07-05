@@ -20,7 +20,7 @@ import activate_gui as gui
 MODBASE = os.path.expanduser('~/.steam/steam/steamapps/common/Stardew Valley/Mods')
 CONFIG = os.path.join(MODBASE, 'sdv_mods.config')
 DOWNLOAD = os.path.expanduser('~/Downloads/Stardew Valley Mods')
-
+SCRPOS = '_ScreenPos'
 
 def main():
     "main line"
@@ -39,14 +39,29 @@ class Activater:
         self.modbase = MODBASE
         self.downloads = DOWNLOAD
         self.directories = set()
+        self.screenpos = {}
 
     def build_and_start_gui(self):
         """build screen: make the user select from a list which expansions they want to have active
         """
+        self.extract_screen_locations()
         self.doit = gui.ShowMods(self)
         self.doit.setup_screen()
         self.doit.setup_actions()
         self.doit.show_screen()
+
+    def extract_screen_locations(self):
+        """read the 'position' key from the config entries that will be presented and remove them
+        temporarily from the config
+        allows for the key not being present due to the screen never being reorganized
+        """
+        for item in self.conf.sections():
+            if item == 'Mod Directories':
+                continue
+            self.screenpos[item] = ""
+            if self.conf.has_option(item, SCRPOS):
+                self.screenpos[item] = self.conf[item][SCRPOS]
+                self.conf.remove_option(item, SCRPOS)
 
     def select_activations(self):
         "expand the selection to a list of directories"
@@ -109,9 +124,11 @@ class Activater:
 
     def add_to_config(self):
         "add a new mod (with dependencies if any) to the configuration"
-        ok, new_entries = gui.show_dialog(gui.NewModDialog, self.doit, self.conf['Mod Directories'],
-                                          first_time=True)
+        # TODO: do not forget to add the screen locations
+        ok = gui.show_dialog(gui.NewModDialog, self.doit, self.conf['Mod Directories'],
+                             first_time=True)
         if ok:
+            new_entries = self.doit.dialog_data
             # print(new_entries)
             for name, other in new_entries['mods']:
                 self.conf.set('Mod Directories', name, other)
@@ -131,6 +148,22 @@ class Activater:
             with open(self.config, 'w') as cfg:
                 self.conf.write(cfg)
             self.doit.refresh_widgets()
+
+    def update_config_from_screenpos(self):
+        """rewrite and reread config after reorganizing screen
+        """
+        oldconf = self.conf
+        for item in self.conf.sections():
+            if item == 'Mod Directories':
+                continue
+            scrpos = self.screenpos[item]
+            if scrpos:
+                self.conf[item][SCRPOS] = scrpos
+        shutil.copyfile(self.config, self.config + '~')
+        with open(self.config, 'w') as cfg:
+            self.conf.write(cfg)
+        # reset conf to version without screen positions, to continue operation
+        self.conf = oldconf
 
     def update_mods(self, names):
         "installeer de aangegeven mod files"
