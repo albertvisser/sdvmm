@@ -22,6 +22,7 @@ CONFIG = os.path.join(MODBASE, 'sdv_mods.config')
 DOWNLOAD = os.path.expanduser('~/Downloads/Stardew Valley Mods')
 SCRPOS = '_ScreenPos'
 
+
 def main():
     "main line"
     DoIt = Activater(CONFIG)
@@ -124,7 +125,6 @@ class Activater:
 
     def add_to_config(self):
         "add a new mod (with dependencies if any) to the configuration"
-        # TODO: do not forget to add the screen locations
         ok = gui.show_dialog(gui.NewModDialog, self.doit, self.conf['Mod Directories'],
                              first_time=True)
         if ok:
@@ -143,7 +143,7 @@ class Activater:
                 except configparser.DuplicateSectionError:
                     pass
                 else:
-                    self.doit.add_checkbox(name)
+                    self.doit.add_entries_for_name(name)
             shutil.copyfile(self.config, self.config + '~')
             with open(self.config, 'w') as cfg:
                 self.conf.write(cfg)
@@ -200,6 +200,15 @@ class Activater:
             archive.close()
             report.append(f'{zipfilename} is successfully installed')
         return report
+
+    def determine_unpack_directory(self, zipfilename):
+        """read the unpack directory and transfer to linedit fields
+        """
+        with zipfile.ZipFile(zipfilename) as archive:
+            root = get_archive_root(archive.namelist())
+        if len(root) != 1:
+            return ''
+        return root.pop()
 
 
 def get_archive_root(namelist):

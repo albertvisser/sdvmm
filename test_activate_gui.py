@@ -46,19 +46,24 @@ called QWidget.setLayout()
 """
 newmod = """\
 called Widget.__init__
-called Dialog.__init__ with args {parent} () {{}}
+called Dialog.__init__ with args {testobj.parent} () {{}}
 called Grid.__init__
 called Label.__init__ with args ('Mod name:', {testobj})
 called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLabel'> at (0, 0)
 called LineEdit.__init__
+called LineEdit.setMinimumWidth with arg `200`
 called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLineEdit'> at (0, 1)
 called Label.__init__ with args ('Unpack directory:', {testobj})
 called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLabel'> at (1, 0)
 called LineEdit.__init__
+called LineEdit.setMinimumWidth with arg `200`
 called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLineEdit'> at (1, 1)
+called PushButton.__init__ with args ('&Select\\nfrom Downloads', {testobj}) {{}}
+called Signal.connect with args ({testobj.select_mod},)
+called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'> at (0, 2, 2, 1)
 called CheckBox.__init__
 called CheckBox.setChecked with arg True
-called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockCheckBox'> at (2, 0, 1, 2)
+called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockCheckBox'> at (2, 0)
 called HBox.__init__
 called HBox.addStretch
 called PushButton.__init__ with args ('&Cancel', {testobj}) {{}}
@@ -71,9 +76,9 @@ called PushButton.__init__ with args ('&Update', {testobj}) {{}}
 called Signal.connect with args ({testobj.update_deps},)
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
 called HBox.addStretch
-called Grid.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (3, 0, 1, 2)
+called Grid.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (3, 0, 1, 3)
 called VBox.__init__
-called Grid.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockVBoxLayout'> at (4, 0, 1, 2)
+called Grid.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockVBoxLayout'> at (4, 0, 1, 3)
 called Dialog.setLayout
 """
 add_depline = """\
@@ -574,6 +579,31 @@ class TestShowMods:
                 "called CheckBox.setChecked with arg True\n"
                 "called CheckBox.setChecked with arg False\n"
                 "called CheckBox.setChecked with arg True\n")
+        texts = list(testobj.containers)
+        testobj.refresh_widgets()
+        assert capsys.readouterr().out == (
+                f"called Grid.removeItem with args ({testobj.containers[texts[0]]},)\n"
+                f"called Grid.removeItem with args ({testobj.containers[texts[1]]},)\n"
+                f"called Grid.removeItem with args ({testobj.containers[texts[2]]},)\n"
+                f"called Grid.removeItem with args ({testobj.containers[texts[3]]},)\n"
+                "called Grid.addLayout with arg of type"
+                " <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (0, 0)\n"
+                "called Grid.addLayout with arg of type"
+                " <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (0, 1)\n"
+                "called Grid.addLayout with arg of type"
+                " <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (1, 0)\n"
+                "called Grid.addLayout with arg of type"
+                " <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (1, 1)\n"
+                "called CheckBox.setChecked with arg False\n"
+                "called CheckBox.setChecked with arg True\n"
+                "called CheckBox.setChecked with arg False\n"
+                "called CheckBox.setChecked with arg True\n")
+        testobj.refresh_widgets(reorder_widgets=False)
+        assert capsys.readouterr().out == (
+                "called CheckBox.setChecked with arg False\n"
+                "called CheckBox.setChecked with arg True\n"
+                "called CheckBox.setChecked with arg False\n"
+                "called CheckBox.setChecked with arg True\n")
 
     def test_add_checkbox(self, monkeypatch, capsys):
         """unittest for ShowMods.add_checkbox
@@ -637,6 +667,36 @@ class TestShowMods:
                 "called Activater.update_mods with arg ['name1', 'name2']\n"
                 "called MessageBox.information with args ('Change Config', 'xxx\\nyyy')\n")
 
+    def test_add_entries_for_name(self, monkeypatch, capsys):
+        """unittest for ShowMods.add_entries_for_name
+        """
+        def mock_add(text):
+            print(f"called Activater.add_checkbox with arg '{text}'")
+            return 'hbox', 'check'
+        def mock_determine():
+            print('called Activater.determine_newt_row_col')
+            return 1, 2
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.containers, testobj.widgets, testobj.positions = {}, {}, {}
+        testobj.add_checkbox = mock_add
+        testobj.determine_next_row_col = mock_determine
+        testobj.add_entries_for_name('name')
+        assert testobj.containers['name'] == 'hbox'
+        assert testobj.widgets['name'] == 'check'
+        assert testobj.positions[1, 2] == 'name'
+        assert capsys.readouterr().out == ("called Activater.add_checkbox with arg 'name'\n"
+                                           'called Activater.determine_newt_row_col\n')
+
+    def test_determine_next_row_col(self, monkeypatch, capsys):
+        """unittest for ShowMods.deteremine_next_row_col
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.positions = {(0, 0): '', (0, 1): '', (0, 2): '', (1, 0): '', (1, 1): ''}
+        assert testobj.determine_next_row_col() == (1, 2)
+        # heb ik hier nou alweer row en col omgedraaid?
+        testobj.positions = {(0, 0): '', (0, 1): '', (0, 2): '', (1, 0): '', (1, 1): '', (1, 2): ''}
+        assert testobj.determine_next_row_col() == (2, 0)
+
     def test_reorder_gui(self, monkeypatch, capsys):
         """unittest for ShowMods.reorder_gui
         """
@@ -669,12 +729,7 @@ class TestShowMods:
                 "called gui.show_dialog with args"
                 f" (<class 'activate_gui.ReorderDialog'>, {testobj}) {{}}\n"
                 "called Activater.update_config_from_screenpos\n"
-                "called Grid.count\n"
-                "called Grid.takeAt with args (0,)\n"
-                "called Grid.takeAt with args (1,)\n"
-                "called Grid.takeAt with args (2,)\n"
                 "called ActivateGui.refresh_widgets\n")
->>>>>>> Reorderable
 
 
 class TestNewModDialog:
@@ -717,8 +772,56 @@ class TestNewModDialog:
         assert testobj.modnames == ['x', 'y']
         assert testobj.deps == []
         assert isinstance(testobj.vbox, testee.qtw.QVBoxLayout)
-        assert capsys.readouterr().out == expected_output['newmod'].format(testobj=testobj,
-                                                                           parent=parent)
+        assert capsys.readouterr().out == expected_output['newmod'].format(testobj=testobj)
+
+    def test_select_mod(self, monkeypatch, capsys):
+        """unittest for NewModDialog.select_mod
+        """
+        def mock_open(*args, **kwargs):
+            print('called FileDialog.getOpenFileName with args', args, kwargs)
+            return [], False
+        def mock_open_2(*args, **kwargs):
+            print('called FileDialog.getOpenFileName with args', args, kwargs)
+            return ['name'], True
+        def mock_determine(name):
+            print(f"called Activater.determine_unpack_directory with arg '{name}'")
+            return ''
+        def mock_determine_2(name):
+            print(f"called Activater.determine_unpack_directory with arg '{name}'")
+            return 'name'
+        def mock_information(self, *args):
+            print('called MessageBox.information with args', args)
+        monkeypatch.setattr(testee.qtw.QFileDialog, 'getOpenFileName', mock_open)
+        monkeypatch.setattr(testee.qtw.QMessageBox, 'information', mock_information)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.parent = types.SimpleNamespace(master=MockActivater())
+        testobj.parent.master.determine_unpack_directory = mock_determine
+        testobj.first_name = mockqtw.MockLineEdit()
+        testobj.last_name = mockqtw.MockLineEdit()
+        assert capsys.readouterr().out == "called LineEdit.__init__\ncalled LineEdit.__init__\n"
+        testobj.select_mod()
+        assert capsys.readouterr().out == (
+                f"called FileDialog.getOpenFileName with args ({testobj},)"
+                " {'caption': 'Select mod', 'directory': 'Downloads',"
+                " 'filter': 'Zip files (*.zip)'}\n")
+        monkeypatch.setattr(testee.qtw.QFileDialog, 'getOpenFileName', mock_open_2)
+        testobj.select_mod()
+        assert capsys.readouterr().out == (
+                f"called FileDialog.getOpenFileName with args ({testobj},)"
+                " {'caption': 'Select mod', 'directory': 'Downloads',"
+                " 'filter': 'Zip files (*.zip)'}\n"
+                "called Activater.determine_unpack_directory with arg '['name']'\n"
+                "called MessageBox.information with args ('Read mod name',"
+                ' "Can\'t auto-determine;\\nzipfile contains more than one base directory")\n')
+        testobj.parent.master.determine_unpack_directory = mock_determine_2
+        testobj.select_mod()
+        assert capsys.readouterr().out == (
+                f"called FileDialog.getOpenFileName with args ({testobj},)"
+                " {'caption': 'Select mod', 'directory': 'Downloads',"
+                " 'filter': 'Zip files (*.zip)'}\n"
+                "called Activater.determine_unpack_directory with arg '['name']'\n"
+                "called LineEdit.setText with arg `name`\n"
+                "called LineEdit.setText with arg `name`\n")
 
     def test_add_depline(self, monkeypatch, capsys, expected_output):
         """unittest for NewModDialog.add_depline

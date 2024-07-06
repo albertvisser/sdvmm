@@ -116,7 +116,12 @@ class ShowMods(qtw.QWidget):
                         colnum = 0
                 self.positions[(row, col)] = text
         if reorder_widgets:
+            if not first_time:
+                for text, layout in self.containers.items():
+                    # print('removing widget for', text)
+                    self.gbox.removeItem(layout)
             for pos, text in self.positions.items():
+                # print('adding widget for', text)
                 self.gbox.addLayout(self.containers[text], pos[0], pos[1])
         for text, check in self.widgets.items():
             loc = os.path.join(self.master.modbase,
@@ -146,13 +151,29 @@ class ShowMods(qtw.QWidget):
             report = self.master.update_mods(filenames)
             qtw.QMessageBox.information(self, 'Change Config', '\n'.join(report))
 
+    def add_entries_for_name(self, name):
+        "add entries for managing the new plugin in the gui"
+        self.containers[name], self.widgets[name] = self.add_checkbox(name)
+        row, col = self.determine_next_row_col()
+        self.positions[row, col] = name
+
+    def determine_next_row_col(self):
+        "calculate placement on screen for new mod"
+        maxcol, maxrow = 0, 0
+        for row, col in self.positions:
+            maxcol = max(col, maxcol)
+            maxrow = max(row, maxrow)
+        for col in range(maxcol + 1):
+            if (maxrow, col) not in self.positions:
+                return maxrow, col
+            row += 1
+        return maxrow + 1, 0
+
     def reorder_gui(self):
         "Bring up a dialog to reodere the names on the screen and process the results"
         ok = show_dialog(ReorderDialog, self)
         if ok:
             self.master.update_config_from_screenpos()
-            for pos in range(self.gbox.count()):
-                self.gbox.takeAt(pos)
             self.widgets = {}
             self.containers = {}
             self.positions = {}
@@ -172,14 +193,19 @@ class NewModDialog(qtw.QDialog):
         gbox = qtw.QGridLayout()
         gbox.addWidget(qtw.QLabel('Mod name:', self), 0, 0)
         self.first_name = qtw.QLineEdit(self)
+        self.first_name.setMinimumWidth(200)
         gbox.addWidget(self.first_name, 0, 1)
         gbox.addWidget(qtw.QLabel('Unpack directory:', self), 1, 0)
         self.last_name = qtw.QLineEdit(self)
+        self.last_name.setMinimumWidth(200)
         gbox.addWidget(self.last_name, 1, 1)
+        self.select = qtw.QPushButton('&Select\nfrom Downloads', self)
+        self.select.clicked.connect(self.select_mod)
+        gbox.addWidget(self.select, 0, 2, 2, 1)
         self.can_activate = qtw.QCheckBox('Activatable', self)
         if first_time:
             self.can_activate.setChecked(True)
-        gbox.addWidget(self.can_activate, 2, 0, 1, 2)
+        gbox.addWidget(self.can_activate, 2, 0)  # , 1, 2)
         hbox = qtw.QHBoxLayout()
         hbox.addStretch()
         btn = qtw.QPushButton('&Cancel', self)
@@ -192,11 +218,26 @@ class NewModDialog(qtw.QDialog):
         btn.clicked.connect(self.update_deps)
         hbox.addWidget(btn)
         hbox.addStretch()
-        gbox.addLayout(hbox, 3, 0, 1, 2)
+        gbox.addLayout(hbox, 3, 0, 1, 3)
         self.deps = []
         self.vbox = qtw.QVBoxLayout()
-        gbox.addLayout(self.vbox, 4, 0, 1, 2)
+        gbox.addLayout(self.vbox, 4, 0, 1, 3)
         self.setLayout(gbox)
+
+    def select_mod(self):
+        """choose a mod to determine the directory it unpacks into
+        """
+        filename, ok = qtw.QFileDialog.getOpenFileName(self, caption="Select mod",
+                                                       directory=self.parent.master.downloads,
+                                                       filter='Zip files (*.zip)')
+        if ok:
+            dirname = self.parent.master.determine_unpack_directory(filename)
+            if not dirname:
+                qtw.QMessageBox.information(self, 'Read mod name', "Can't auto-determine;\n"
+                                            'zipfile contains more than one base directory')
+            else:
+                self.first_name.setText(dirname)
+                self.last_name.setText(dirname)
 
     def add_depline(self):
         """add a combobox to define a new dependency
@@ -392,7 +433,6 @@ class ReorderDialog(qtw.QDialog):
         if rows * cols < len(self.data):
             qtw.QMessageBox.information(self, 'Reorder names', "not enough room for all entries")
             return
-        items = []
         for row in range(rows):
             for col in range(cols):
                 # try:

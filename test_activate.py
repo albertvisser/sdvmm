@@ -100,7 +100,7 @@ def test_build_and_start_gui(monkeypatch, capsys):
                                        'called gui.ShowMods.show_screen()\n')
 
 
-def test_extract_screen_locations(monkeypatch, capsys):
+def test_extract_screen_locations(monkeypatch):
     """unittest for Activater.extract_screen_locations
     """
     monkeypatch.setattr(testee.Activater, '__init__', mock_init)
@@ -230,16 +230,17 @@ def test_add_to_config(monkeypatch, capsys, tmp_path):
     """
     class MockShow:
         "stub for testee.ShowMods"
-        def add_checkbox(self, arg):
-            print(f"called ShowMods.add_checkbox with arg '{arg}'")
+        def add_entries_for_name(self, arg):
+            print(f"called ShowMods.add_entries_for_name with arg '{arg}'")
         def refresh_widgets(self):
             print("called ShowMods.refresh_widgets")
     def mock_show(*args, **kwargs):
         print("called gui.show_dialog with args", args, kwargs)
-        return False, {}
+        return False
     def mock_show_2(*args, **kwargs):
         print("called gui.show_dialog with args", args, kwargs)
-        return True, {'mods': [('x', 'y')], 'deps': {'a': 'b'}, 'set_active': ['q', 'r']}
+        args[1].dialog_data = {'mods': [('x', 'y')], 'deps': {'a': 'b'}, 'set_active': ['q', 'r']}
+        return True
     def mock_copyfile(*args):
         print('called shutil.copyfile with args', args)
     conffile = tmp_path / 'sdvmm' / 'config'
@@ -276,14 +277,14 @@ def test_add_to_config(monkeypatch, capsys, tmp_path):
             "called ConfigParser.set with args ({'Mod Directories': 'mods'}, 'a', 'b', '')\n"
             "called ConfigParser.add_section with args ({'Mod Directories': 'mods'}, 'q')\n"
             "called ConfigParser.add_section with args ({'Mod Directories': 'mods'}, 'r')\n"
-            "called ShowMods.add_checkbox with arg 'r'\n"
+            "called ShowMods.add_entries_for_name with arg 'r'\n"
             f"called shutil.copyfile with args ('{conffile}', '{conffile}~')\n"
             "called ConfigParser.write with args ({'Mod Directories': 'mods'},"
             f" <_io.TextIOWrapper name='{conffile}' mode='w' encoding='UTF-8'>)\n"
             "called ShowMods.refresh_widgets\n")
 
 
-def test_update_config_from_screenpos(monkeypatch, capsys, tmp_path):
+def test_update_config_from_screenpos(monkeypatch, tmp_path):
     """unittest for Activater.update_config_from_screenpos
     """
     monkeypatch.setattr(testee.Activater, '__init__', mock_init)
@@ -293,7 +294,7 @@ def test_update_config_from_screenpos(monkeypatch, capsys, tmp_path):
     backupfile = tmp_path / 'testconf~'
     configfile.touch()
     testobj.config = str(configfile)
-    conf = (f'[test]\nthis\n\n[other]\nthey\nthem\n\n'
+    conf = ('[test]\nthis\n\n[other]\nthey\nthem\n\n'
             '[Mod Directories]\ntest: x\nthis: y')
     testobj.conf = testee.configparser.ConfigParser(delimiters=(':',), allow_no_value=True)
     testobj.conf.optionxform = str
@@ -312,6 +313,8 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
     """unittest for Activater.update_mods
     """
     class MockZipFile:
+        """stub for zipfile.Zipfile
+        """
         def __init__(self, *args):
             print('called ZipFile.__init__ with args', args)
             self._name = args[0].name
@@ -400,6 +403,70 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
             "called get_archive_root with arg ['name', 'list']\n"
             f"called ZipFile.extractall with args ({testobj.modbase!r},)\n"
             "called ZipFile.close\n")
+
+
+def test_determine_unpack_directory(monkeypatch, capsys):
+    """unittest for Activater.determine_unpack_directory
+    """
+    class MockZipFile:
+        """testdouble object mimicking zipfile.ZipFile class
+        """
+        def __init__(self, *args, **kwargs):
+            print('called zipfile.ZipFile with args', args, kwargs)
+        def __enter__(self):
+            """stub
+            """
+            print('called ZipFile.__enter__')
+            return self
+        def __exit__(self, *args):
+            """stub
+            """
+            print('called ZipFile.__exit__')
+            return True
+        def namelist(self):
+            """stub
+            """
+            print('called ZipFile.namelist')
+            return []
+    def mock_get(namelist):
+        print(f'called Activater.get_archive_root with arg {namelist}')
+        return []
+    def mock_get_1(namelist):
+        print(f'called Activater.get_archive_root with arg {namelist}')
+        return ['name']
+    def mock_get_2(namelist):
+        print(f'called Activater.get_archive_root with arg {namelist}')
+        return ['name', 'list']
+    monkeypatch.setattr(testee.zipfile, 'ZipFile', MockZipFile)
+    monkeypatch.setattr(testee.Activater, '__init__', mock_init)
+    testobj = testee.Activater('')
+    monkeypatch.setattr(testee, 'get_archive_root', mock_get)
+    assert testobj.determine_unpack_directory('testfile.zip') == ''
+    assert capsys.readouterr().out == (
+            "called zipfile.ZipFile with args ('testfile.zip',) {}\n"
+            "called ZipFile.__enter__\n"
+            "called ZipFile.namelist\n"
+            "called Activater.get_archive_root with arg []\n"
+            "called ZipFile.__exit__\n")
+
+    monkeypatch.setattr(testee, 'get_archive_root', mock_get_1)
+    assert testobj.determine_unpack_directory('testfile.zip') == 'name'
+    assert capsys.readouterr().out == (
+            "called zipfile.ZipFile with args ('testfile.zip',) {}\n"
+            "called ZipFile.__enter__\n"
+            "called ZipFile.namelist\n"
+            "called Activater.get_archive_root with arg []\n"
+            "called ZipFile.__exit__\n")
+
+    monkeypatch.setattr(testee, 'get_archive_root', mock_get_2)
+    assert testobj.determine_unpack_directory('testfile.zip') == ''
+    assert capsys.readouterr().out == (
+            "called zipfile.ZipFile with args ('testfile.zip',) {}\n"
+            "called ZipFile.__enter__\n"
+            "called ZipFile.namelist\n"
+            "called Activater.get_archive_root with arg []\n"
+            "called ZipFile.__exit__\n")
+
 
 class MockActivater:
     """testdouble object mimicking Activater class
