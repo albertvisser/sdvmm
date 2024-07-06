@@ -206,22 +206,24 @@ class NewModDialog(qtw.QDialog):
         if first_time:
             self.can_activate.setChecked(True)
         gbox.addWidget(self.can_activate, 2, 0)  # , 1, 2)
+
+        self.deps = []
+        self.vbox = qtw.QVBoxLayout()
+        btn = qtw.QPushButton('&Add dependency', self)
+        btn.clicked.connect(self.add_depline)
+        self.vbox.addWidget(btn)
+        gbox.addLayout(self.vbox, 3, 0, 1, 3)
+
         hbox = qtw.QHBoxLayout()
         hbox.addStretch()
         btn = qtw.QPushButton('&Cancel', self)
         btn.clicked.connect(self.reject)
         hbox.addWidget(btn)
-        btn = qtw.QPushButton('&Add dependency', self)
-        btn.clicked.connect(self.add_depline)
-        hbox.addWidget(btn)
         btn = qtw.QPushButton('&Update', self)
         btn.clicked.connect(self.update_deps)
         hbox.addWidget(btn)
         hbox.addStretch()
-        gbox.addLayout(hbox, 3, 0, 1, 3)
-        self.deps = []
-        self.vbox = qtw.QVBoxLayout()
-        gbox.addLayout(self.vbox, 4, 0, 1, 3)
+        gbox.addLayout(hbox, 4, 0, 1, 3)
         self.setLayout(gbox)
 
     def select_mod(self):

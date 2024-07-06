@@ -64,21 +64,21 @@ called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushBut
 called CheckBox.__init__
 called CheckBox.setChecked with arg True
 called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockCheckBox'> at (2, 0)
+called VBox.__init__
+called PushButton.__init__ with args ('&Add dependency', {testobj}) {{}}
+called Signal.connect with args ({testobj.add_depline},)
+called VBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
+called Grid.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockVBoxLayout'> at (3, 0, 1, 3)
 called HBox.__init__
 called HBox.addStretch
 called PushButton.__init__ with args ('&Cancel', {testobj}) {{}}
 called Signal.connect with args ({testobj.reject},)
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
-called PushButton.__init__ with args ('&Add dependency', {testobj}) {{}}
-called Signal.connect with args ({testobj.add_depline},)
-called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
 called PushButton.__init__ with args ('&Update', {testobj}) {{}}
 called Signal.connect with args ({testobj.update_deps},)
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
 called HBox.addStretch
-called Grid.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (3, 0, 1, 3)
-called VBox.__init__
-called Grid.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockVBoxLayout'> at (4, 0, 1, 3)
+called Grid.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (4, 0, 1, 3)
 called Dialog.setLayout
 """
 add_depline = """\
