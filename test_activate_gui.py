@@ -933,7 +933,7 @@ class TestNewModDialog:
         testobj.update_deps()
         assert testobj.parent.dialog_data == {'mods': [('aaa', 'bbb'), 'already, present'],
                                               'deps': {'aaa': ['dep1', 'dep2']},
-                                              'set_active': ['xxx', '']}
+                                              'set_active': ['xxx']}
         assert capsys.readouterr().out == ("called LineEdit.text\n"
                                            "called LineEdit.text\n"
                                            "called CheckBox.isChecked\n"

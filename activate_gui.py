@@ -303,7 +303,8 @@ class NewModDialog(qtw.QDialog):
         modname = self.first_name.text()
         self.parent.dialog_data['mods'].insert(0, (modname, self.last_name.text()))
         self.parent.dialog_data['deps'][modname] = [x[1] for x in self.deps]
-        self.parent.dialog_data['set_active'].append(modname if self.can_activate.isChecked() else '')
+        if self.can_activate.isChecked():
+            self.parent.dialog_data['set_active'].append(modname)
         self.accept()
 
 
