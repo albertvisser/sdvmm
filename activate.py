@@ -170,7 +170,8 @@ class Activater:
         report = []
         for zipfilename in names:
             archive = zipfile.ZipFile(zipfilename)
-            root = get_archive_root(archive.namelist())
+            names = archive.namelist()
+            root = get_archive_root(names)
             if len(root) != 1:
                 report.append(f'{zipfilename}: zipfile should contain only one base directory')
                 archive.close()
@@ -190,7 +191,8 @@ class Activater:
                           os.path.join(self.modbase, f'.{root}~'))
             else:
                 mod_was_active = True  # strictly speaking: should be "not applicable"
-            archive.extractall(self.modbase)
+            # archive.extractall(self.modbase)
+            archive.extract(names[0], self.modbase)
             if not mod_was_active:
                 os.rename(os.path.join(self.modbase, f'{root}'),
                           os.path.join(self.modbase, f'.{root}'))
@@ -221,5 +223,8 @@ def get_archive_root(namelist):
             if not test:
                 break
             parent = test
+        if parent == '__MACOSX':
+            continue
         roots.add(parent)
+    print(roots)
     return roots
