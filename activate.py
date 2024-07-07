@@ -191,8 +191,10 @@ class Activater:
                           os.path.join(self.modbase, f'.{root}~'))
             else:
                 mod_was_active = True  # strictly speaking: should be "not applicable"
-            # archive.extractall(self.modbase)
-            archive.extract(names[0], self.modbase)
+            archive.extractall(self.modbase)
+            if os.path.exists(os.path.join(self.modbase, '__MACOSX')):
+                shutil.rmtree(os.path.join(self.modbase, '__MACOSX'))
+            # alternatief: alle namelist entries doorlopen en extracten wat met root begint
             if not mod_was_active:
                 os.rename(os.path.join(self.modbase, f'{root}'),
                           os.path.join(self.modbase, f'.{root}'))

@@ -325,6 +325,8 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
         def extractall(self, *args):
             print('called ZipFile.extractall with args', args)
             (tmp_path / 'mods' / self._name).touch()
+            if not (tmp_path / 'mods' / '__MACOSX').exists():
+                (tmp_path / 'mods' / '__MACOSX').mkdir()
         def extract(self, *args):
             print('called ZipFile.extract with args', args)
             (tmp_path / 'mods' / self._name).touch()
@@ -358,7 +360,7 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
     monkeypatch.setattr(testee, 'get_archive_root', mock_get)
     monkeypatch.setattr(testee.Activater, '__init__', mock_init)
     testobj = testee.Activater('')
-    testobj.modbase = tmp_path / 'mods'
+    testobj.modbase = str(tmp_path / 'mods')
     assert testobj.update_mods([]) == []
     assert capsys.readouterr().out == ''
     filelist = [tmp_path / 'dl' / 'root-1', tmp_path / 'dl' / 'root-2', tmp_path / 'dl' / 'root-3',
@@ -377,7 +379,7 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
             f"called ZipFile.__init__ with args ({filelist[0]!r},)\n"
             "called ZipFile.namelist\n"
             "called get_archive_root with arg ['name', 'list']\n"
-            f"called ZipFile.extract with args ('name', {testobj.modbase!r})\n"
+            f"called ZipFile.extractall with args ({testobj.modbase!r},)\n"
             "called ZipFile.close\n"
             f"called ZipFile.__init__ with args ({filelist[1]!r},)\n"
             "called ZipFile.namelist\n"
@@ -386,7 +388,7 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
             f"called ZipFile.__init__ with args ({filelist[2]!r},)\n"
             "called ZipFile.namelist\n"
             "called get_archive_root with arg ['name', 'list']\n"
-            f"called ZipFile.extract with args ('name', {testobj.modbase!r})\n"
+            f"called ZipFile.extractall with args ({testobj.modbase!r},)\n"
             "called ZipFile.close\n"
             f"called ZipFile.__init__ with args ({filelist[3]!r},)\n"
             "called ZipFile.namelist\n"
@@ -395,17 +397,17 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
             f"called ZipFile.__init__ with args ({filelist[4]!r},)\n"
             "called ZipFile.namelist\n"
             "called get_archive_root with arg ['name', 'list']\n"
-            f"called ZipFile.extract with args ('name', {testobj.modbase!r})\n"
+            f"called ZipFile.extractall with args ({testobj.modbase!r},)\n"
             "called ZipFile.close\n"
             f"called ZipFile.__init__ with args ({filelist[5]!r},)\n"
             "called ZipFile.namelist\n"
             "called get_archive_root with arg ['name', 'list']\n"
-            f"called ZipFile.extract with args ('name', {testobj.modbase!r})\n"
+            f"called ZipFile.extractall with args ({testobj.modbase!r},)\n"
             "called ZipFile.close\n"
             f"called ZipFile.__init__ with args ({filelist[6]!r},)\n"
             "called ZipFile.namelist\n"
             "called get_archive_root with arg ['name', 'list']\n"
-            f"called ZipFile.extract with args ('name', {testobj.modbase!r})\n"
+            f"called ZipFile.extractall with args ({testobj.modbase!r},)\n"
             "called ZipFile.close\n")
 
 
