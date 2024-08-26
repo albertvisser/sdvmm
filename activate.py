@@ -62,7 +62,7 @@ class Activater:
             self.screenpos[item] = ""
             if self.conf.has_option(item, SCRPOS):
                 self.screenpos[item] = self.conf[item][SCRPOS]
-                self.conf.remove_option(item, SCRPOS)
+                # self.conf.remove_option(item, SCRPOS)
 
     def select_activations(self):
         "expand the selection to a list of directories"
@@ -72,7 +72,8 @@ class Activater:
         for item in self.modnames:
             self.directories |= set(self.conf['Mod Directories'][item].split(', '))
             for entry in self.conf[item]:
-                self.add_activations(item, entry)
+                if entry != "_ScreenPos":
+                    self.add_activations(item, entry)
 
     def add_activations(self, section_name, entry):
         "expand an item with a list of subitems"
@@ -85,7 +86,8 @@ class Activater:
         for dirname in self.conf[section_name]:
             if dirname in self.conf:
                 for item in self.conf[dirname]:
-                    self.add_activations(dirname, item)
+                    if item != "_ScreenPos":
+                        self.add_activations(dirname, item)
 
     def activate(self):
         "activate by making directories hidden or not"
@@ -119,7 +121,7 @@ class Activater:
             if name not in modnames:
                 errors.append(f'Unknown expansion / mod name: `{name}`')
             for name2 in self.conf.options(name):
-                if name2 not in modnames:
+                if name2 not in modnames and name2 != "_ScreenPos":
                     errors.append(f'Unknown mod name `{name2}` for expansion/mod `{name}`')
         return errors or ['No errors']
 
@@ -163,7 +165,7 @@ class Activater:
         with open(self.config, 'w') as cfg:
             self.conf.write(cfg)
         # reset conf to version without screen positions, to continue operation
-        self.conf = oldconf
+        # self.conf = oldconf
 
     def update_mods(self, names):
         "installeer de aangegeven mod files"
@@ -190,7 +192,7 @@ class Activater:
                 os.rename(os.path.join(self.modbase, f'.{root}'),
                           os.path.join(self.modbase, f'.{root}~'))
             else:
-                mod_was_active = True  # strictly speaking: should be "not applicable"
+                mod_was_active = False  # strictly speaking: should be "not applicable"
             archive.extractall(self.modbase)
             if os.path.exists(os.path.join(self.modbase, '__MACOSX')):
                 shutil.rmtree(os.path.join(self.modbase, '__MACOSX'))

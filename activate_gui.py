@@ -123,6 +123,8 @@ class ShowMods(qtw.QWidget):
             for pos, text in self.positions.items():
                 # print('adding widget for', text)
                 self.gbox.addLayout(self.containers[text], pos[0], pos[1])
+            if not first_time:
+                self.gbox.update()  # werkt helaas niet om de nieuwe volgorde te laten zien
         for text, check in self.widgets.items():
             loc = os.path.join(self.master.modbase,
                                self.master.conf['Mod Directories'][text].split(', ')[0])
@@ -260,9 +262,9 @@ class NewModDialog(qtw.QDialog):
         """react to manipulating the combobox
         """
         if choice == 0:
-            ok, data = show_dialog(NewModDialog, self, self.modnames, first_time=False)
+            ok = show_dialog(NewModDialog, self, self.modnames, first_time=False)
             if ok:
-                # print(data)
+                data = self.dialog_data
                 self.parent.dialog_data['mods'].extend(data['mods'])
                 for key, value in data['deps'].items():
                     self.parent.dialog_data['deps'][key] = value
