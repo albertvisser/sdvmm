@@ -117,7 +117,7 @@ def test_extract_screen_locations(monkeypatch):
     assert testobj.conf.options('other') == ['they', 'them']
     testobj.extract_screen_locations()
     assert testobj.conf.sections() == ['test', 'other', 'Mod Directories']
-    assert testobj.conf.options('test') == ['this']
+    assert testobj.conf.options('test') == ['this', '_ScreenPos']
     assert testobj.conf.options('other') == ['they', 'them']
     assert testobj.screenpos == {'test': 'x,y', 'other': ''}
 

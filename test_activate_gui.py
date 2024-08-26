@@ -594,6 +594,7 @@ class TestShowMods:
                 " <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (1, 0)\n"
                 "called Grid.addLayout with arg of type"
                 " <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (1, 1)\n"
+                "called Grid.update\n"
                 "called CheckBox.setChecked with arg False\n"
                 "called CheckBox.setChecked with arg True\n"
                 "called CheckBox.setChecked with arg False\n"
@@ -849,12 +850,14 @@ class TestNewModDialog:
         """
         def mock_remove(arg):
             print(f'called NewModDialog.remove_depline with arg {arg}')
-        def mock_show(*args, **kwargs):
+        def mock_show(parent, *args, **kwargs):
             print("called gui.show_dialog with args", args, kwargs)
-            return False, {}
-        def mock_show_2(*args, **kwargs):
+            parent.dialog_data = {}
+            return False
+        def mock_show_2(parent, *args, **kwargs):
             print("called gui.show_dialog with args", args, kwargs)
-            return True, {'mods': [('x', 'y')], 'deps': {'a': 'b'}, 'set_active': ['q', 'r']}
+            parent.dialog_data = {'mods': [('x', 'y')], 'deps': {'a': 'b'}, 'set_active': ['q', 'r']}
+            return True
 
         monkeypatch.setattr(testee, 'show_dialog', mock_show)
         lbox = mockqtw.MockComboBox()
@@ -868,19 +871,17 @@ class TestNewModDialog:
                                                             'deps': {},
                                                             'set_active': ['xxx']})
         testobj.process_dep(lbox, 0)
-        assert capsys.readouterr().out == (
-                "called gui.show_dialog with args (<class 'activate_gui.NewModDialog'>,"
-                f" {testobj}, ['x', 'y']) {{'first_time': False}}\n")
+        assert capsys.readouterr().out == ("called gui.show_dialog with args"
+                                           f" ({testobj}, ['x', 'y']) {{'first_time': False}}\n")
         monkeypatch.setattr(testee, 'show_dialog', mock_show_2)
         testobj.process_dep(lbox, 0)
         assert testobj.parent.dialog_data == {'mods': ['already, present', ('x', 'y')],
                                               'deps': {'a': 'b'}, 'set_active': ['xxx', 'q']}
         assert testobj.deps == [('lbox', 'text'), (lbox, 'a')]
-        assert capsys.readouterr().out == (
-                "called gui.show_dialog with args (<class 'activate_gui.NewModDialog'>,"
-                f" {testobj}, ['x', 'y']) {{'first_time': False}}\n"
-                "called ComboBox.addItems with arg `a`\n"
-                "called ComboBox.setCurrentText with arg `a`\n")
+        assert capsys.readouterr().out == ("called gui.show_dialog with args"
+                                           f" ({testobj}, ['x', 'y']) {{'first_time': False}}\n"
+                                           "called ComboBox.addItems with arg `a`\n"
+                                           "called ComboBox.setCurrentText with arg `a`\n")
 
         testobj.deps = [('lbox1', 'text1'), ('lbox2', 'text2')]
         testobj.process_dep('lbox2', 1)
