@@ -10,7 +10,7 @@ showmods = """\
 called QWidget.setWindowTitle()
 called VBox.__init__
 called HBox.__init__
-called Label.__init__ with args ('Dit overzicht toont de namen van expansies die je kunt activeren (inclusief die al geactiveerd zijn).\\nIn de achterliggende configuratie is geregeld welke mods hiervoor eventueel nog meer aangezet moeten worden',)
+called Label.__init__ with args ('Dit overzicht toont de namen van expansies die je kunt activeren (inclusief die al geactiveerd zijn).\\nIn de achterliggende configuratie is geregeld welke mods hiervoor eventueel nog meer aangezet moeten worden\\nDe onderstreepte items zijn hyperlinks; ze leiden naar de pagina waarvandaan ik ze van gedownload heb (doorgaans op Nexus)',)
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLabel'>
 called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>
 called Grid.__init__
@@ -30,6 +30,9 @@ called Signal.connect with args ({testobj.master.add_to_config},)
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
 called PushButton.__init__ with args ('&Edit config', {testobj}) {{}}
 called Signal.connect with args ({testobj.master.edit_config},)
+called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
+called PushButton.__init__ with args ('Re&Load config', {testobj}) {{}}
+called Signal.connect with args ({testobj.master.reload_config},)
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
 called PushButton.__init__ with args ('&Check config', {testobj}) {{}}
 called Signal.connect with args ({testobj.check},)
@@ -177,6 +180,10 @@ class MockActivater:
         """stub
         """
         print('called Activater.activate')
+    def reload_config(self):
+        """stub
+        """
+        print('called Activater.reload_config()')
     def check_config(self):
         """stub
         """
@@ -331,7 +338,7 @@ class TestShowMods:
                 'called QWidget.addAction()\n'
                 f"called Action.__init__ with args ('Cancel', {testobj})\n"
                 f"called Signal.connect with args ({testobj.close},)\n"
-                'called Action.setShortcut with arg `Escape`\n'
+                "called Action.setShortcuts with arg `['Escape', 'Ctrl+Q']`\n"
                 'called QWidget.addAction()\n')
 
     def test_show_screen(self, monkeypatch, capsys):
@@ -481,13 +488,15 @@ class TestShowMods:
             if counter % 2 == 1:
                 return False
             return True
-        def mock_add(text):
+        def mock_add(text, linknum):
             print(f"called Activater.add_checkbox with arg '{text}'")
             hbox = mockqtw.MockHBoxLayout()
             check = mockqtw.MockCheckBox()
+            label = mockqtw.MockLabel()
             assert capsys.readouterr().out == (f"called Activater.add_checkbox with arg '{text}'\n"
                                                "called HBox.__init__\n"
-                                               "called CheckBox.__init__\n")
+                                               "called CheckBox.__init__\n"
+                                               "called Label.__init__\n")
             return hbox, check
         # monkeypatch.setattr(testee.qtw, 'QHBoxLayout', mockqtw.MockHBoxLayout)
         # monkeypatch.setattr(testee.qtw, 'QCheckBox', mockqtw.MockCheckBox)
@@ -501,8 +510,10 @@ class TestShowMods:
                                         'twoone: three\ntwotwo: four\nfirst: first\n'
                                         '2neone: one, eno\n2netwo: two\n'
                                         '2woone: three\n2wotwo: four')
-        testobj.master.screenpos = {'twoone': '', 'oneone': '', 'onetwo': '', 'twotwo': '',
-                                    '2woone': '', '2neone': '', '2netwo': '', '2wotwo': ''}
+        testobj.master.screenpos = {'twoone': ['', ''], 'oneone': ['', ''],
+                                    'onetwo': ['', ''], 'twotwo': ['', ''],
+                                    '2woone': ['', ''], '2neone': ['', ''],
+                                    '2netwo': ['', ''], '2wotwo': ['', '']}
         testobj.gbox = mockqtw.MockGridLayout()
         assert capsys.readouterr().out == "called Grid.__init__\n"
 
@@ -548,8 +559,8 @@ class TestShowMods:
                 "called CheckBox.setChecked with arg False\n"
                 "called CheckBox.setChecked with arg True\n")
 
-        testobj.master.screenpos = {'oneone': '0x0', 'onetwo': '0x1',
-                                    'twoone': '1x0', 'twotwo': '1x1'}
+        testobj.master.screenpos = {'oneone': ['0x0', '1'], 'onetwo': ['0x1', '3'],
+                                    'twoone': ['1x0', '2'], 'twotwo': ['1x1', '4']}
         testobj.widgets = {}
         testobj.containers = {}
         testobj.positions = {}
@@ -611,15 +622,22 @@ class TestShowMods:
         """
         monkeypatch.setattr(testee.qtw, 'QHBoxLayout', mockqtw.MockHBoxLayout)
         monkeypatch.setattr(testee.qtw, 'QCheckBox', mockqtw.MockCheckBox)
+        monkeypatch.setattr(testee.qtw, 'QLabel', mockqtw.MockLabel)
         testobj = self.setup_testobj(monkeypatch, capsys)
-        obj1, obj2 = testobj.add_checkbox('xxxx')
+        obj1, obj2 = testobj.add_checkbox('xxxx', '123')
         assert isinstance(obj1, testee.qtw.QHBoxLayout)
         assert isinstance(obj2, testee.qtw.QCheckBox)
         assert capsys.readouterr().out == (
             "called HBox.__init__\n"
             "called CheckBox.__init__\n"
+            "called Label.__init__\n"
+            "called Label.setOpenExternalLinks with arg 'True'\n"
+            "called Label.setText with arg"
+            ' `<a href="https://www.nexusmods.com/stardewvalley/mods/123">xxxx</a>`\n'
             "called HBox.addSpacing\n"
             "called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockCheckBox'>\n"
+            "called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLabel'>\n"
+            "called HBox.addStretch\n"
             "called HBox.addSpacing\n")
 
     def test_check(self, monkeypatch, capsys):

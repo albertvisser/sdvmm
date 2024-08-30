@@ -29,13 +29,15 @@ class ShowMods(qtw.QWidget):
 
     def setup_screen(self):
         "define the screen elements"
-        self.setWindowTitle('Select expansions/mods to activate')
+        self.setWindowTitle('SDV Mod Manager')
         self.vbox = qtw.QVBoxLayout()
         hbox = qtw.QHBoxLayout()
         hbox.addWidget(qtw.QLabel('Dit overzicht toont de namen van expansies die je kunt activeren'
                                   ' (inclusief die al geactiveerd zijn).\n'
                                   'In de achterliggende configuratie is geregeld welke mods'
-                                  ' hiervoor eventueel nog meer aangezet moeten worden'))
+                                  ' hiervoor eventueel nog meer aangezet moeten worden\n'
+                                  'De onderstreepte items zijn hyperlinks; ze leiden naar de pagina'
+                                  ' waarvandaan ik ze van gedownload heb (doorgaans op Nexus)'))
         self.vbox.addLayout(hbox)
         self.widgets = {}
         self.containers = {}
@@ -59,6 +61,9 @@ class ShowMods(qtw.QWidget):
         btn = qtw.QPushButton('&Edit config', self)
         btn.clicked.connect(self.master.edit_config)
         hbox.addWidget(btn)
+        btn = qtw.QPushButton('Re&Load config', self)
+        btn.clicked.connect(self.master.reload_config)
+        hbox.addWidget(btn)
         btn = qtw.QPushButton('&Check config', self)
         btn.clicked.connect(self.check)
         hbox.addWidget(btn)
@@ -80,7 +85,7 @@ class ShowMods(qtw.QWidget):
         self.addAction(do)
         dont = qgui.QAction('Cancel', self)
         dont.triggered.connect(self.close)
-        dont.setShortcut('Escape')
+        dont.setShortcuts(['Escape', 'Ctrl+Q'])
         self.addAction(dont)
 
     def show_screen(self):
@@ -104,7 +109,8 @@ class ShowMods(qtw.QWidget):
             rownum, colnum = 0, 0
             # for text, scrpos in sorted(self.master.screenpos.items(), key=lambda x: x[1]):
             for text, scrpos in self.master.screenpos.items():
-                self.containers[text], self.widgets[text] = self.add_checkbox(text)
+                scrpos, linknum = scrpos
+                self.containers[text], self.widgets[text] = self.add_checkbox(text, linknum)
                 if scrpos:
                     row, col = [int(y) for y in scrpos.split('x', 1)]
                 else:   # fallback voor als het scherm nog niet eerder geordend was
@@ -115,6 +121,7 @@ class ShowMods(qtw.QWidget):
                         rownum += 1
                         colnum = 0
                 self.positions[(row, col)] = text
+        # print(self.positions)i # wordt deze misschien niet bijgewerkt na reorderen?
         if reorder_widgets:
             if not first_time:
                 for text, layout in self.containers.items():
@@ -130,12 +137,20 @@ class ShowMods(qtw.QWidget):
                                self.master.conf['Mod Directories'][text].split(', ')[0])
             check.setChecked(os.path.exists(loc))
 
-    def add_checkbox(self, text):
+    def add_checkbox(self, text, linknum):
         "add a checkbox with the given text"
         hbox = qtw.QHBoxLayout()
-        check = qtw.QCheckBox(text)
+        check = qtw.QCheckBox()
+        label = qtw.QLabel()
+        if linknum:
+            nexustext = '<a href="https://www.nexusmods.com/stardewvalley/mods/{}">{}</a>'
+            text = nexustext.format(linknum, text)
+            label.setOpenExternalLinks(True)
+        label.setText(text)
         hbox.addSpacing(50)
         hbox.addWidget(check)
+        hbox.addWidget(label)
+        hbox.addStretch()
         hbox.addSpacing(50)
         return hbox, check
 
@@ -155,7 +170,7 @@ class ShowMods(qtw.QWidget):
 
     def add_entries_for_name(self, name):
         "add entries for managing the new plugin in the gui"
-        self.containers[name], self.widgets[name] = self.add_checkbox(name)
+        self.containers[name], self.widgets[name] = self.add_checkbox(name, '')
         row, col = self.determine_next_row_col()
         self.positions[row, col] = name
 
@@ -179,7 +194,7 @@ class ShowMods(qtw.QWidget):
             self.widgets = {}
             self.containers = {}
             self.positions = {}
-            self.refresh_widgets()
+            self.refresh_widgets()  # waarom eerst de bovenstaande leegmaken?
 
 
 class NewModDialog(qtw.QDialog):

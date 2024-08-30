@@ -1,6 +1,7 @@
 """unittests for ./activate.py
 """
 import pathlib
+import types
 import activate as testee
 
 def mock_init(self, *args):
@@ -107,19 +108,19 @@ def test_extract_screen_locations(monkeypatch):
     monkeypatch.setattr(testee.Activater, '__init__', mock_init)
     testobj = testee.Activater('')
     testobj.screenpos = {}
-    conf = (f'[test]\nthis\n{testee.SCRPOS}: x,y\n\n[other]\nthey\nthem\n\n'
+    conf = (f'[test]\nthis\n{testee.SCRPOS}: x,y\n{testee.NXSKEY}: 123\n[other]\nthey\nthem\n\n'
             '[Mod Directories]\ntest: x\nthis: y')
     testobj.conf = testee.configparser.ConfigParser(allow_no_value=True)
     testobj.conf.optionxform = str
     testobj.conf.read_string(conf)
     assert testobj.conf.sections() == ['test', 'other', 'Mod Directories']
-    assert testobj.conf.options('test') == ['this', f'{testee.SCRPOS}']
+    assert testobj.conf.options('test') == ['this', f'{testee.SCRPOS}', '_Nexus']
     assert testobj.conf.options('other') == ['they', 'them']
     testobj.extract_screen_locations()
     assert testobj.conf.sections() == ['test', 'other', 'Mod Directories']
-    assert testobj.conf.options('test') == ['this', '_ScreenPos']
+    assert testobj.conf.options('test') == ['this', '_ScreenPos', '_Nexus']
     assert testobj.conf.options('other') == ['they', 'them']
-    assert testobj.screenpos == {'test': 'x,y', 'other': ''}
+    assert testobj.screenpos == {'test': ['x,y', '123'], 'other': ['', '']}
 
 
 def test_select_activations(monkeypatch, capsys):
@@ -202,6 +203,27 @@ def test_edit_config(monkeypatch, capsys):
     testobj.edit_config()
     assert capsys.readouterr().out == ("called subprocess.run with args (['gnome-terminal',"
                                        " '--geometry=102x54+1072+0', '--', 'vim', 'mock_config'],)\n")
+
+
+def test_reload_config(monkeypatch, capsys):
+    """unittest for Activater.reload_config
+    """
+    def mock_read(config):
+        print(f"called config.read with arg {config}")
+    def mock_refresh():
+        print("called AcivateGui.refresh_widgets")
+    def mock_extract():
+        print("called Activater.extract_screen_locations")
+    monkeypatch.setattr(testee.Activater, '__init__', mock_init)
+    testobj = testee.Activater('')
+    testobj.config = {'config': 'parameters'}
+    testobj.conf = types.SimpleNamespace(read=mock_read)
+    testobj.doit = types.SimpleNamespace(refresh_widgets=mock_refresh)
+    testobj.extract_screen_locations = mock_extract
+    testobj.reload_config()
+    assert capsys.readouterr().out == ("called config.read with arg {'config': 'parameters'}\n"
+                                       "called Activater.extract_screen_locations\n"
+                                       "called AcivateGui.refresh_widgets\n")
 
 
 def test_check_config(monkeypatch):

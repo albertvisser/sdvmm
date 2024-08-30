@@ -21,6 +21,7 @@ MODBASE = os.path.expanduser('~/.steam/steam/steamapps/common/Stardew Valley/Mod
 CONFIG = os.path.join(MODBASE, 'sdv_mods.config')
 DOWNLOAD = os.path.expanduser('~/Downloads/Stardew Valley Mods')
 SCRPOS = '_ScreenPos'
+NXSKEY = '_Nexus'
 
 
 def main():
@@ -59,10 +60,12 @@ class Activater:
         for item in self.conf.sections():
             if item == 'Mod Directories':
                 continue
-            self.screenpos[item] = ""
+            self.screenpos[item] = ['', '']  # screenpos is eigenlijk geen goede naam meer
             if self.conf.has_option(item, SCRPOS):
-                self.screenpos[item] = self.conf[item][SCRPOS]
+                self.screenpos[item][0] = self.conf[item][SCRPOS]
                 # self.conf.remove_option(item, SCRPOS)
+            if self.conf.has_option(item, NXSKEY):
+                self.screenpos[item][1] = self.conf[item][NXSKEY]
 
     def select_activations(self):
         "expand the selection to a list of directories"
@@ -111,6 +114,12 @@ class Activater:
         # subprocess.run(['scite', CONFIG])
         subprocess.run(['gnome-terminal', '--geometry=102x54+1072+0', '--', 'vim', CONFIG])
 
+    def reload_config(self):
+        "reload config after editing"
+        self.conf.read(self.config)
+        self.extract_screen_locations()
+        self.doit.refresh_widgets()
+
     def check_config(self):
         "check names in config files for spelling errors etc."
         modnames = self.conf.options('Mod Directories')
@@ -154,7 +163,7 @@ class Activater:
     def update_config_from_screenpos(self):
         """rewrite and reread config after reorganizing screen
         """
-        oldconf = self.conf
+        # oldconf = self.conf
         for item in self.conf.sections():
             if item == 'Mod Directories':
                 continue
