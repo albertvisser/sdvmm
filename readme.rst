@@ -13,9 +13,10 @@ In the config you define a mod by associating the mod's directory name to the mo
 Mods that need to be activatable must be named in a header (display name surrounded by [ and ]). 
 Dependencies are defined by naming the dependent mod's display name under the header containing the name of the depending mod. 
 
-Because names are important, there's also an option to check the configuration for (non-)matching names (spelling and case).
+Because names are important, there's an option to check the configuration for (non-)matching names (spelling and case).
 
-There is also an option to directly edit the config file as well as a way to enter new mods and dependencies without having to know the structure of the file.
+There is also an option to directly edit the config file so you can add new mods to the collection.
+
 
 
 How to set up
@@ -23,7 +24,17 @@ How to set up
 
 Modify the file `sdv_mods.config.example` to your needs and rename it removing the .example suffix. Either leave it in this directory or (what I did on my Linux system) move it to the mods installation directory and make a symlink to it here.
 
+
 Dependencies of the project:
 ----------------------------
 - Python
 - PyQt(6)
+
+
+Changes summary:
+................
+
+- Separated exiting the GUI from applying changes, so you can check and if necessary modify the results.
+- Added a way to enter new mods and dependenciesi directly from the gui, without having to know the structure of the file.
+- Added a (clunky) way to reorder the names on the screen.
+- Added a way to install a mod from the downloads directory from this GUI.
