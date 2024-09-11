@@ -75,7 +75,7 @@ class Activater:
         for item in self.modnames:
             self.directories |= set(self.conf['Mod Directories'][item].split(', '))
             for entry in self.conf[item]:
-                if entry != "_ScreenPos":
+                if entry not in (SCRPOS, NXSKEY):
                     self.add_activations(item, entry)
 
     def add_activations(self, section_name, entry):
@@ -89,7 +89,7 @@ class Activater:
         for dirname in self.conf[section_name]:
             if dirname in self.conf:
                 for item in self.conf[dirname]:
-                    if item != "_ScreenPos":
+                    if item not in (SCRPOS, NXSKEY):
                         self.add_activations(dirname, item)
 
     def activate(self):
@@ -182,33 +182,40 @@ class Activater:
         for zipfilename in names:
             archive = zipfile.ZipFile(zipfilename)
             names = archive.namelist()
-            root = get_archive_root(names)
-            if len(root) != 1:
-                report.append(f'{zipfilename}: zipfile should contain only one base directory')
+            roots = get_archive_roots(names)
+            # if len(root) != 1:
+            if not roots:
+            #     report.append(f'{zipfilename}: zipfile should contain only one base directory')
+                report.append(f'{zipfilename}: zipfile appears to be empty')
                 archive.close()
                 continue
-            root = root.pop()
-            if os.path.exists(os.path.join(self.modbase, root)):
-                mod_was_active = True
-                if os.path.exists(os.path.join(self.modbase, f'.{root}~')):
-                    shutil.rmtree(os.path.join(self.modbase, f'.{root}~'))
-                os.rename(os.path.join(self.modbase, f'{root}'),
-                          os.path.join(self.modbase, f'.{root}~'))
-            elif os.path.exists(os.path.join(self.modbase, f'.{root}')):
-                mod_was_active = False
-                if os.path.exists(os.path.join(self.modbase, f'.{root}~')):
-                    shutil.rmtree(os.path.join(self.modbase, f'.{root}~'))
-                os.rename(os.path.join(self.modbase, f'.{root}'),
-                          os.path.join(self.modbase, f'.{root}~'))
-            else:
-                mod_was_active = False  # strictly speaking: should be "not applicable"
+            #     # dit is geen probleem als ik de downloads directories gewoon in de config opneem
+            #     # als een comma separated list (vgl. SMAPI en BusLocations)
+            #     # de activeer routines snappen dit al
+            #     # nu het vervolg van deze methode nog
+            # root = root.pop()
+            for rootitem in roots:
+                if os.path.exists(os.path.join(self.modbase, rootitem)):
+                    mod_was_active = True
+                    if os.path.exists(os.path.join(self.modbase, f'.{rootitem}~')):
+                        shutil.rmtree(os.path.join(self.modbase, f'.{rootitem}~'))
+                    os.rename(os.path.join(self.modbase, f'{rootitem}'),
+                              os.path.join(self.modbase, f'.{rootitem}~'))
+                elif os.path.exists(os.path.join(self.modbase, f'.{rootitem}')):
+                    mod_was_active = False
+                    if os.path.exists(os.path.join(self.modbase, f'.{rootitem}~')):
+                        shutil.rmtree(os.path.join(self.modbase, f'.{rootitem}~'))
+                    os.rename(os.path.join(self.modbase, f'.{rootitem}'),
+                              os.path.join(self.modbase, f'.{rootitem}~'))
+                else:
+                    mod_was_active = False  # strictly speaking: should be "not applicable"
             archive.extractall(self.modbase)
             if os.path.exists(os.path.join(self.modbase, '__MACOSX')):
                 shutil.rmtree(os.path.join(self.modbase, '__MACOSX'))
-            # alternatief: alle namelist entries doorlopen en extracten wat met root begint
-            if not mod_was_active:
-                os.rename(os.path.join(self.modbase, f'{root}'),
-                          os.path.join(self.modbase, f'.{root}'))
+            for rootitem in roots:
+                if not mod_was_active:
+                    os.rename(os.path.join(self.modbase, f'{rootitem}'),
+                              os.path.join(self.modbase, f'.{rootitem}'))
             zipfilepath = os.path.abspath(zipfilename)
             os.rename(zipfilepath, os.path.join(os.path.dirname(zipfilepath), 'installed',
                                                 os.path.basename(zipfilepath)))
@@ -217,16 +224,16 @@ class Activater:
         return report
 
     def determine_unpack_directory(self, zipfilename):
-        """read the unpack directory and transfer to linedit fields
+        """read the unpack directory to transfer to linedit fields
         """
+        # dit is waarschijnlijk de handigste plek om ook de andere gegevens (nexus key, mod naam
+        # volgens manifest) op te halen en door te geven
         with zipfile.ZipFile(zipfilename) as archive:
-            root = get_archive_root(archive.namelist())
-        if len(root) != 1:
-            return ''
-        return root.pop()
+            roots = get_archive_roots(archive.namelist())
+        return '' if not roots else ', '.join(list(roots))
 
 
-def get_archive_root(namelist):
+def get_archive_roots(namelist):
     "determine base directories for a list of filenames"
     roots = set()
     for name in namelist:

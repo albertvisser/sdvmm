@@ -144,10 +144,6 @@ called HBox.addStretch
 called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>
 called Dialog.setLayout
 """
-populate = """\
-called TableItem.__init__ with arg {}
-called Table.setItem with args ({}, item of <class 'mockgui.mockqtwidgets.MockTableItem'>)
-"""
 
 
 @pytest.fixture
@@ -276,7 +272,6 @@ class TestShowMods:
         testobj = testee.ShowMods(master)
         assert isinstance(testobj, testee.qtw.QWidget)
         assert testobj.master == master
-        assert master.modnames == []
         # assert testobj.filenames == ['file', 'name']
         assert hasattr(testobj, 'app')
         assert isinstance(testobj.app, testee.qtw.QApplication)
@@ -373,17 +368,30 @@ class TestShowMods:
             print('called MessageBox.information with args', args)
         monkeypatch.setattr(testee.qtw.QMessageBox, 'information', mock_information)
         monkeypatch.setattr(testee.qtw, 'QCheckBox', mockqtw.MockCheckBox)
+        monkeypatch.setattr(testee.qtw, 'QLabel', mockqtw.MockLabel)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.refresh_widgets = mock_refresh
-        check1 = testee.qtw.QCheckBox('check1', testobj)
+        label1 = testee.qtw.QLabel('check1')
+        check1 = testee.qtw.QCheckBox('', testobj)
         check1.setChecked(True)
-        check2 = testee.qtw.QCheckBox('check2', testobj)
-        testobj.widgets = {'check1': check1, 'check2': check2}
-        testobj.confirm()
-        assert testobj.master.modnames == ['check1']
-        assert capsys.readouterr().out == ('called CheckBox.__init__\n'
-                                           'called CheckBox.setChecked with arg True\n'
+        label2 = testee.qtw.QLabel('check2')
+        check2 = testee.qtw.QCheckBox('', testobj)
+        label3 = testee.qtw.QLabel('<a>check3</a>')
+        check3 = testee.qtw.QCheckBox('', testobj)
+        check3.setChecked(True)
+        assert capsys.readouterr().out == ("called Label.__init__ with args ('check1',)\n"
                                            'called CheckBox.__init__\n'
+                                           'called CheckBox.setChecked with arg True\n'
+                                           "called Label.__init__ with args ('check2',)\n"
+                                           'called CheckBox.__init__\n'
+                                           "called Label.__init__ with args ('<a>check3</a>',)\n"
+                                           'called CheckBox.__init__\n'
+                                           'called CheckBox.setChecked with arg True\n')
+        testobj.widgets = {'check1': (label1, check1), 'check2': (label2, check2),
+                           'check3': (label3, check3)}
+        testobj.confirm()
+        assert testobj.master.modnames == ['check1', 'check3']
+        assert capsys.readouterr().out == ('called CheckBox.isChecked\n'
                                            'called CheckBox.isChecked\n'
                                            'called CheckBox.isChecked\n'
                                            'called Activater.select_activations\n'
@@ -497,7 +505,7 @@ class TestShowMods:
                                                "called HBox.__init__\n"
                                                "called CheckBox.__init__\n"
                                                "called Label.__init__\n")
-            return hbox, check
+            return hbox, (label, check)
         # monkeypatch.setattr(testee.qtw, 'QHBoxLayout', mockqtw.MockHBoxLayout)
         # monkeypatch.setattr(testee.qtw, 'QCheckBox', mockqtw.MockCheckBox)
         monkeypatch.setattr(testee, 'maxpercol', 3)
@@ -510,25 +518,29 @@ class TestShowMods:
                                         'twoone: three\ntwotwo: four\nfirst: first\n'
                                         '2neone: one, eno\n2netwo: two\n'
                                         '2woone: three\n2wotwo: four')
-        testobj.master.screenpos = {'twoone': ['', ''], 'oneone': ['', ''],
-                                    'onetwo': ['', ''], 'twotwo': ['', ''],
-                                    '2woone': ['', ''], '2neone': ['', ''],
-                                    '2netwo': ['', ''], '2wotwo': ['', '']}
+        testobj.master.screenpos = {'twoone': ['0x0', ''], 'oneone': ['0x1', 'y'],
+                                    'onetwo': ['0x2', 'a'], 'twotwo': ['1x0', 'b'],
+                                    '2woone': ['1x1', 'c'], '2neone': ['1x2', 'd'],
+                                    '2netwo': ['', 'e'], '2wotwo': ['', 'f']}
         testobj.gbox = mockqtw.MockGridLayout()
         assert capsys.readouterr().out == "called Grid.__init__\n"
 
         testobj.widgets = {}
         testobj.containers = {}
         testobj.positions = {}
+        # breakpoint()
         testobj.refresh_widgets(first_time=True)
         assert len(testobj.widgets) == len(testobj.master.screenpos)
         assert list(testobj.widgets.keys()) == list(testobj.master.screenpos.keys())
-        for x in testobj.widgets.values():
-            assert isinstance(x, mockqtw.MockCheckBox)
+        for x, y in testobj.widgets.values():
+            assert isinstance(x, mockqtw.MockLabel)
+            assert isinstance(y, mockqtw.MockCheckBox)
         assert len(testobj.containers) == len(testobj.master.screenpos)
         assert list(testobj.containers.keys()) == list(testobj.master.screenpos.keys())
         for x in testobj.containers.values():
             assert isinstance(x, mockqtw.MockHBoxLayout)
+        # dat onderstaande fout gaat toont aan dat m'n manier om items zonder scrpos key
+        # toch op het scherm te zetten nu ineens fout gaat
         assert len(testobj.positions) == len(testobj.master.screenpos)
         assert list(testobj.positions.keys()) == [(0, 0), (0, 1), (0, 2), (1, 0),
                                                   (1, 1), (1, 2), (2, 0), (2, 1)]
@@ -564,12 +576,12 @@ class TestShowMods:
         testobj.widgets = {}
         testobj.containers = {}
         testobj.positions = {}
-        # breakpoint()
         testobj.refresh_widgets(first_time=True)
         assert len(testobj.widgets) == len(testobj.master.screenpos)
         assert list(testobj.widgets.keys()) == list(testobj.master.screenpos.keys())
-        for x in testobj.widgets.values():
-            assert isinstance(x, mockqtw.MockCheckBox)
+        for x, y in testobj.widgets.values():
+            assert isinstance(x, mockqtw.MockLabel)
+            assert isinstance(y, mockqtw.MockCheckBox)
         assert len(testobj.containers) == len(testobj.master.screenpos)
         assert list(testobj.containers.keys()) == list(testobj.master.screenpos.keys())
         for x in testobj.containers.values():
@@ -626,7 +638,8 @@ class TestShowMods:
         testobj = self.setup_testobj(monkeypatch, capsys)
         obj1, obj2 = testobj.add_checkbox('xxxx', '123')
         assert isinstance(obj1, testee.qtw.QHBoxLayout)
-        assert isinstance(obj2, testee.qtw.QCheckBox)
+        assert isinstance(obj2[0], testee.qtw.QLabel)
+        assert isinstance(obj2[1], testee.qtw.QCheckBox)
         assert capsys.readouterr().out == (
             "called HBox.__init__\n"
             "called CheckBox.__init__\n"
@@ -689,9 +702,9 @@ class TestShowMods:
     def test_add_entries_for_name(self, monkeypatch, capsys):
         """unittest for ShowMods.add_entries_for_name
         """
-        def mock_add(text):
-            print(f"called Activater.add_checkbox with arg '{text}'")
-            return 'hbox', 'check'
+        def mock_add(*args):
+            print("called Activater.add_checkbox with args", args)
+            return 'hbox', ('label', 'check')
         def mock_determine():
             print('called Activater.determine_newt_row_col')
             return 1, 2
@@ -701,9 +714,9 @@ class TestShowMods:
         testobj.determine_next_row_col = mock_determine
         testobj.add_entries_for_name('name')
         assert testobj.containers['name'] == 'hbox'
-        assert testobj.widgets['name'] == 'check'
+        assert testobj.widgets['name'] == ('label', 'check')
         assert testobj.positions[1, 2] == 'name'
-        assert capsys.readouterr().out == ("called Activater.add_checkbox with arg 'name'\n"
+        assert capsys.readouterr().out == ("called Activater.add_checkbox with args ('name', '')\n"
                                            'called Activater.determine_newt_row_col\n')
 
     def test_determine_next_row_col(self, monkeypatch, capsys):
@@ -804,7 +817,7 @@ class TestNewModDialog:
             return ['name'], True
         def mock_determine(name):
             print(f"called Activater.determine_unpack_directory with arg '{name}'")
-            return ''
+            return 'name1, name2'
         def mock_determine_2(name):
             print(f"called Activater.determine_unpack_directory with arg '{name}'")
             return 'name'
@@ -830,8 +843,8 @@ class TestNewModDialog:
                 " {'caption': 'Select mod', 'directory': 'Downloads',"
                 " 'filter': 'Zip files (*.zip)'}\n"
                 "called Activater.determine_unpack_directory with arg '['name']'\n"
-                "called MessageBox.information with args ('Read mod name',"
-                ' "Can\'t auto-determine;\\nzipfile contains more than one base directory")\n')
+                "called LineEdit.setText with arg `name1, name2`\n"
+                "called LineEdit.setText with arg `name1, name2`\n")
         testobj.parent.master.determine_unpack_directory = mock_determine_2
         testobj.select_mod()
         assert capsys.readouterr().out == (
@@ -976,6 +989,9 @@ class TestNewModDialog:
 class TestReorderDialog:
     """unittest for activate_gui.ReorderDialog
     """
+    populate_text = ("called TableItem.__init__ with arg {}\n"
+                     "called Table.setItem with args ({},"
+                     " item of <class 'mockgui.mockqtwidgets.MockTableItem'>)\n")
     def setup_testobj(self, monkeypatch, capsys):
         """stub for activate_gui.ReorderDialog object
 
@@ -1032,13 +1048,16 @@ class TestReorderDialog:
         """unittest for ReorderDialog.determine_rows_cols
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.data = {'xxx': '', 'yyy': '', 'zzz': '', 'qqq': '', 'rrr': ''}
+        testobj.data = {'xxx': ('', ''), 'yyy': ('', ''), 'zzz': ('', ''), 'qqq': ('', ''),
+                        'rrr': ('', '')}
         assert testobj.determine_rows_cols() == (2, 3)
-        testobj.data = {'xxx': '', 'yyy': '', 'zzz': '', 'qqq': '', 'rrr': '', 'sss': ''}
+        testobj.data = {'xxx': ('', ''), 'yyy': ('', ''), 'zzz': ('', ''), 'qqq': ('', ''),
+                        'rrr': ('', ''), 'sss': ('', '')}
         assert testobj.determine_rows_cols() == (2, 3)
-        testobj.data = {'xxx': '', 'yyy': '', 'zzz': '', 'qqq': '', 'rrr': '', 'sss': '', 'ttt': ''}
+        testobj.data = {'xxx': ('', ''), 'yyy': ('', ''), 'zzz': ('', ''), 'qqq': ('', ''),
+                        'rrr': ('', ''), 'sss': ('', ''), 'ttt': ('', '')}
         assert testobj.determine_rows_cols() == (3, 3)
-        testobj.data = {'xxx': '1x1', 'yyy': '2x1', 'zzz': '0x0'}
+        testobj.data = {'xxx': ('1x1', ''), 'yyy': ('2x1', ''), 'zzz': ('0x0', '')}
         assert testobj.determine_rows_cols() == (3, 2)
 
     def test_add_column(self, monkeypatch, capsys):
@@ -1095,39 +1114,42 @@ class TestReorderDialog:
         assert capsys.readouterr().out == ("called Table.clear\n"
                                            "called Table.columnCount\n"
                                            "called Table.rowCount\n"
-                                           + populate.format('aaa', '0, 0')
-                                           + populate.format('bbb', '1, 0')
-                                           + populate.format('ccc', '2, 0')
+                                           + self.populate_text.format('aaa', '0, 0')
+                                           + self.populate_text.format('bbb', '1, 0')
+                                           + self.populate_text.format('ccc', '2, 0')
                                            + "called Table.rowCount\n"
-                                           + populate.format('ddd', '0, 1')
-                                           + populate.format('eee', '1, 1')
-                                           + populate.format('fff', '2, 1'))
+                                           + self.populate_text.format('ddd', '0, 1')
+                                           + self.populate_text.format('eee', '1, 1')
+                                           + self.populate_text.format('fff', '2, 1'))
         testobj.table.setColumnCount(3)
         assert capsys.readouterr().out == ("called Table.setColumnCount with arg '3'\n")
         testobj.populate()
         assert capsys.readouterr().out == ("called Table.clear\n"
                                            "called Table.columnCount\n"
                                            "called Table.rowCount\n"
-                                           + populate.format('aaa', '0, 0')
-                                           + populate.format('bbb', '1, 0')
-                                           + populate.format('ccc', '2, 0')
+                                           + self.populate_text.format('aaa', '0, 0')
+                                           + self.populate_text.format('bbb', '1, 0')
+                                           + self.populate_text.format('ccc', '2, 0')
                                            + "called Table.rowCount\n"
-                                           + populate.format('ddd', '0, 1')
-                                           + populate.format('eee', '1, 1')
-                                           + populate.format('fff', '2, 1')
+                                           + self.populate_text.format('ddd', '0, 1')
+                                           + self.populate_text.format('eee', '1, 1')
+                                           + self.populate_text.format('fff', '2, 1')
                                            + "called Table.rowCount\n"
-                                           + populate.format('ggg', '0, 2'))
-        testobj.data = {'aaa': '1x1', 'bbb': '0x0', 'ccc': '0x1', 'ddd': '1x2', 'eee': '3x1',
-                        'fff': '1x0', 'ggg': '2x2'}
+                                           + self.populate_text.format('ggg', '0, 2'))
+        testobj.data = {'aaa': ('1x1', ''), 'bbb': ('0x0', ''), 'ccc': ('0x1', ''),
+                        'ddd': ('2x1', ''), 'eee': ('3x1', ''),
+                        'fff': ('1x0', ''), 'ggg': ('', '')}
         testobj.populate()
         assert capsys.readouterr().out == ("called Table.clear\n"
-                                           + populate.format('bbb', '0, 0')
-                                           + populate.format('ccc', '0, 1')
-                                           + populate.format('fff', '1, 0')
-                                           + populate.format('aaa', '1, 1')
-                                           + populate.format('ddd', '1, 2')
-                                           + populate.format('ggg', '2, 2')
-                                           + populate.format('eee', '3, 1'))
+                                           "called Table.rowCount\n"
+                                           "called Table.insertRow with arg '3'\n"
+                                           + self.populate_text.format('ggg', '3, 0')
+                                           + self.populate_text.format('bbb', '0, 0')
+                                           + self.populate_text.format('ccc', '0, 1')
+                                           + self.populate_text.format('fff', '1, 0')
+                                           + self.populate_text.format('aaa', '1, 1')
+                                           + self.populate_text.format('ddd', '2, 1')
+                                           + self.populate_text.format('eee', '3, 1'))
 
     def test_accept(self, monkeypatch, capsys):
         """unittest for ReorderDialog.accept
@@ -1164,13 +1186,13 @@ class TestReorderDialog:
         testobj.table.setItem(0, 2, mockqtw.MockTableItem('ggg'))
         assert capsys.readouterr().out == ("called Table.setRowCount with arg '3'\n"
                                            "called Table.setColumnCount with arg '3'\n"
-                                           + populate.format('bbb', '0, 0')
-                                           + populate.format('fff', '1, 0')
-                                           + populate.format('ddd', '2, 0')
-                                           + populate.format('ccc', '0, 1')
-                                           + populate.format('aaa', '1, 1')
-                                           + populate.format('eee', '2, 1')
-                                           + populate.format('ggg', '0, 2'))
+                                           + self.populate_text.format('bbb', '0, 0')
+                                           + self.populate_text.format('fff', '1, 0')
+                                           + self.populate_text.format('ddd', '2, 0')
+                                           + self.populate_text.format('ccc', '0, 1')
+                                           + self.populate_text.format('aaa', '1, 1')
+                                           + self.populate_text.format('eee', '2, 1')
+                                           + self.populate_text.format('ggg', '0, 2'))
         testobj.accept()
         assert testobj.data == {'aaa': '1x1', 'bbb': '0x0', 'ccc': '0x1', 'ddd': '2x0', 'eee': '2x1',
                                 'fff': '1x0', 'ggg': '0x2'}

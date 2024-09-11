@@ -22,29 +22,29 @@ class MockParser(dict):
         """stub
         """
         print('called ConfigParser.read with args', args)
-    def set(*args):
+    def set(self, *args):
         """stub
         """
         print("called ConfigParser.set with args", args)
-    def add_section(*args):
+    def add_section(self, *args):
         """stub
         """
         print("called ConfigParser.add_section with args", args)
         if args[1] == 'q':
             raise testee.configparser.DuplicateSectionError('q')
-    def write(*args):
+    def write(self, *args):
         """stub
         """
         print("called ConfigParser.write with args", args)
 
 
-def test_get_archive_root():
+def test_get_archive_roots():
     """unittest for get_archive_root
     """
-    assert testee.get_archive_root([]) == set()
-    assert testee.get_archive_root(['path/to/file', 'path/to/other/file', 'root/dir']) == {'path',
+    assert testee.get_archive_roots([]) == set()
+    assert testee.get_archive_roots(['path/to/file', 'path/to/other/file', 'root/dir']) == {'path',
                                                                                            'root'}
-    assert testee.get_archive_root(['path/to/file', '__MACOSX/dir', '__MACOSX/xxx']) == {'path'}
+    assert testee.get_archive_roots(['path/to/file', '__MACOSX/dir', '__MACOSX/xxx']) == {'path'}
 
 
 def test_init(monkeypatch, capsys):
@@ -56,7 +56,7 @@ def test_init(monkeypatch, capsys):
             "called ConfigParser() with args () {'delimiters': (':',), 'allow_no_value': True}\n"
             "called ConfigParser.read with args ('config',)\n")
     assert isinstance(testobj.conf, testee.configparser.ConfigParser)
-    assert testobj.conf.optionxform == str
+    assert isinstance(testobj.conf.optionxform, str)
     assert testobj.modnames == []
     assert testobj.modbase == testee.MODBASE
     assert testobj.downloads == testee.DOWNLOAD
@@ -370,8 +370,14 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
     (tmp_path / 'dl' / 'installed').mkdir()
     (tmp_path / 'dl' / 'root-1').touch()
     (tmp_path / 'mods' / 'root-1').touch()
+    (tmp_path / 'dl' / 'two').touch()
+    (tmp_path / 'mods' / 'two').touch()
+    (tmp_path / 'dl' / 'roots').touch()
+    (tmp_path / 'mods' / 'roots').touch()
+    (tmp_path / 'dl' / 'root-2').touch()
     (tmp_path / 'dl' / 'root-3').touch()
     (tmp_path / 'mods' / '.root-3').touch()
+    (tmp_path / 'dl' / 'root-4').touch()
     (tmp_path / 'dl' / 'root-5').touch()
     (tmp_path / 'dl' / 'root-6').touch()
     (tmp_path / 'mods' / 'root-6').touch()
@@ -379,7 +385,7 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
     (tmp_path / 'dl' / 'root-7').touch()
     (tmp_path / 'mods' / '.root-7').touch()
     (tmp_path / 'mods' / '.root-7~').mkdir()
-    monkeypatch.setattr(testee, 'get_archive_root', mock_get)
+    monkeypatch.setattr(testee, 'get_archive_roots', mock_get)
     monkeypatch.setattr(testee.Activater, '__init__', mock_init)
     testobj = testee.Activater('')
     testobj.modbase = str(tmp_path / 'mods')
@@ -390,9 +396,9 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
                 tmp_path / 'dl' / 'root-7']
     assert testobj.update_mods(filelist) == [
             f"{tmp_path}/dl/root-1 is successfully installed",
-            f"{tmp_path}/dl/root-2: zipfile should contain only one base directory",
+            f"{tmp_path}/dl/root-2 is successfully installed",
             f"{tmp_path}/dl/root-3 is successfully installed",
-            f"{tmp_path}/dl/root-4: zipfile should contain only one base directory",
+            f"{tmp_path}/dl/root-4: zipfile appears to be empty",
             f"{tmp_path}/dl/root-5 is successfully installed",
             f"{tmp_path}/dl/root-6 is successfully installed",
             f"{tmp_path}/dl/root-7 is successfully installed"]
@@ -406,6 +412,7 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
             f"called ZipFile.__init__ with args ({filelist[1]!r},)\n"
             "called ZipFile.namelist\n"
             "called get_archive_root with arg ['name', 'list']\n"
+            f"called ZipFile.extractall with args ({testobj.modbase!r},)\n"
             "called ZipFile.close\n"
             f"called ZipFile.__init__ with args ({filelist[2]!r},)\n"
             "called ZipFile.namelist\n"
@@ -457,42 +464,42 @@ def test_determine_unpack_directory(monkeypatch, capsys):
             print('called ZipFile.namelist')
             return []
     def mock_get(namelist):
-        print(f'called Activater.get_archive_root with arg {namelist}')
+        print(f'called Activater.get_archive_roots with arg {namelist}')
         return []
     def mock_get_1(namelist):
-        print(f'called Activater.get_archive_root with arg {namelist}')
+        print(f'called Activater.get_archive_roots with arg {namelist}')
         return ['name']
     def mock_get_2(namelist):
-        print(f'called Activater.get_archive_root with arg {namelist}')
+        print(f'called Activater.get_archive_roots with arg {namelist}')
         return ['name', 'list']
     monkeypatch.setattr(testee.zipfile, 'ZipFile', MockZipFile)
     monkeypatch.setattr(testee.Activater, '__init__', mock_init)
     testobj = testee.Activater('')
-    monkeypatch.setattr(testee, 'get_archive_root', mock_get)
+    monkeypatch.setattr(testee, 'get_archive_roots', mock_get)
     assert testobj.determine_unpack_directory('testfile.zip') == ''
     assert capsys.readouterr().out == (
             "called zipfile.ZipFile with args ('testfile.zip',) {}\n"
             "called ZipFile.__enter__\n"
             "called ZipFile.namelist\n"
-            "called Activater.get_archive_root with arg []\n"
+            "called Activater.get_archive_roots with arg []\n"
             "called ZipFile.__exit__\n")
 
-    monkeypatch.setattr(testee, 'get_archive_root', mock_get_1)
+    monkeypatch.setattr(testee, 'get_archive_roots', mock_get_1)
     assert testobj.determine_unpack_directory('testfile.zip') == 'name'
     assert capsys.readouterr().out == (
             "called zipfile.ZipFile with args ('testfile.zip',) {}\n"
             "called ZipFile.__enter__\n"
             "called ZipFile.namelist\n"
-            "called Activater.get_archive_root with arg []\n"
+            "called Activater.get_archive_roots with arg []\n"
             "called ZipFile.__exit__\n")
 
-    monkeypatch.setattr(testee, 'get_archive_root', mock_get_2)
-    assert testobj.determine_unpack_directory('testfile.zip') == ''
+    monkeypatch.setattr(testee, 'get_archive_roots', mock_get_2)
+    assert testobj.determine_unpack_directory('testfile.zip') == 'name, list'
     assert capsys.readouterr().out == (
             "called zipfile.ZipFile with args ('testfile.zip',) {}\n"
             "called ZipFile.__enter__\n"
             "called ZipFile.namelist\n"
-            "called Activater.get_archive_root with arg []\n"
+            "called Activater.get_archive_roots with arg []\n"
             "called ZipFile.__exit__\n")
 
 

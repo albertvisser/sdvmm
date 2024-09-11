@@ -116,21 +116,21 @@ class ShowMods(qtw.QWidget):
         # on first-time we build all the checkbox containers
         if first_time:
             rownum, colnum = 0, 0
+            maxcol = 3
             # for text, scrpos in sorted(self.master.screenpos.items(), key=lambda x: x[1]):
             for text, scrpos in self.master.screenpos.items():
-                scrpos, linknum = scrpos
+                realscrpos, linknum = scrpos
                 self.containers[text], self.widgets[text] = self.add_checkbox(text, linknum)
-                if scrpos:
-                    row, col = [int(y) for y in scrpos.split('x', 1)]
+                # print(f'{realscrpos=}', end=', ')
+                if realscrpos:
+                    rownum, colnum = [int(y) for y in realscrpos.split('x', 1)]
                 else:   # fallback voor als het scherm nog niet eerder geordend was
-                    maxcol = 3  # len(self.master.screenpos) // maxpercol
-                    row, col = rownum, colnum
                     colnum += 1
                     if colnum == maxcol:
                         rownum += 1
                         colnum = 0
-                self.positions[(row, col)] = text
-        # print(self.positions)i # wordt deze misschien niet bijgewerkt na reorderen?
+                self.positions[(rownum, colnum)] = text
+        # print(self.positions) # wordt deze misschien niet bijgewerkt na reorderen?
         if reorder_widgets:
             if not first_time:
                 for text, layout in self.containers.items():
@@ -260,12 +260,10 @@ class NewModDialog(qtw.QDialog):
                                                        filter='Zip files (*.zip)')
         if ok:
             dirname = self.parent.master.determine_unpack_directory(filename)
-            if not dirname:
-                qtw.QMessageBox.information(self, 'Read mod name', "Can't auto-determine;\n"
-                                            'zipfile contains more than one base directory')
-            else:
-                self.first_name.setText(dirname)
-                self.last_name.setText(dirname)
+            # dit is waarschijnlijk het handigste punt voor het binnenhalen van andere gegevens
+            # (nexuskey, echte modnaam) vooropgesteld dat deze methode ze ook oplevert
+            self.first_name.setText(dirname)
+            self.last_name.setText(dirname)
 
     def add_depline(self):
         """add a combobox to define a new dependency
