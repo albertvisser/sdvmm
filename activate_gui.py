@@ -23,7 +23,6 @@ class ShowMods(qtw.QWidget):
     "GUI presenting the available mods/extensions to make selection possible of mods to (de)activate"
     def __init__(self, master):
         self.master = master
-        self.master.modnames = []
         self.app = qtw.QApplication(sys.argv)
         super().__init__()
 
@@ -91,11 +90,21 @@ class ShowMods(qtw.QWidget):
     def show_screen(self):
         "show the screen and start the event loop"
         self.show()
-        return self.app.exec()  # niet via sys.exit() want we zijn nog niet klaar
+        return self.app.exec()  # kan evt. ook weer via sys.exit()
 
     def confirm(self):
         "build a list from the checked entries and pass it back to the caller"
-        self.master.modnames = [x.text() for x in self.widgets.values() if x.isChecked()]
+        # self.master.modnames = [x.text().split(">", 1)[1].split("<", 1)[0]
+        #                        for x, y in self.widgets.values() if y.isChecked()]
+        self.master.modnames = []
+        for label, check in self.widgets.values():
+            if check.isChecked():
+                labeltext = label.text()
+                if ">" in labeltext:
+                    linktext = labeltext.split(">", 1)[1].split("<", 1)[0]
+                else:
+                    linktext = labeltext
+                self.master.modnames.append(linktext)
         self.master.select_activations()
         if self.master.directories:   # is deze conditie nog nodig of misschien zelfs te beperkend?
             self.master.activate()
@@ -135,7 +144,7 @@ class ShowMods(qtw.QWidget):
         for text, check in self.widgets.items():
             loc = os.path.join(self.master.modbase,
                                self.master.conf['Mod Directories'][text].split(', ')[0])
-            check.setChecked(os.path.exists(loc))
+            check[1].setChecked(os.path.exists(loc))
 
     def add_checkbox(self, text, linknum):
         "add a checkbox with the given text"
@@ -152,7 +161,7 @@ class ShowMods(qtw.QWidget):
         hbox.addWidget(label)
         hbox.addStretch()
         hbox.addSpacing(50)
-        return hbox, check
+        return hbox, (label, check)
 
     def check(self):
         "check for non-matching names in config file"
@@ -396,7 +405,7 @@ class ReorderDialog(qtw.QDialog):
         """derive number of rows and columns from texts to lay out
         """
         colcount = rowcount = 0
-        for pos in self.data.values():
+        for pos in [x[0] for x in self.data.values()]:
             if not pos:
                 break
             row, col = [int(x) + 1 for x in pos.split('x')]
@@ -440,9 +449,13 @@ class ReorderDialog(qtw.QDialog):
                         self.table.setItem(rownum, colnum, item)
             return
         for text, scrpos in sorted(self.data.items(), key=lambda x: (x[1], x[0])):
-            row, col = scrpos.split('x')
+            if scrpos[0]:
+                row, col = [int(x) for x in scrpos[0].split('x')]
+            else:
+                row, col = self.table.rowCount(), 0
+                self.table.insertRow(row)
             item = qtw.QTableWidgetItem(text)
-            self.table.setItem(int(row), int(col), item)
+            self.table.setItem(row, col, item)
 
     def accept(self):
         """bij OK: de opgebouwde tabel via self.dialog_data doorgeven
