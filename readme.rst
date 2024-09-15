@@ -35,6 +35,6 @@ Changes summary:
 ................
 
 - Separated exiting the GUI from applying changes, so you can check and if necessary modify the results.
-- Added a way to enter new mods and dependenciesi directly from the gui, without having to know the structure of the file.
+- Added a way to enter new mods and dependencies directly from the gui, without having to know the structure of the file.
 - Added a (clunky) way to reorder the names on the screen.
 - Added a way to install a mod from the downloads directory from this GUI.
