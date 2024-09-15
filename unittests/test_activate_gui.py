@@ -4,7 +4,7 @@ import types
 import configparser
 import pytest
 import mockgui.mockqtwidgets as mockqtw
-import activate_gui as testee
+from src import activate_gui as testee
 
 showmods = """\
 called QWidget.setWindowTitle()
@@ -751,7 +751,7 @@ class TestShowMods:
         testobj.reorder_gui()
         assert capsys.readouterr().out == (
                 "called gui.show_dialog with args"
-                f" (<class 'activate_gui.ReorderDialog'>, {testobj}) {{}}\n")
+                f" (<class 'src.activate_gui.ReorderDialog'>, {testobj}) {{}}\n")
         monkeypatch.setattr(testee, 'show_dialog', mock_show_2)
         testobj.reorder_gui()
         assert testobj.widgets == {}
@@ -759,7 +759,7 @@ class TestShowMods:
         assert testobj.positions == {}
         assert capsys.readouterr().out == (
                 "called gui.show_dialog with args"
-                f" (<class 'activate_gui.ReorderDialog'>, {testobj}) {{}}\n"
+                f" (<class 'src.activate_gui.ReorderDialog'>, {testobj}) {{}}\n"
                 "called Activater.update_config_from_screenpos\n"
                 "called ActivateGui.refresh_widgets\n")
 

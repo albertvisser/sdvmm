@@ -16,7 +16,7 @@ import configparser
 import shutil
 import zipfile
 import subprocess
-import activate_gui as gui
+from src import activate_gui as gui
 MODBASE = os.path.expanduser('~/.steam/steam/steamapps/common/Stardew Valley/Mods')
 CONFIG = os.path.join(MODBASE, 'sdv_mods.config')
 DOWNLOAD = os.path.expanduser('~/Downloads/Stardew Valley Mods')

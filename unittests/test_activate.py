@@ -2,7 +2,7 @@
 """
 import pathlib
 import types
-import activate as testee
+from src import activate as testee
 
 def mock_init(self, *args):
     """stub for setting up activate.Activater class
@@ -281,8 +281,8 @@ def test_add_to_config(monkeypatch, capsys, tmp_path):
     testobj.add_to_config()
     assert capsys.readouterr().out == (
             "called ConfigParser() with args () {}\n"
-            "called gui.show_dialog with args"
-            f" (<class 'activate_gui.NewModDialog'>, {showmods}, 'mods') {{'first_time': True}}\n")
+            "called gui.show_dialog with args (<class 'src.activate_gui.NewModDialog'>,"
+            f" {showmods}, 'mods') {{'first_time': True}}\n")
     monkeypatch.setattr(testee.gui, 'show_dialog', mock_show_2)
     testobj = testee.Activater('')
     testobj.conf = MockParser()
@@ -293,7 +293,7 @@ def test_add_to_config(monkeypatch, capsys, tmp_path):
     assert capsys.readouterr().out == (
             "called ConfigParser() with args () {}\n"
             "called gui.show_dialog with args"
-            f" (<class 'activate_gui.NewModDialog'>, {showmods}, 'mods') {{'first_time': True}}\n"
+            f" (<class 'src.activate_gui.NewModDialog'>, {showmods}, 'mods') {{'first_time': True}}\n"
             "called ConfigParser.set with args"
             " ({'Mod Directories': 'mods'}, 'Mod Directories', 'x', 'y')\n"
             "called ConfigParser.add_section with args ({'Mod Directories': 'mods'}, 'a')\n"

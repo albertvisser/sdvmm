@@ -1,11 +1,11 @@
 [testdir]
-.
+unittests/
 
 [testscripts]
 main: test_activate.py
 gui: test_activate_gui.py
 
 [testees]
-main: activate.py
-gui: activate_gui.py
+main: src/activate.py
+gui: src/activate_gui.py
 
