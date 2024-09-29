@@ -102,7 +102,7 @@ called Widget.__init__
 called Dialog.__init__ with args {testobj.parent} () {{}}
 called ReorderDialog.determine_rows_cols
 called VBox.__init__
-called Table.__init__ with arg {testobj}
+called Table.__init__ with args ({testobj},)
 called Header.__init__
 called Header.__init__
 called Table.setRowCount with arg '1'
@@ -1039,7 +1039,7 @@ class TestReorderDialog:
         """stub for table widget
         """
         testobj.table = mockqtw.MockTable(testobj)
-        assert capsys.readouterr().out == (f"called Table.__init__ with arg {testobj}\n"
+        assert capsys.readouterr().out == (f"called Table.__init__ with args ({testobj},)\n"
                                            "called Header.__init__\n"
                                            "called Header.__init__\n")
         return testobj.table
