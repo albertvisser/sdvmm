@@ -30,7 +30,7 @@ class MockParser(dict):
         """stub
         """
         print("called ConfigParser.add_section with args", args)
-        if args[1] == 'q':
+        if args[0] == 'q':
             raise testee.configparser.DuplicateSectionError('q')
     def write(self, *args):
         """stub
@@ -56,7 +56,8 @@ def test_init(monkeypatch, capsys):
             "called ConfigParser() with args () {'delimiters': (':',), 'allow_no_value': True}\n"
             "called ConfigParser.read with args ('config',)\n")
     assert isinstance(testobj.conf, testee.configparser.ConfigParser)
-    assert isinstance(testobj.conf.optionxform, str)
+    # assert isinstance(testobj.conf.optionxform, str)
+    assert testobj.conf.optionxform('AbcdEf') == str('AbcdEf')
     assert testobj.modnames == []
     assert testobj.modbase == testee.MODBASE
     assert testobj.downloads == testee.DOWNLOAD
@@ -274,36 +275,35 @@ def test_add_to_config(monkeypatch, capsys, tmp_path):
     monkeypatch.setattr(testee.Activater, '__init__', mock_init)
     testobj = testee.Activater('')
     testobj.conf = MockParser()
+    assert capsys.readouterr().out == "called ConfigParser() with args () {}\n"
     testobj.conf['Mod Directories'] = 'mods'
     showmods = MockShow()
     testobj.doit = showmods
     testobj.config = str(conffile)
     testobj.add_to_config()
     assert capsys.readouterr().out == (
-            "called ConfigParser() with args () {}\n"
             "called gui.show_dialog with args (<class 'src.activate_gui.NewModDialog'>,"
             f" {showmods}, 'mods') {{'first_time': True}}\n")
     monkeypatch.setattr(testee.gui, 'show_dialog', mock_show_2)
     testobj = testee.Activater('')
     testobj.conf = MockParser()
+    assert capsys.readouterr().out == "called ConfigParser() with args () {}\n"
     testobj.conf['Mod Directories'] = 'mods'
     testobj.doit = showmods
     testobj.config = str(conffile)
     testobj.add_to_config()
     assert capsys.readouterr().out == (
-            "called ConfigParser() with args () {}\n"
             "called gui.show_dialog with args"
             f" (<class 'src.activate_gui.NewModDialog'>, {showmods}, 'mods') {{'first_time': True}}\n"
-            "called ConfigParser.set with args"
-            " ({'Mod Directories': 'mods'}, 'Mod Directories', 'x', 'y')\n"
-            "called ConfigParser.add_section with args ({'Mod Directories': 'mods'}, 'a')\n"
-            "called ConfigParser.set with args ({'Mod Directories': 'mods'}, 'a', 'b', '')\n"
-            "called ConfigParser.add_section with args ({'Mod Directories': 'mods'}, 'q')\n"
-            "called ConfigParser.add_section with args ({'Mod Directories': 'mods'}, 'r')\n"
+            "called ConfigParser.set with args ('Mod Directories', 'x', 'y')\n"
+            "called ConfigParser.add_section with args ('a',)\n"
+            "called ConfigParser.set with args ('a', 'b', '')\n"
+            "called ConfigParser.add_section with args ('q',)\n"
+            "called ConfigParser.add_section with args ('r',)\n"
             "called ShowMods.add_entries_for_name with arg 'r'\n"
             f"called shutil.copyfile with args ('{conffile}', '{conffile}~')\n"
-            "called ConfigParser.write with args ({'Mod Directories': 'mods'},"
-            f" <_io.TextIOWrapper name='{conffile}' mode='w' encoding='UTF-8'>)\n"
+            f"called ConfigParser.write with args (<_io.TextIOWrapper name='{conffile}'"
+            " mode='w' encoding='UTF-8'>,)\n"
             "called ShowMods.refresh_widgets\n")
 
 
