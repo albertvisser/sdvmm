@@ -1,11 +1,11 @@
-"""unittests for ./activate.py
+"""unittests for ./manager.py
 """
 import pathlib
 import types
-from src import activate as testee
+from src import manager as testee
 
 def mock_init(self, *args):
-    """stub for setting up activate.Activater class
+    """stub for setting up manager.Manager class
     """
     self.conf = {}
     self.modnames = []
@@ -48,10 +48,10 @@ def test_get_archive_roots():
 
 
 def test_init(monkeypatch, capsys):
-    """unittest for Activater.init
+    """unittest for Manager.init
     """
     monkeypatch.setattr(testee.configparser, 'ConfigParser', MockParser)
-    testobj = testee.Activater('config')
+    testobj = testee.Manager('config')
     assert capsys.readouterr().out == (
             "called ConfigParser() with args () {'delimiters': (':',), 'allow_no_value': True}\n"
             "called ConfigParser.read with args ('config',)\n")
@@ -66,7 +66,7 @@ def test_init(monkeypatch, capsys):
 
 
 def test_build_and_start_gui(monkeypatch, capsys):
-    """unittest for Activater.build_and_start_gui
+    """unittest for Manager.build_and_start_gui
     """
     class MockShowMods:
         """stub
@@ -87,16 +87,16 @@ def test_build_and_start_gui(monkeypatch, capsys):
             """
             print('called gui.ShowMods.show_screen()')
     def mock_extract():
-        print('called Activater.extract_screen_locations')
-    monkeypatch.setattr(testee.Activater, '__init__', mock_init)
+        print('called Manager.extract_screen_locations')
+    monkeypatch.setattr(testee.Manager, '__init__', mock_init)
     monkeypatch.setattr(testee.gui, 'ShowMods', MockShowMods)
-    testobj = testee.Activater('')
+    testobj = testee.Manager('')
     testobj.extract_screen_locations = mock_extract
     testobj.conf = {}
     testobj.modnames = []
     testobj.build_and_start_gui()
     assert testobj.modnames == ['one', 'two', 'three']
-    assert capsys.readouterr().out == ('called Activater.extract_screen_locations\n'
+    assert capsys.readouterr().out == ('called Manager.extract_screen_locations\n'
                                        f"called gui.ShowMods.__init__() with arg '{testobj}'\n"
                                        'called gui.ShowMods.setup_screen()\n'
                                        'called gui.ShowMods.setup_actions()\n'
@@ -104,10 +104,10 @@ def test_build_and_start_gui(monkeypatch, capsys):
 
 
 def test_extract_screen_locations(monkeypatch):
-    """unittest for Activater.extract_screen_locations
+    """unittest for Manager.extract_screen_locations
     """
-    monkeypatch.setattr(testee.Activater, '__init__', mock_init)
-    testobj = testee.Activater('')
+    monkeypatch.setattr(testee.Manager, '__init__', mock_init)
+    testobj = testee.Manager('')
     testobj.screenpos = {}
     conf = (f'[test]\nthis\n{testee.SCRPOS}: x,y\n{testee.NXSKEY}: 123\n[other]\nthey\nthem\n\n'
             '[Mod Directories]\ntest: x\nthis: y')
@@ -125,15 +125,15 @@ def test_extract_screen_locations(monkeypatch):
 
 
 def test_select_activations(monkeypatch, capsys):
-    """unittest for Activater.select_activations
+    """unittest for Manager.select_activations
     """
     def mock_add(self, *args):
         """stub
         """
         print('called self.add_activations with args', args)
-    monkeypatch.setattr(testee.Activater, '__init__', mock_init)
-    monkeypatch.setattr(testee.Activater, 'add_activations', mock_add)
-    testobj = testee.Activater('')
+    monkeypatch.setattr(testee.Manager, '__init__', mock_init)
+    monkeypatch.setattr(testee.Manager, 'add_activations', mock_add)
+    testobj = testee.Manager('')
     conf = ('[test]\nthis\n\n[other]\nthey\nthem\n\n[third]\noink\n\n'
             '[Mod Directories]\ntest: x\nthis: y\nother: z\nthey: a\nthem: b\n\nthird: c\noink: d')
     testobj.conf = testee.configparser.ConfigParser(allow_no_value=True)
@@ -149,10 +149,10 @@ def test_select_activations(monkeypatch, capsys):
 
 
 def test_add_activations(monkeypatch):
-    """unittest for Activater.add_activations
+    """unittest for Manager.add_activations
     """
-    monkeypatch.setattr(testee.Activater, '__init__', mock_init)
-    testobj = testee.Activater('')
+    monkeypatch.setattr(testee.Manager, '__init__', mock_init)
+    testobj = testee.Manager('')
     testobj.conf = {'test': {'this': '', 'that': ''}, 'this': {'those': ''},
                     'Mod Directories': {'this': 'that, another', 'those': 'thoze'}}
     testobj.directories.add('that')
@@ -162,7 +162,7 @@ def test_add_activations(monkeypatch):
 
 
 def test_activate(monkeypatch, capsys):
-    """unittest for Activater.activate
+    """unittest for Manager.activate
     """
     def mock_rename(*args):
         """stub
@@ -180,8 +180,8 @@ def test_activate(monkeypatch, capsys):
                                                          pathlib.Path('modbase/.off')])
     monkeypatch.setattr(testee.os, 'rename', mock_rename)
     monkeypatch.setattr(pathlib.Path, 'is_file', mock_isfile)
-    monkeypatch.setattr(testee.Activater, '__init__', mock_init)
-    testobj = testee.Activater('')
+    monkeypatch.setattr(testee.Manager, '__init__', mock_init)
+    testobj = testee.Manager('')
     testobj.conf['Mod Directories'] = {'SMAPI': ['test']}
     testobj.directories |= {'yes', 'off'}
     assert testobj.directories == {'yes', 'off'}
@@ -193,45 +193,45 @@ def test_activate(monkeypatch, capsys):
 
 
 def test_edit_config(monkeypatch, capsys):
-    """unittest for Activater.edit_config
+    """unittest for Manager.edit_config
     """
     def mock_run(*args):
         print('called subprocess.run with args', args)
     monkeypatch.setattr(testee.subprocess, 'run', mock_run)
     monkeypatch.setattr(testee, 'CONFIG', 'mock_config')
-    monkeypatch.setattr(testee.Activater, '__init__', mock_init)
-    testobj = testee.Activater('')
+    monkeypatch.setattr(testee.Manager, '__init__', mock_init)
+    testobj = testee.Manager('')
     testobj.edit_config()
     assert capsys.readouterr().out == ("called subprocess.run with args (['gnome-terminal',"
                                        " '--geometry=102x54+1072+0', '--', 'vim', 'mock_config'],)\n")
 
 
 def test_reload_config(monkeypatch, capsys):
-    """unittest for Activater.reload_config
+    """unittest for Manager.reload_config
     """
     def mock_read(config):
         print(f"called config.read with arg {config}")
     def mock_refresh():
         print("called AcivateGui.refresh_widgets")
     def mock_extract():
-        print("called Activater.extract_screen_locations")
-    monkeypatch.setattr(testee.Activater, '__init__', mock_init)
-    testobj = testee.Activater('')
+        print("called Manager.extract_screen_locations")
+    monkeypatch.setattr(testee.Manager, '__init__', mock_init)
+    testobj = testee.Manager('')
     testobj.config = {'config': 'parameters'}
     testobj.conf = types.SimpleNamespace(read=mock_read)
     testobj.doit = types.SimpleNamespace(refresh_widgets=mock_refresh)
     testobj.extract_screen_locations = mock_extract
     testobj.reload_config()
     assert capsys.readouterr().out == ("called config.read with arg {'config': 'parameters'}\n"
-                                       "called Activater.extract_screen_locations\n"
+                                       "called Manager.extract_screen_locations\n"
                                        "called AcivateGui.refresh_widgets\n")
 
 
 def test_check_config(monkeypatch):
-    """unittest for Activater.check_config
+    """unittest for Manager.check_config
     """
-    monkeypatch.setattr(testee.Activater, '__init__', mock_init)
-    testobj = testee.Activater('')
+    monkeypatch.setattr(testee.Manager, '__init__', mock_init)
+    testobj = testee.Manager('')
     conf_ok = ('[test]\nthis\nthese\n\n[this]\nthose\n\n'
                '[Mod Directories]\ntest: x\nthis: that, another\nthose: thoze\nthese: theze')
     testobj.conf = testee.configparser.ConfigParser(allow_no_value=True)
@@ -250,7 +250,7 @@ def test_check_config(monkeypatch):
 
 
 def test_add_to_config(monkeypatch, capsys, tmp_path):
-    """unittest for Activater.add_to_config
+    """unittest for Manager.add_to_config
     """
     class MockShow:
         "stub for testee.ShowMods"
@@ -272,8 +272,8 @@ def test_add_to_config(monkeypatch, capsys, tmp_path):
     monkeypatch.setattr(testee.gui, 'show_dialog', mock_show)
     monkeypatch.setattr(testee.shutil, 'copyfile', mock_copyfile)
     # monkeypatch.setattr(testee.gui, 'NewModDialog', MockDialog)
-    monkeypatch.setattr(testee.Activater, '__init__', mock_init)
-    testobj = testee.Activater('')
+    monkeypatch.setattr(testee.Manager, '__init__', mock_init)
+    testobj = testee.Manager('')
     testobj.conf = MockParser()
     assert capsys.readouterr().out == "called ConfigParser() with args () {}\n"
     testobj.conf['Mod Directories'] = 'mods'
@@ -282,10 +282,10 @@ def test_add_to_config(monkeypatch, capsys, tmp_path):
     testobj.config = str(conffile)
     testobj.add_to_config()
     assert capsys.readouterr().out == (
-            "called gui.show_dialog with args (<class 'src.activate_gui.NewModDialog'>,"
+            "called gui.show_dialog with args (<class 'src.gui.NewModDialog'>,"
             f" {showmods}, 'mods') {{'first_time': True}}\n")
     monkeypatch.setattr(testee.gui, 'show_dialog', mock_show_2)
-    testobj = testee.Activater('')
+    testobj = testee.Manager('')
     testobj.conf = MockParser()
     assert capsys.readouterr().out == "called ConfigParser() with args () {}\n"
     testobj.conf['Mod Directories'] = 'mods'
@@ -294,7 +294,7 @@ def test_add_to_config(monkeypatch, capsys, tmp_path):
     testobj.add_to_config()
     assert capsys.readouterr().out == (
             "called gui.show_dialog with args"
-            f" (<class 'src.activate_gui.NewModDialog'>, {showmods}, 'mods') {{'first_time': True}}\n"
+            f" (<class 'src.gui.NewModDialog'>, {showmods}, 'mods') {{'first_time': True}}\n"
             "called ConfigParser.set with args ('Mod Directories', 'x', 'y')\n"
             "called ConfigParser.add_section with args ('a',)\n"
             "called ConfigParser.set with args ('a', 'b', '')\n"
@@ -308,10 +308,10 @@ def test_add_to_config(monkeypatch, capsys, tmp_path):
 
 
 def test_update_config_from_screenpos(monkeypatch, tmp_path):
-    """unittest for Activater.update_config_from_screenpos
+    """unittest for Manager.update_config_from_screenpos
     """
-    monkeypatch.setattr(testee.Activater, '__init__', mock_init)
-    testobj = testee.Activater('')
+    monkeypatch.setattr(testee.Manager, '__init__', mock_init)
+    testobj = testee.Manager('')
     testobj.screenpos = {}
     configfile = tmp_path / 'testconf'
     backupfile = tmp_path / 'testconf~'
@@ -333,7 +333,7 @@ def test_update_config_from_screenpos(monkeypatch, tmp_path):
 
 
 def test_update_mods(monkeypatch, capsys, tmp_path):
-    """unittest for Activater.update_mods
+    """unittest for Manager.update_mods
     """
     class MockZipFile:
         """stub for zipfile.Zipfile
@@ -386,8 +386,8 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
     (tmp_path / 'mods' / '.root-7').touch()
     (tmp_path / 'mods' / '.root-7~').mkdir()
     monkeypatch.setattr(testee, 'get_archive_roots', mock_get)
-    monkeypatch.setattr(testee.Activater, '__init__', mock_init)
-    testobj = testee.Activater('')
+    monkeypatch.setattr(testee.Manager, '__init__', mock_init)
+    testobj = testee.Manager('')
     testobj.modbase = str(tmp_path / 'mods')
     assert testobj.update_mods([]) == []
     assert capsys.readouterr().out == ''
@@ -441,7 +441,7 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
 
 
 def test_determine_unpack_directory(monkeypatch, capsys):
-    """unittest for Activater.determine_unpack_directory
+    """unittest for Manager.determine_unpack_directory
     """
     class MockZipFile:
         """testdouble object mimicking zipfile.ZipFile class
@@ -464,24 +464,24 @@ def test_determine_unpack_directory(monkeypatch, capsys):
             print('called ZipFile.namelist')
             return []
     def mock_get(namelist):
-        print(f'called Activater.get_archive_roots with arg {namelist}')
+        print(f'called Manager.get_archive_roots with arg {namelist}')
         return []
     def mock_get_1(namelist):
-        print(f'called Activater.get_archive_roots with arg {namelist}')
+        print(f'called Manager.get_archive_roots with arg {namelist}')
         return ['name']
     def mock_get_2(namelist):
-        print(f'called Activater.get_archive_roots with arg {namelist}')
+        print(f'called Manager.get_archive_roots with arg {namelist}')
         return ['name', 'list']
     monkeypatch.setattr(testee.zipfile, 'ZipFile', MockZipFile)
-    monkeypatch.setattr(testee.Activater, '__init__', mock_init)
-    testobj = testee.Activater('')
+    monkeypatch.setattr(testee.Manager, '__init__', mock_init)
+    testobj = testee.Manager('')
     monkeypatch.setattr(testee, 'get_archive_roots', mock_get)
     assert testobj.determine_unpack_directory('testfile.zip') == ''
     assert capsys.readouterr().out == (
             "called zipfile.ZipFile with args ('testfile.zip',) {}\n"
             "called ZipFile.__enter__\n"
             "called ZipFile.namelist\n"
-            "called Activater.get_archive_roots with arg []\n"
+            "called Manager.get_archive_roots with arg []\n"
             "called ZipFile.__exit__\n")
 
     monkeypatch.setattr(testee, 'get_archive_roots', mock_get_1)
@@ -490,7 +490,7 @@ def test_determine_unpack_directory(monkeypatch, capsys):
             "called zipfile.ZipFile with args ('testfile.zip',) {}\n"
             "called ZipFile.__enter__\n"
             "called ZipFile.namelist\n"
-            "called Activater.get_archive_roots with arg []\n"
+            "called Manager.get_archive_roots with arg []\n"
             "called ZipFile.__exit__\n")
 
     monkeypatch.setattr(testee, 'get_archive_roots', mock_get_2)
@@ -499,36 +499,36 @@ def test_determine_unpack_directory(monkeypatch, capsys):
             "called zipfile.ZipFile with args ('testfile.zip',) {}\n"
             "called ZipFile.__enter__\n"
             "called ZipFile.namelist\n"
-            "called Activater.get_archive_roots with arg []\n"
+            "called Manager.get_archive_roots with arg []\n"
             "called ZipFile.__exit__\n")
 
 
-class MockActivater:
-    """testdouble object mimicking Activater class
+class MockManager:
+    """testdouble object mimicking Manager class
     """
     def __init__(self, args):
-        print('called Activater() with args', args)
+        print('called Manager() with args', args)
         self.directories = []
         self.modnames = []
     def build_and_start_gui(self):
         """stub
         """
-        print('called Activater.build_and_start_gui()')
+        print('called Manager.build_and_start_gui()')
     def select_activations(self):
         """stub
         """
-        print('called Activater.select_activations()')
+        print('called Manager.select_activations()')
     def activate(self):
         """stub
         """
-        print('called Activater.activate()')
+        print('called Manager.activate()')
 
 
 def test_main(monkeypatch, capsys):
-    """unittest for activate.main
+    """unittest for manager.main
     """
-    monkeypatch.setattr(testee, 'Activater', MockActivater)
+    monkeypatch.setattr(testee, 'Manager', MockManager)
     monkeypatch.setattr(testee, 'CONFIG', 'filename')
     testee.main()
-    assert capsys.readouterr().out == ("called Activater() with args filename\n"
-                                       'called Activater.build_and_start_gui()\n')
+    assert capsys.readouterr().out == ("called Manager() with args filename\n"
+                                       'called Manager.build_and_start_gui()\n')

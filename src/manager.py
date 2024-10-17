@@ -16,7 +16,7 @@ import configparser
 import shutil
 import zipfile
 import subprocess
-from src import activate_gui as gui
+from src import gui
 MODBASE = os.path.expanduser('~/.steam/steam/steamapps/common/Stardew Valley/Mods')
 CONFIG = os.path.join(MODBASE, 'sdv_mods.config')
 DOWNLOAD = os.path.expanduser('~/Downloads/Stardew Valley Mods')
@@ -26,11 +26,11 @@ NXSKEY = '_Nexus'
 
 def main():
     "main line"
-    DoIt = Activater(CONFIG)
+    DoIt = Manager(CONFIG)
     DoIt.build_and_start_gui()
 
 
-class Activater:
+class Manager:
     "Processing class (the one that contains the application logic (except the GUI stuff)"
     def __init__(self, config):
         self.config = config
@@ -210,16 +210,19 @@ class Activater:
                 else:
                     mod_was_active = False  # strictly speaking: should be "not applicable"
             archive.extractall(self.modbase)
+            archive.close()
+            configdata = {}
             if os.path.exists(os.path.join(self.modbase, '__MACOSX')):
                 shutil.rmtree(os.path.join(self.modbase, '__MACOSX'))
             for rootitem in roots:
+                configdata[rootitem] = self.read_manifest(rootitem)
                 if not mod_was_active:
                     os.rename(os.path.join(self.modbase, f'{rootitem}'),
                               os.path.join(self.modbase, f'.{rootitem}'))
             zipfilepath = os.path.abspath(zipfilename)
             os.rename(zipfilepath, os.path.join(os.path.dirname(zipfilepath), 'installed',
                                                 os.path.basename(zipfilepath)))
-            archive.close()
+            self.add_mod_to_config(configdata, mod_was_active)
             report.append(f'{zipfilename} is successfully installed')
         return report
 
@@ -232,9 +235,16 @@ class Activater:
             roots = get_archive_roots(archive.namelist())
         return '' if not roots else ', '.join(list(roots))
 
+    def read_manifest(self, dirname):
+        "read manifest.json and extract nxskey and dependencies"
+        modinfo = {'modname': '', NXSKEY: '', 'deps': []}
+
+    def add_mod_to_config(self, configdata, mod_was_active):
+        "add info about mod to configuration"
+
 
 def get_archive_roots(namelist):
-    "determine base directories for a list of filenames"
+    "determione base directories for a list of filenames"
     roots = set()
     for name in namelist:
         parent = os.path.dirname(name)

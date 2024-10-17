@@ -2,10 +2,10 @@
 unittests/
 
 [testscripts]
-main: test_activate.py
-gui: test_activate_gui.py
+main: test_manager.py
+gui: test_gui.py
 
 [testees]
-main: src/activate.py
-gui: src/activate_gui.py
+main: src/manager.py
+gui: src/gui.py
 

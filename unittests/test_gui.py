@@ -1,10 +1,10 @@
-"""unittests for ./activate_gui.py
+"""unittests for ./gui.py
 """
 import types
 import configparser
 import pytest
 import mockgui.mockqtwidgets as mockqtw
-from src import activate_gui as testee
+from src import gui as testee
 
 showmods = """\
 called QWidget.setWindowTitle()
@@ -154,8 +154,8 @@ def expected_output():
     return results
 
 
-class MockActivater:
-    """stub for ./activate.Activater
+class MockManager:
+    """stub for ./manager.Manager
     """
     def __init__(self):
         self.modbase = 'modbase'
@@ -175,7 +175,7 @@ class MockActivater:
     def activate(self):
         """stub
         """
-        print('called Activater.activate')
+        print('called Activater.manager')
     def reload_config(self):
         """stub
         """
@@ -192,7 +192,7 @@ class MockActivater:
 
 
 def test_show_dialog(capsys):
-    """unittest for activate_gui.show_dialog
+    """unittest for gui.show_dialog
     """
     def mock_exec(self):
         print('called Dialog.exec')
@@ -224,10 +224,10 @@ def test_show_dialog(capsys):
 
 
 class TestShowMods:
-    """unittest for activate_gui.ShowMods
+    """unittest for gui.ShowMods
     """
     def setup_testobj(self, monkeypatch, capsys):
-        """stub for activate_gui.ShowMods object
+        """stub for gui.ShowMods object
 
         create the object skipping the normal initialization
         intercept messages during creation
@@ -243,7 +243,7 @@ class TestShowMods:
             print('called QWidget.__init__()')
         monkeypatch.setattr(testee.qtw.QApplication, '__init__', mock_app_init)
         monkeypatch.setattr(testee.qtw.QWidget, '__init__', mock_init)
-        testobj = testee.ShowMods(MockActivater())
+        testobj = testee.ShowMods(MockManager())
         assert capsys.readouterr().out == (
             'called QApplication.__init__()\n'
             'called QWidget.__init__()\n')
@@ -395,7 +395,7 @@ class TestShowMods:
                                            'called CheckBox.isChecked\n'
                                            'called CheckBox.isChecked\n'
                                            'called Activater.select_activations\n'
-                                           'called Activater.activate\n'
+                                           'called Activater.manager\n'
                                            'called Activater.refresh_widgets with'
                                            " args {'reorder_widgets': False}\n"
                                            "called MessageBox.information with args"
@@ -751,7 +751,7 @@ class TestShowMods:
         testobj.reorder_gui()
         assert capsys.readouterr().out == (
                 "called gui.show_dialog with args"
-                f" (<class 'src.activate_gui.ReorderDialog'>, {testobj}) {{}}\n")
+                f" (<class 'src.gui.ReorderDialog'>, {testobj}) {{}}\n")
         monkeypatch.setattr(testee, 'show_dialog', mock_show_2)
         testobj.reorder_gui()
         assert testobj.widgets == {}
@@ -759,16 +759,16 @@ class TestShowMods:
         assert testobj.positions == {}
         assert capsys.readouterr().out == (
                 "called gui.show_dialog with args"
-                f" (<class 'src.activate_gui.ReorderDialog'>, {testobj}) {{}}\n"
+                f" (<class 'src.gui.ReorderDialog'>, {testobj}) {{}}\n"
                 "called Activater.update_config_from_screenpos\n"
                 "called ActivateGui.refresh_widgets\n")
 
 
 class TestNewModDialog:
-    """unittest for activate_gui.NewModDialog
+    """unittest for gui.NewModDialog
     """
     def setup_testobj(self, monkeypatch, capsys):
-        """stub for activate_gui.NewModDialog object
+        """stub for gui.NewModDialog object
 
         create the object skipping the normal initialization
         intercept messages during creation
@@ -826,7 +826,7 @@ class TestNewModDialog:
         monkeypatch.setattr(testee.qtw.QFileDialog, 'getOpenFileName', mock_open)
         monkeypatch.setattr(testee.qtw.QMessageBox, 'information', mock_information)
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.parent = types.SimpleNamespace(master=MockActivater())
+        testobj.parent = types.SimpleNamespace(master=MockManager())
         testobj.parent.master.determine_unpack_directory = mock_determine
         testobj.first_name = mockqtw.MockLineEdit()
         testobj.last_name = mockqtw.MockLineEdit()
@@ -987,13 +987,13 @@ class TestNewModDialog:
 
 
 class TestReorderDialog:
-    """unittest for activate_gui.ReorderDialog
+    """unittest for gui.ReorderDialog
     """
     populate_text = ("called TableItem.__init__ with arg {}\n"
                      "called Table.setItem with args ({},"
                      " item of <class 'mockgui.mockqtwidgets.MockTableItem'>)\n")
     def setup_testobj(self, monkeypatch, capsys):
-        """stub for activate_gui.ReorderDialog object
+        """stub for gui.ReorderDialog object
 
         create the object skipping the normal initialization
         intercept messages during creation
@@ -1025,7 +1025,7 @@ class TestReorderDialog:
         monkeypatch.setattr(testee.qtw, 'QPushButton', mockqtw.MockPushButton)
         parent = mockqtw.MockWidget()
         # parent.appicon = 'appicon'
-        parent.master = MockActivater()
+        parent.master = MockManager()
         parent.master.screenpos = {'screen': 'positions'}
         testobj = testee.ReorderDialog(parent)
         assert testobj.parent == parent
@@ -1162,7 +1162,7 @@ class TestReorderDialog:
         monkeypatch.setattr(testee.qtw.QMessageBox, 'information', mock_information)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj._parent = mockqtw.MockWidget()
-        testobj._parent.master = MockActivater()
+        testobj._parent.master = MockManager()
         assert capsys.readouterr().out == "called Widget.__init__\n"
         testobj.data = {'aaa': '', 'bbb': '', 'ccc': '', 'ddd': '', 'eee': '', 'fff': '', 'ggg': ''}
         testobj.table = self.setup_table(testobj, capsys)
