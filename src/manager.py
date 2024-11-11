@@ -215,7 +215,7 @@ class Manager:
             if os.path.exists(os.path.join(self.modbase, '__MACOSX')):
                 shutil.rmtree(os.path.join(self.modbase, '__MACOSX'))
             for rootitem in roots:
-                configdata[rootitem] = self.read_manifest(rootitem)
+                configdata[rootitem] = self.read_manifest(rootitem)  # functie is nog WIP
                 if not mod_was_active:
                     os.rename(os.path.join(self.modbase, f'{rootitem}'),
                               os.path.join(self.modbase, f'.{rootitem}'))
@@ -248,7 +248,7 @@ def get_archive_roots(namelist):
     roots = set()
     for name in namelist:
         parent = os.path.dirname(name)
-        while parent:
+        while True:
             test = os.path.dirname(parent)
             if not test:
                 break

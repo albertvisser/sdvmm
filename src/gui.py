@@ -106,7 +106,7 @@ class ShowMods(qtw.QWidget):
                     linktext = labeltext
                 self.master.modnames.append(linktext)
         self.master.select_activations()
-        if self.master.directories:   # is deze conditie nog nodig of misschien zelfs te beperkend?
+        if self.master.directories:   # alleen leeg als er niks aangevinkt is
             self.master.activate()
         self.refresh_widgets(reorder_widgets=False)  # is eigenlijk niet nodig?
         qtw.QMessageBox.information(self, 'Change Config', 'wijzigingen zijn doorgevoerd')
@@ -155,6 +155,10 @@ class ShowMods(qtw.QWidget):
             nexustext = '<a href="https://www.nexusmods.com/stardewvalley/mods/{}">{}</a>'
             text = nexustext.format(linknum, text)
             label.setOpenExternalLinks(True)
+        if linknum == '1720':  # JSON Assets
+            text = text + " (broken in 1.6.9)"
+        if linknum == '19376':
+            text = text + " (broken in 1.6)"
         label.setText(text)
         hbox.addSpacing(50)
         hbox.addWidget(check)
@@ -293,14 +297,13 @@ class NewModDialog(qtw.QDialog):
                     # self.parent.dialog_data['deps'][data['mods'][0]] = value
                 if data['set_active']:
                     self.parent.dialog_data['set_active'].append(data['set_active'][0])
-                for ix, dep in enumerate(self.deps):
-                    if dep[0] == lbox:
-                        self.deps[ix] = (lbox, key)
-                        break
-                # print(self.parent.dialog_data)
-                # lbox.setEditText(data['mods'][0])
-                lbox.addItem(key)
-                lbox.setCurrentText(key)
+                if data['deps']:
+                    for ix, dep in enumerate(self.deps):
+                        if dep[0] == lbox:
+                            self.deps[ix] = (lbox, key)
+                            break
+                    lbox.addItem(key)
+                    lbox.setCurrentText(key)
             return
         if choice == 1:
             self.remove_depline(lbox)

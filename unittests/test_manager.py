@@ -134,7 +134,8 @@ def test_select_activations(monkeypatch, capsys):
     monkeypatch.setattr(testee.Manager, '__init__', mock_init)
     monkeypatch.setattr(testee.Manager, 'add_activations', mock_add)
     testobj = testee.Manager('')
-    conf = ('[test]\nthis\n\n[other]\nthey\nthem\n\n[third]\noink\n\n'
+    conf = ('[test]\nthis\n\n[other]\nthey\nthem\n'
+            f'{testee.SCRPOS}: x,y\n{testee.NXSKEY}: 5\n\n[third]\noink\n\n'
             '[Mod Directories]\ntest: x\nthis: y\nother: z\nthey: a\nthem: b\n\nthird: c\noink: d')
     testobj.conf = testee.configparser.ConfigParser(allow_no_value=True)
     testobj.conf.optionxform = str
@@ -153,7 +154,8 @@ def test_add_activations(monkeypatch):
     """
     monkeypatch.setattr(testee.Manager, '__init__', mock_init)
     testobj = testee.Manager('')
-    testobj.conf = {'test': {'this': '', 'that': ''}, 'this': {'those': ''},
+    testobj.conf = {'test': {'this': '', 'that': ''},
+                    'this': {'those': '', testee.SCRPOS: 'x,y', testee.NXSKEY: '5'},
                     'Mod Directories': {'this': 'that, another', 'those': 'thoze'}}
     testobj.directories.add('that')
     assert testobj.directories == {'that'}
@@ -263,7 +265,8 @@ def test_add_to_config(monkeypatch, capsys, tmp_path):
         return False
     def mock_show_2(*args, **kwargs):
         print("called gui.show_dialog with args", args, kwargs)
-        args[1].dialog_data = {'mods': [('x', 'y')], 'deps': {'a': 'b'}, 'set_active': ['q', 'r']}
+        args[1].dialog_data = {'mods': [('x', 'y')], 'deps': {'a': 'b', 'c': ''},
+                               'set_active': ['q', 'r']}
         return True
     def mock_copyfile(*args):
         print('called shutil.copyfile with args', args)
@@ -345,10 +348,13 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
             print('called ZipFile.namelist')
             return ['name', 'list']
         def extractall(self, *args):
+            nonlocal extractall_counter
             print('called ZipFile.extractall with args', args)
+            extractall_counter += 1
             (tmp_path / 'mods' / self._name).touch()
-            if not (tmp_path / 'mods' / '__MACOSX').exists():
-                (tmp_path / 'mods' / '__MACOSX').mkdir()
+            if extractall_counter == 1:
+                if not (tmp_path / 'mods' / '__MACOSX').exists():
+                    (tmp_path / 'mods' / '__MACOSX').mkdir()
         def extract(self, *args):
             print('called ZipFile.extract with args', args)
             (tmp_path / 'mods' / self._name).touch()
@@ -394,6 +400,7 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
     filelist = [tmp_path / 'dl' / 'root-1', tmp_path / 'dl' / 'root-2', tmp_path / 'dl' / 'root-3',
                 tmp_path / 'dl' / 'root-4', tmp_path / 'dl' / 'root-5', tmp_path / 'dl' / 'root-6',
                 tmp_path / 'dl' / 'root-7']
+    extractall_counter = 0
     assert testobj.update_mods(filelist) == [
             f"{tmp_path}/dl/root-1 is successfully installed",
             f"{tmp_path}/dl/root-2 is successfully installed",
