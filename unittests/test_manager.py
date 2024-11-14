@@ -32,6 +32,10 @@ class MockParser(dict):
         print("called ConfigParser.add_section with args", args)
         if args[0] == 'q':
             raise testee.configparser.DuplicateSectionError('q')
+    def remove_option(self, *args):
+        """stub
+        """
+        print("called ConfigParser.remove_option with args", args)
     def write(self, *args):
         """stub
         """
@@ -109,19 +113,22 @@ def test_extract_screen_locations(monkeypatch):
     monkeypatch.setattr(testee.Manager, '__init__', mock_init)
     testobj = testee.Manager('')
     testobj.screenpos = {}
-    conf = (f'[test]\nthis\n{testee.SCRPOS}: x,y\n{testee.NXSKEY}: 123\n[other]\nthey\nthem\n\n'
-            '[Mod Directories]\ntest: x\nthis: y')
+    testobj.screentext = {}
+    conf = (f'[test]\nthis\n{testee.SCRPOS}: x,y\n{testee.NXSKEY}: 123\n{testee.SCRTXT}: xxxx\n\n'
+            f'[other]\nthey\nthem\n\n[Mod Directories]\ntest: x\nthis: y')
     testobj.conf = testee.configparser.ConfigParser(allow_no_value=True)
     testobj.conf.optionxform = str
     testobj.conf.read_string(conf)
     assert testobj.conf.sections() == ['test', 'other', 'Mod Directories']
-    assert testobj.conf.options('test') == ['this', f'{testee.SCRPOS}', '_Nexus']
+    assert testobj.conf.options('test') == ['this', f'{testee.SCRPOS}', f'{testee.NXSKEY}',
+                                            f'{testee.SCRTXT}']
     assert testobj.conf.options('other') == ['they', 'them']
     testobj.extract_screen_locations()
     assert testobj.conf.sections() == ['test', 'other', 'Mod Directories']
-    assert testobj.conf.options('test') == ['this', '_ScreenPos', '_Nexus']
+    assert testobj.conf.options('test') == ['this', '_ScreenPos', '_Nexus', '_ScreenText']
     assert testobj.conf.options('other') == ['they', 'them']
     assert testobj.screenpos == {'test': ['x,y', '123'], 'other': ['', '']}
+    assert testobj.screentext == {'test': 'xxxx'}
 
 
 def test_select_activations(monkeypatch, capsys):
@@ -304,6 +311,58 @@ def test_add_to_config(monkeypatch, capsys, tmp_path):
             "called ConfigParser.add_section with args ('q',)\n"
             "called ConfigParser.add_section with args ('r',)\n"
             "called ShowMods.add_entries_for_name with arg 'r'\n"
+            f"called shutil.copyfile with args ('{conffile}', '{conffile}~')\n"
+            f"called ConfigParser.write with args (<_io.TextIOWrapper name='{conffile}'"
+            " mode='w' encoding='UTF-8'>,)\n"
+            "called ShowMods.refresh_widgets\n")
+
+
+def test_add_remark(monkeypatch, capsys, tmp_path):
+    """unittest for Manager.add_remark
+    """
+    class MockShow:
+        "stub for testee.ShowMods"
+        def __init__(self, master):
+            self.master = master
+        def refresh_widgets(self):
+            print("called ShowMods.refresh_widgets")
+    def mock_show(*args):
+        print("called gui.show_dialog with args", args)
+        args[1].master.screentext = {}
+    def mock_show_2(*args):
+        print("called gui.show_dialog with args", args)
+        args[1].master.screentext = {'xxx': 'aaaaaaa', 'zzz': 'zzzzzzz', 'qqq': 'qqqqqqq'}
+    def mock_copyfile(*args):
+        print('called shutil.copyfile with args', args)
+    conffile = tmp_path / 'sdvmm' / 'config'
+    conffile.parent.mkdir()
+    monkeypatch.setattr(testee.gui, 'show_dialog', mock_show)
+    monkeypatch.setattr(testee.shutil, 'copyfile', mock_copyfile)
+    # monkeypatch.setattr(testee.gui, 'NewModDialog', MockDialog)
+    monkeypatch.setattr(testee.Manager, '__init__', mock_init)
+    testobj = testee.Manager('')
+    testobj.conf = MockParser()
+    assert capsys.readouterr().out == "called ConfigParser() with args () {}\n"
+    testobj.conf['Mod Directories'] = 'mods'
+    showmods = MockShow(testobj)
+    testobj.doit = showmods
+    testobj.config = str(conffile)
+
+    testobj.screentext = {}
+    testobj.add_remark()
+    assert capsys.readouterr().out == (
+            "called gui.show_dialog with args"
+            f" (<class 'src.gui.RemarksDialog'>, {testobj.doit}, 'mods')\n")
+
+    monkeypatch.setattr(testee.gui, 'show_dialog', mock_show_2)
+    testobj.screentext = {'xxx': 'xxxxxxx', 'yyy': 'yyyyyyy', 'qqq': 'qqqqqqq'}
+    testobj.add_remark()
+    assert capsys.readouterr().out == (
+            "called gui.show_dialog with args"
+            f" (<class 'src.gui.RemarksDialog'>, {testobj.doit}, 'mods')\n"
+            "called ConfigParser.set with args ('xxx', '_ScreenText', 'aaaaaaa')\n"
+            "called ConfigParser.set with args ('zzz', '_ScreenText', 'zzzzzzz')\n"
+            "called ConfigParser.remove_option with args ('yyy', '_ScreenText')\n"
             f"called shutil.copyfile with args ('{conffile}', '{conffile}~')\n"
             f"called ConfigParser.write with args (<_io.TextIOWrapper name='{conffile}'"
             " mode='w' encoding='UTF-8'>,)\n"

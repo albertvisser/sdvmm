@@ -21,6 +21,7 @@ MODBASE = os.path.expanduser('~/.steam/steam/steamapps/common/Stardew Valley/Mod
 CONFIG = os.path.join(MODBASE, 'sdv_mods.config')
 DOWNLOAD = os.path.expanduser('~/Downloads/Stardew Valley Mods')
 SCRPOS = '_ScreenPos'
+SCRTXT = '_ScreenText'
 NXSKEY = '_Nexus'
 
 
@@ -42,6 +43,7 @@ class Manager:
         self.downloads = DOWNLOAD
         self.directories = set()
         self.screenpos = {}
+        self.screentext = {}
 
     def build_and_start_gui(self):
         """build screen: make the user select from a list which expansions they want to have active
@@ -66,6 +68,8 @@ class Manager:
                 # self.conf.remove_option(item, SCRPOS)
             if self.conf.has_option(item, NXSKEY):
                 self.screenpos[item][1] = self.conf[item][NXSKEY]
+            if self.conf.has_option(item, SCRTXT):
+                self.screentext[item] = self.conf[item][SCRTXT]
 
     def select_activations(self):
         "expand the selection to a list of directories"
@@ -155,6 +159,26 @@ class Manager:
                     pass
                 else:
                     self.doit.add_entries_for_name(name)
+            shutil.copyfile(self.config, self.config + '~')
+            with open(self.config, 'w') as cfg:
+                self.conf.write(cfg)
+            self.doit.refresh_widgets()
+
+    def add_remark(self):
+        """save screen remark in config
+        """
+        oldremarks = dict(self.screentext)
+        gui.show_dialog(gui.RemarksDialog, self.doit, self.conf['Mod Directories'])
+        changes = False
+        for modname, remark in self.screentext.items():  # changed remarks
+            if modname not in oldremarks or remark != oldremarks[modname]:
+                self.conf.set(modname, SCRTXT, remark)
+                changes = True
+        for modname in oldremarks:
+            if modname not in self.screentext:
+                self.conf.remove_option(modname, SCRTXT)
+                changes = True
+        if changes:
             shutil.copyfile(self.config, self.config + '~')
             with open(self.config, 'w') as cfg:
                 self.conf.write(cfg)

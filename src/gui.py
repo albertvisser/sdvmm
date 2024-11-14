@@ -57,6 +57,9 @@ class ShowMods(qtw.QWidget):
         btn = qtw.QPushButton('add &Mod to config', self)
         btn.clicked.connect(self.master.add_to_config)
         hbox.addWidget(btn)
+        btn = qtw.QPushButton('add/remove remar&Ks', self)
+        btn.clicked.connect(self.master.add_remark)
+        hbox.addWidget(btn)
         btn = qtw.QPushButton('&Edit config', self)
         btn.clicked.connect(self.master.edit_config)
         hbox.addWidget(btn)
@@ -66,10 +69,10 @@ class ShowMods(qtw.QWidget):
         btn = qtw.QPushButton('&Check config', self)
         btn.clicked.connect(self.check)
         hbox.addWidget(btn)
-        btn = qtw.QPushButton('&Activeer wijzigingen', self)
+        btn = qtw.QPushButton('&Activate changes', self)
         btn.clicked.connect(self.confirm)
         hbox.addWidget(btn)
-        btn = qtw.QPushButton('&Klaar', self)
+        btn = qtw.QPushButton('&Done', self)
         btn.clicked.connect(self.close)
         hbox.addWidget(btn)
         hbox.addStretch()
@@ -151,14 +154,13 @@ class ShowMods(qtw.QWidget):
         hbox = qtw.QHBoxLayout()
         check = qtw.QCheckBox()
         label = qtw.QLabel()
+        modname = text
         if linknum:
             nexustext = '<a href="https://www.nexusmods.com/stardewvalley/mods/{}">{}</a>'
             text = nexustext.format(linknum, text)
             label.setOpenExternalLinks(True)
-        if linknum == '1720':  # JSON Assets
-            text = text + " (broken in 1.6.9)"
-        if linknum == '19376':
-            text = text + " (broken in 1.6)"
+        if modname in self.master.screentext:
+            text += ' ' + self.master.screentext[modname]
         label.setText(text)
         hbox.addSpacing(50)
         hbox.addWidget(check)
@@ -335,6 +337,68 @@ class NewModDialog(qtw.QDialog):
         if self.can_activate.isChecked():
             self.parent.dialog_data['set_active'].append(modname)
         self.accept()
+
+
+class RemarksDialog(qtw.QDialog):
+    """Dialog for add ing or removing a remark following a mod's screen text
+    """
+    def __init__(self, parent, modnames):
+        self.parent = parent
+        self.modnames = modnames
+        super().__init__(parent)
+        vbox = qtw.QVBoxLayout()
+        lbox = qtw.QComboBox(self)
+        lbox.setEditable(False)
+        lbox.addItem('select a mod to change the screen text')
+        lbox.addItems(self.modnames)
+        lbox.currentTextChanged[str].connect(self.process)
+        vbox.addWidget(lbox)
+        hbox = qtw.QHBoxLayout()
+        self.text = qtw.QLineEdit(self)
+        self.text.setMinimumWidth(200)
+        self.text.setReadOnly(True)
+        hbox.addWidget(self.text)
+        self.clear_button = qtw.QPushButton()
+        self.clear_button.setIcon(qgui.QIcon.fromTheme(qgui.QIcon.ThemeIcon.EditClear))
+        self.clear_button.setDisabled(True)
+        self.clear_button.clicked.connect(self.clear_text)
+        hbox.addWidget(self.clear_button)
+        vbox.addLayout(hbox)
+        hbox = qtw.QHBoxLayout()
+        self.change_button = qtw.QPushButton('&Change')
+        self.change_button.setDisabled(True)
+        self.change_button.clicked.connect(self.change_text)
+        hbox.addWidget(self.change_button)
+        close_button = qtw.QPushButton('&Done')
+        close_button.clicked.connect(self.accept)
+        hbox.addWidget(close_button)
+        vbox.addLayout(hbox)
+        self.setLayout(vbox)
+
+    def process(self, choice):
+        "get description if any"
+        self.text.clear()
+        if choice in self.parent.master.screentext:
+            self.text.setText(self.parent.master.screentext[choice])
+        self.choice = choice
+        self.text.setReadOnly(False)
+        self.clear_button.setDisabled(False)
+        self.change_button.setDisabled(False)
+
+    def clear_text(self):
+        "visually delete description if any"
+        self.text.clear()
+
+    def change_text(self):
+        "update screentext in dictionary"
+        newtext = self.text.text()
+        if not newtext:
+            self.parent.master.screentext.pop(self.choice)
+        else:
+            self.parent.master.screentext[self.choice] = newtext
+        self.text.setReadOnly(True)
+        self.clear_button.setDisabled(True)
+        self.change_button.setDisabled(True)
 
 
 class ReorderDialog(qtw.QDialog):
