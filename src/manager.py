@@ -218,6 +218,9 @@ class Manager:
             #     # de activeer routines snappen dit al
             #     # nu het vervolg van deze methode nog
             # root = root.pop()
+            justfiles = roots == {''}
+            if justfiles:
+                roots = []
             for rootitem in roots:
                 if os.path.exists(os.path.join(self.modbase, rootitem)):
                     mod_was_active = True
@@ -246,7 +249,8 @@ class Manager:
             zipfilepath = os.path.abspath(zipfilename)
             os.rename(zipfilepath, os.path.join(os.path.dirname(zipfilepath), 'installed',
                                                 os.path.basename(zipfilepath)))
-            self.add_mod_to_config(configdata, mod_was_active)
+            if not justfiles:
+                self.add_mod_to_config(configdata, mod_was_active)
             report.append(f'{zipfilename} is successfully installed')
         return report
 

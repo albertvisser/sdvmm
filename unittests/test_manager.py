@@ -429,6 +429,9 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
         if counter == 4:
             return set()
         return {f'root-{counter}'}
+    def mock_get_2(arg):
+        print(f'called get_archive_root with arg {arg}')
+        return {''}
     monkeypatch.setattr(testee.zipfile, 'ZipFile', MockZipFile)
     (tmp_path / 'mods').mkdir()
     (tmp_path / 'dl').mkdir()
@@ -500,6 +503,19 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
             f"called ZipFile.extractall with args ({testobj.modbase!r},)\n"
             "called ZipFile.close\n"
             f"called ZipFile.__init__ with args ({filelist[6]!r},)\n"
+            "called ZipFile.namelist\n"
+            "called get_archive_root with arg ['name', 'list']\n"
+            f"called ZipFile.extractall with args ({testobj.modbase!r},)\n"
+            "called ZipFile.close\n")
+
+    monkeypatch.setattr(testee, 'get_archive_roots', mock_get_2)
+    (tmp_path / 'dl' / 'root-1').touch()
+    filelist = [tmp_path / 'dl' / 'root-1']
+    # breakpoint()
+    assert testobj.update_mods(filelist) == [
+            f"{tmp_path}/dl/root-1 is successfully installed"]
+    assert capsys.readouterr().out == (
+            f"called ZipFile.__init__ with args ({filelist[0]!r},)\n"
             "called ZipFile.namelist\n"
             "called get_archive_root with arg ['name', 'list']\n"
             f"called ZipFile.extractall with args ({testobj.modbase!r},)\n"
