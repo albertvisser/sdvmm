@@ -241,7 +241,7 @@ def test_check_config(monkeypatch):
     """
     monkeypatch.setattr(testee.Manager, '__init__', mock_init)
     testobj = testee.Manager('')
-    conf_ok = ('[test]\nthis\nthese\n\n[this]\nthose\n\n'
+    conf_ok = ('[test]\nthis\nthese\n\n[this]\nthose\n_xxx: yyy\n\n'
                '[Mod Directories]\ntest: x\nthis: that, another\nthose: thoze\nthese: theze')
     testobj.conf = testee.configparser.ConfigParser(allow_no_value=True)
     testobj.conf.optionxform = str

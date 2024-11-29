@@ -134,7 +134,7 @@ class Manager:
             if name not in modnames:
                 errors.append(f'Unknown expansion / mod name: `{name}`')
             for name2 in self.conf.options(name):
-                if name2 not in modnames and name2 != "_ScreenPos":
+                if name2 not in modnames and not name2.startswith('_'):
                     errors.append(f'Unknown mod name `{name2}` for expansion/mod `{name}`')
         return errors or ['No errors']
 
