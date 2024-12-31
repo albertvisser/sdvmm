@@ -221,7 +221,13 @@ class Manager:
             justfiles = roots == {''}
             if justfiles:
                 roots = []
+            dest = self.modbase
+            smapi_install = False
             for rootitem in roots:
+                if rootitem.startswith('SMAPI'):
+                    smapi_install = True
+                    dest = '/tmp'
+                    break
                 if os.path.exists(os.path.join(self.modbase, rootitem)):
                     mod_was_active = True
                     if os.path.exists(os.path.join(self.modbase, f'.{rootitem}~')):
@@ -236,22 +242,31 @@ class Manager:
                               os.path.join(self.modbase, f'.{rootitem}~'))
                 else:
                     mod_was_active = False  # strictly speaking: should be "not applicable"
-            archive.extractall(self.modbase)
-            archive.close()
-            configdata = {}
-            if os.path.exists(os.path.join(self.modbase, '__MACOSX')):
-                shutil.rmtree(os.path.join(self.modbase, '__MACOSX'))
-            for rootitem in roots:
-                configdata[rootitem] = self.read_manifest(rootitem)  # functie is nog WIP
-                if not mod_was_active:
-                    os.rename(os.path.join(self.modbase, f'{rootitem}'),
-                              os.path.join(self.modbase, f'.{rootitem}'))
+            if smapi_install:
+                archive.close()
+                installdir = os.path.join('/tmp', roots.pop())
+                subprocess.run(['unzip', zipfilename, '-d', dest], check=True)
+                subprocess.run(['gnome-terminal'], cwd=installdir)  # , capture_output=True)
+                message = ("SMAPI-install is waiting in a terminal window to be finished"
+                           " by executing './install on Linux.sh'")
+            else:
+                archive.extractall(dest)  # self.modbase)
+                archive.close()
+                configdata = {}
+                if os.path.exists(os.path.join(self.modbase, '__MACOSX')):
+                    shutil.rmtree(os.path.join(self.modbase, '__MACOSX'))
+                for rootitem in roots:
+                    configdata[rootitem] = self.read_manifest(rootitem)  # functie is nog WIP
+                    if not mod_was_active:
+                        os.rename(os.path.join(self.modbase, f'{rootitem}'),
+                                  os.path.join(self.modbase, f'.{rootitem}'))
+                message = f'{zipfilename} is successfully installed'
+                if not justfiles:
+                    self.add_mod_to_config(configdata, mod_was_active)
             zipfilepath = os.path.abspath(zipfilename)
             os.rename(zipfilepath, os.path.join(os.path.dirname(zipfilepath), 'installed',
                                                 os.path.basename(zipfilepath)))
-            if not justfiles:
-                self.add_mod_to_config(configdata, mod_was_active)
-            report.append(f'{zipfilename} is successfully installed')
+            report.append(message)
         return report
 
     def determine_unpack_directory(self, zipfilename):
@@ -266,9 +281,12 @@ class Manager:
     def read_manifest(self, dirname):
         "read manifest.json and extract nxskey and dependencies"
         modinfo = {'modname': '', NXSKEY: '', 'deps': []}
+        return modinfo
 
     def add_mod_to_config(self, configdata, mod_was_active):
         "add info about mod to configuration"
+        # bij updaten: vergelijken oude informatie met nieuwe of blind vervangen?
+        # vragen of de mod (nog steeds niet) apart activatable moet zijn
 
 
 def get_archive_roots(namelist):

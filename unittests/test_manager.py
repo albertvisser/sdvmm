@@ -432,6 +432,12 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
     def mock_get_2(arg):
         print(f'called get_archive_root with arg {arg}')
         return {''}
+    def mock_get_3(arg):
+        print(f'called get_archive_root with arg {arg}')
+        return {'SMAPI-root-1'}
+    def mock_run(*args, **kwargs):
+        print('called subprocess.run with args', args, kwargs)
+    monkeypatch.setattr(testee.subprocess, 'run', mock_run)
     monkeypatch.setattr(testee.zipfile, 'ZipFile', MockZipFile)
     (tmp_path / 'mods').mkdir()
     (tmp_path / 'dl').mkdir()
@@ -511,7 +517,6 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
     monkeypatch.setattr(testee, 'get_archive_roots', mock_get_2)
     (tmp_path / 'dl' / 'root-1').touch()
     filelist = [tmp_path / 'dl' / 'root-1']
-    # breakpoint()
     assert testobj.update_mods(filelist) == [
             f"{tmp_path}/dl/root-1 is successfully installed"]
     assert capsys.readouterr().out == (
@@ -520,6 +525,23 @@ def test_update_mods(monkeypatch, capsys, tmp_path):
             "called get_archive_root with arg ['name', 'list']\n"
             f"called ZipFile.extractall with args ({testobj.modbase!r},)\n"
             "called ZipFile.close\n")
+
+    monkeypatch.setattr(testee, 'get_archive_roots', mock_get_3)
+    fpath = tmp_path / 'dl' / 'SMAPI-root-1'
+    fpath.touch()
+    filelist = [fpath]
+    assert testobj.update_mods(filelist) == [
+            "SMAPI-install is waiting in a terminal window to be finished"
+            " by executing './install on Linux.sh'"]
+    assert capsys.readouterr().out == (
+            f"called ZipFile.__init__ with args ({filelist[0]!r},)\n"
+            "called ZipFile.namelist\n"
+            "called get_archive_root with arg ['name', 'list']\n"
+            "called ZipFile.close\n"
+            f"called subprocess.run with args (['unzip', {fpath!r}, '-d', '/tmp'],)"
+            " {'check': True}\n"
+            f"called subprocess.run with args (['gnome-terminal'],)"
+            " {'cwd': '/tmp/SMAPI-root-1'}\n")
 
 
 def test_determine_unpack_directory(monkeypatch, capsys):
