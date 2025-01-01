@@ -13,37 +13,48 @@ werkwijze:
 """
 import os
 import configparser
+import contextlib
+import json
+import pathlib
 import shutil
 import zipfile
 import subprocess
 from src import gui
+import src.jsonconfig as dmlj
 MODBASE = os.path.expanduser('~/.steam/steam/steamapps/common/Stardew Valley/Mods')
 CONFIG = os.path.join(MODBASE, 'sdv_mods.config')
+JSONCONFIG = os.path.join(MODBASE, 'sdv_mods_config.json')
 DOWNLOAD = os.path.expanduser('~/Downloads/Stardew Valley Mods')
 SCRPOS = '_ScreenPos'
+SCRNAM = '_ScreenName'
 SCRTXT = '_ScreenText'
 NXSKEY = '_Nexus'
-
+SEL = '_Selectable'
 
 def main():
     "main line"
-    DoIt = Manager(CONFIG)
+    if not os.path.exists(JSONCONFIG):
+        build_jsonconf()
+    DoIt = Manager()   # (CONFIG)
     DoIt.build_and_start_gui()
 
 
 class Manager:
     "Processing class (the one that contains the application logic (except the GUI stuff)"
-    def __init__(self, config):
-        self.config = config
-        self.conf = configparser.ConfigParser(delimiters=(':',), allow_no_value=True)
-        self.conf.optionxform = str
-        self.conf.read(self.config)
+    def __init__(self):  # , config):
+        # self.config = config
+        # self.conf = configparser.ConfigParser(delimiters=(':',), allow_no_value=True)
+        # self.conf.optionxform = str
+        # self.conf.read(self.config)
+        self.conf = dmlj.JsonConf(JSONCONFIG)
+        self.conf.load()
         self.modnames = []
         self.modbase = MODBASE
         self.downloads = DOWNLOAD
         self.directories = set()
         self.screenpos = {}
         self.screentext = {}
+        self.screeninfo = {}
 
     def build_and_start_gui(self):
         """build screen: make the user select from a list which expansions they want to have active
@@ -59,17 +70,27 @@ class Manager:
         temporarily from the config
         allows for the key not being present due to the screen never being reorganized
         """
-        for item in self.conf.sections():
-            if item == 'Mod Directories':
-                continue
-            self.screenpos[item] = ['', '']  # screenpos is eigenlijk geen goede naam meer
-            if self.conf.has_option(item, SCRPOS):
-                self.screenpos[item][0] = self.conf[item][SCRPOS]
-                # self.conf.remove_option(item, SCRPOS)
-            if self.conf.has_option(item, NXSKEY):
-                self.screenpos[item][1] = self.conf[item][NXSKEY]
-            if self.conf.has_option(item, SCRTXT):
-                self.screentext[item] = self.conf[item][SCRTXT]
+        # for item in self.conf.sections():
+        #     if item == 'Mod Directories':
+        #         continue
+        #     self.screenpos[item] = ['', '']  # screenpos is eigenlijk geen goede naam meer
+        #     if self.conf.has_option(item, SCRPOS):
+        #         self.screenpos[item][0] = self.conf[item][SCRPOS]
+        #         # self.conf.remove_option(item, SCRPOS)
+        #     if self.conf.has_option(item, NXSKEY):
+        #         self.screenpos[item][1] = self.conf[item][NXSKEY]
+        #     if self.conf.has_option(item, SCRTXT):
+        #         self.screentext[item] = self.conf[item][SCRTXT]
+        for dirname in self.conf.list_all_mod_dirs():
+            item = self.conf.get_diritem_data(dirname, SCRNAM) or dirname
+            oldinfo = self.screeninfo[item] if item in self.screeninfo else {'sel': False, 'pos': '',
+                                                                             'key': '', 'txt': ''}
+            self.screeninfo[item] = {
+                    'dir': dirname,
+                    'sel': self.conf.get_diritem_data(dirname, SEL) or oldinfo['sel'],
+                    'pos': self.conf.get_diritem_data(dirname, SCRPOS) or oldinfo['pos'],
+                    'key': self.conf.get_diritem_data(dirname, NXSKEY) or oldinfo['key'],
+                    'txt': self.conf.get_diritem_data(dirname, SCRTXT) or oldinfo['txt']}
 
     def select_activations(self):
         "expand the selection to a list of directories"
@@ -120,7 +141,8 @@ class Manager:
 
     def reload_config(self):
         "reload config after editing"
-        self.conf.read(self.config)
+        # self.conf.read(self.config)
+        self.conf.load()
         self.extract_screen_locations()
         self.doit.refresh_widgets()
 
@@ -262,14 +284,21 @@ class Manager:
                                   os.path.join(self.modbase, f'.{rootitem}'))
                 message = f'{zipfilename} is successfully installed'
                 if not justfiles:
-                    self.add_mod_to_config(configdata, mod_was_active)
+                    if len(roots) > 1:
+                        root = ''
+                        while not root:
+                            root = self.gui.select_value('Select one of the directories as the'
+                                                         ' "mod base"', roots, False, True)
+                    else:
+                        root = roots[0]
+                    self.add_mod_to_config(root, configdata, mod_was_active)
             zipfilepath = os.path.abspath(zipfilename)
             os.rename(zipfilepath, os.path.join(os.path.dirname(zipfilepath), 'installed',
                                                 os.path.basename(zipfilepath)))
             report.append(message)
         return report
 
-    def determine_unpack_directory(self, zipfilename):
+    def determine_unpack_directory(self, dest, zipfilename):
         """read the unpack directory to transfer to linedit fields
         """
         # dit is waarschijnlijk de handigste plek om ook de andere gegevens (nexus key, mod naam
@@ -280,14 +309,50 @@ class Manager:
 
     def read_manifest(self, dirname):
         "read manifest.json and extract nxskey and dependencies"
-        modinfo = {'modname': '', NXSKEY: '', 'deps': []}
+        # modinfo = {'modname': '', NXSKEY: '', 'deps': []}
+        modinfo = dmlj.build_entry_from_dir(importpath)
         return modinfo
 
-    def add_mod_to_config(self, configdata, mod_was_active):
+    def add_mod_to_config(self, moddir, configdata, mod_was_active):
         "add info about mod to configuration"
+        new_mod = not conf.has_moddir(moddir)
+        if new_mod:
+            names = set()
+            keys = set()
+            self.conf.set_diritem_value(moddir, 'components', list(configdata))
+            for name, data in configdata.items():
+                for key, value in data.items():
+                    if key == 'Name':
+                        names.add(value)
+                    if key == '_Nexus':
+                        it = value.strip().replace('?', '').split('@')[0])
+                        if it and it:
+                            keys.add(int(it))
+                    self.conf.set_component_value(moddir, key, value)
+            self.conf.determine_value_for_nexuskey()
+            if len(names) > 1:
+                screentext = self.gui.select_value('Select or enter the screen name for this mod',
+                                                   texts)
+            else:
+                screentext = names.pop(0)
+            self.conf.set_diritem_value(moddir, '_Screentext', screentext)
+            self.conf.set_diritem_value(moddir, '_Selectable',
+                                        self.gui.ask_question('Do you want to be able to activate'
+                                                              ' this mod by itself?'))
+        else:
+            olddata = self.conf.get_diritem_data(moddir, 'components')
+            newdata = list(configdata)
+            if newdata != olddata:
+                print(f"componenten gewijzigd van {olddata} in {newdata}")
+                self.conf.set_diritem_value(moddir, 'components', newdata)
+            for name, data in configdata.items():
+                ...
+        # per component in configdata kijken of deze al bestaat in conf["components"]
+        # dest is de installdir, deze kan gezocht worden in conf["moddirs"]
         # bij updaten: vergelijken oude informatie met nieuwe of blind vervangen?
         # vragen of de mod (nog steeds niet) apart activatable moet zijn
 
+            value = self.get_component_data(item, '_Nexus')
 
 def get_archive_roots(namelist):
     "determione base directories for a list of filenames"
@@ -302,5 +367,49 @@ def get_archive_roots(namelist):
         if parent == '__MACOSX':
             continue
         roots.add(parent)
-    print(roots)
     return roots
+
+
+def build_jsonconf():
+    """build new configuration from current state of mod directory
+
+    copy screen positions and additional texts from original config
+    """
+    data, messages = dmlj.rebuild_all(pathlib.Path(MODBASE).iterdir())
+    with open(JSONCONFIG, 'w') as f:
+        json.dump(data, f)
+    newconf = dmlj.JsonConf(JSONCONFIG)
+    newconf.load()
+    # copy screen positions and texts from original config
+    oldconfig = configparser.ConfigParser(delimiters=(':',), allow_no_value=True)
+    oldconfig.optionxform = str
+    oldconfig.read(CONFIG)
+    for item in oldconfig.sections():
+        if item == 'Mod Directories':
+            continue
+        dirname = oldconfig['Mod Directories'][item]
+        if len(dirname.split(', ')) > 1:
+            dirname = dirname.split(', ')[0]
+        if newconf.has_moddir(dirname):
+            if oldconfig.has_option(item, SCRPOS):
+                newconf.set_diritem_value(dirname, SCRPOS, oldconfig[item][SCRPOS])
+            if oldconfig.has_option(item, NXSKEY):
+                newconf.set_diritem_value(dirname, NXSKEY, int(oldconfig[item][NXSKEY]))
+            if oldconfig.has_option(item, SCRTXT):
+                newconf.set_diritem_value(dirname, SCRTXT, oldconfig[item][SCRTXT])
+            newconf.set_diritem_value(dirname, SEL, True)
+    newconf.save()
+    for item in oldconfig.options('Mod Directories'):
+        if item == 'SMAPI':
+            continue
+        dirname = oldconfig['Mod Directories'][item]
+        if len(dirname.split(', ')) > 1:
+            newconf.mergecomponents(item, dirname)
+            dirname = dirname.split(', ')[0]
+        if newconf.has_moddir(dirname):
+            newconf.set_diritem_value(dirname, SCRNAM, item)
+            if not newconf.get_diritem_data(dirname, NXSKEY):
+                newconf.determine_nexuskey_for_mod(dirname)
+            if not newconf.get_diritem_data(dirname, SEL):
+                newconf.set_diritem_value(dirname, SEL, False)
+    newconf.save()

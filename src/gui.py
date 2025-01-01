@@ -11,7 +11,7 @@ maxpercol = 10
 
 # def show_dialog(cls, parent, modnames, first_time):
 def show_dialog(cls, parent, *args, **kwargs):
-    "generic function for handling a dialog (instead of calling it directly"
+    "generic function for handling a dialog (instead of calling it directly)"
     # parent.dialog_data = {'mods': [], 'deps': {}, 'set_active': []}
     # ok = cls(parent, modnames, first_time).exec()
     ok = cls(parent, *args, **kwargs).exec()
@@ -44,6 +44,7 @@ class ShowMods(qtw.QWidget):
         self.gbox = qtw.QGridLayout()
         self.refresh_widgets(first_time=True)
         self.vbox.addLayout(self.gbox)
+        self.vbox.addSpacing(10)
         hbox = qtw.QHBoxLayout()
         hbox.addStretch()
         btn = qtw.QPushButton('&Install / update', self)
@@ -119,20 +120,45 @@ class ShowMods(qtw.QWidget):
         # on first-time we build all the checkbox containers
         if first_time:
             rownum, colnum = 0, 0
+            highrow, highcol = 0, 0
             maxcol = 3
-            # for text, scrpos in sorted(self.master.screenpos.items(), key=lambda x: x[1]):
-            for text, scrpos in self.master.screenpos.items():
-                realscrpos, linknum = scrpos
-                self.containers[text], self.widgets[text] = self.add_checkbox(text, linknum)
-                # print(f'{realscrpos=}', end=', ')
-                if realscrpos:
-                    rownum, colnum = [int(y) for y in realscrpos.split('x', 1)]
-                else:   # fallback voor als het scherm nog niet eerder geordend was
-                    colnum += 1
-                    if colnum == maxcol:
-                        rownum += 1
-                        colnum = 0
+            # for text, scrpos in self.master.screenpos.items():
+            #     realscrpos, linknum = scrpos
+            #     self.containers[text], self.widgets[text] = self.add_checkbox(text, linknum)
+            #     # print(f'{realscrpos=}', end=', ')
+            #     if realscrpos:
+            #         rownum, colnum = [int(y) for y in realscrpos.split('x', 1)]
+            #     else:   # fallback voor als het scherm nog niet eerder geordend was
+            #         colnum += 1
+            #         if colnum == maxcol:
+            #             rownum += 1
+            #             colnum = 0
+            #     self.positions[(rownum, colnum)] = text
+            unplotted = []
+            for text, data in self.master.screeninfo.items():
+                self.containers[text], self.widgets[text] = self.add_checkbox(text, data)
+                if data['pos']:
+                    rownum, colnum = [int(y) for y in data['pos'].split('x', 1)]
+                    highrow = rownum if rownum > highrow else highrow
+                    highcol = colnum if colnum > highcol else highcol
+                    self.positions[(rownum, colnum)] = text
+                else:   # fallback voor nog niet geplotte teksten
+                    unplotted.append(text)
+                rownum, colnum = highrow + 1, -1
+            self.positions[(rownum, colnum)] = "---"
+            hbox = qtw.QHBoxLayout()
+            hbox.addWidget(qtw.QLabel('Hieronder volgen afhankelijkheden; deze zijn niet'
+                                      ' apart te activeren maar je kunt wel zien of ze'
+                                      ' actief zijn'))
+            self.containers['---'] = hbox
+            rownum += 1
+            for text in sorted(unplotted):
+                colnum += 1
+                if colnum == maxcol:
+                    rownum += 1
+                    colnum = 0
                 self.positions[(rownum, colnum)] = text
+
         # print(self.positions) # wordt deze misschien niet bijgewerkt na reorderen?
         if reorder_widgets:
             if not first_time:
@@ -145,22 +171,29 @@ class ShowMods(qtw.QWidget):
             if not first_time:
                 self.gbox.update()  # werkt helaas niet om de nieuwe volgorde te laten zien
         for text, check in self.widgets.items():
-            loc = os.path.join(self.master.modbase,
-                               self.master.conf['Mod Directories'][text].split(', ')[0])
+            # loc = os.path.join(self.master.modbase,
+            #                    self.master.conf['Mod Directories'][text].split(', ')[0])
+            loc = os.path.join(self.master.modbase, self.master.screeninfo[text]['dir'])
             check[1].setChecked(os.path.exists(loc))
 
-    def add_checkbox(self, text, linknum):
+    # def add_checkbox(self, text, linknum):
+    def add_checkbox(self, text, data):
         "add a checkbox with the given text"
         hbox = qtw.QHBoxLayout()
         check = qtw.QCheckBox()
+        check.setEnabled(data['sel'])
         label = qtw.QLabel()
         modname = text
-        if linknum:
+        # if linknum:
+        if data['key']:
             nexustext = '<a href="https://www.nexusmods.com/stardewvalley/mods/{}">{}</a>'
-            text = nexustext.format(linknum, text)
+            # text = nexustext.format(linknum, text)
+            text = nexustext.format(data['key'], text)
             label.setOpenExternalLinks(True)
-        if modname in self.master.screentext:
-            text += ' ' + self.master.screentext[modname]
+        # if modname in self.master.screentext:
+        if data['txt']:
+            # text += ' ' + self.master.screentext[modname]
+            text += ' ' + data['txt']
         label.setText(text)
         hbox.addSpacing(50)
         hbox.addWidget(check)
@@ -210,6 +243,19 @@ class ShowMods(qtw.QWidget):
             self.containers = {}
             self.positions = {}
             self.refresh_widgets()  # waarom eerst de bovenstaande leegmaken?
+
+    def select_value(self, caption, options, editable=True, mandatory=False):
+        "Select or enter a value in a dialog"
+        ok = False
+        while not ok:
+            ok, item = qtw.QInputDialog.getItem(self, 'Stardew Valley Mod Manager', caption, options,
+                                                editable=editable)
+            if not ok:
+                if mandatory:
+                    qtw.QMessageBox.information(self, 'SDVMM', 'You *must* select or enter a value')
+                else:
+                    ok = True
+        return item
 
 
 class NewModDialog(qtw.QDialog):
