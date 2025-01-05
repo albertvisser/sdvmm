@@ -2,10 +2,12 @@
 unittests/
 
 [testscripts]
-main: test_manager.py
-gui: test_gui.py
+main = test_manager.py
+gui = test_gui.py
+dmlj = test_jsonconfig.py
 
 [testees]
-main: src/manager.py
-gui: src/gui.py
+main = src/manager.py
+gui = src/gui.py
+dmlj = src/jsonconfig.py
 

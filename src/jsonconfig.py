@@ -6,11 +6,8 @@
 Main interest: "UpdateKeys" (value is a list), specifically avalue that starts with "Nexus:"
 also interesting: Author, Version, Description, Dependencies (list of dicts)
 """
-import os
 import pathlib
 import shutil
-import collections
-import pprint
 import json5
 import json
 
@@ -27,7 +24,7 @@ def rebuild_all(startdirs):
             # mods[modpath.name.removeprefix('.')] = build_entry_from_dir(modpath)
             data = build_entry_from_dir(modpath)
             if any(x in mods['components'] for x in data):
-                messages.append(f'duplicate key(s) found in {modpath}')
+                messages.append(f'duplicate component(s) found in {modpath}')
                 continue
             mods['moddirs'][modpath.name.lstrip('.')] = {'components': list(data)}
             mods['components'].update(data)
@@ -40,7 +37,7 @@ def build_entry_from_dir(modpath):
     for path in modpath.iterdir():
         data = read_dir(path)
         if data:
-            root = modpath.name.removeprefix('.')
+            # root = modpath.name.removeprefix('.')
             # dirname = os.path.join(root, path.name) if path.is_dir() else root
             for item in data:
                 mod_id = item.pop('UniqueID')
@@ -51,46 +48,37 @@ def build_entry_from_dir(modpath):
 
 def read_dir(path):
     "get data from mod (sub)directory"
-    found_stuff = {}
     if path.name == 'manifest.json':
-        found_stuff = read_keys(path)
-        if found_stuff:
-            found_stuff['dirpath'] = path.parent
-            return [found_stuff]
-    elif not path.is_dir():
-        return
+        result = read_manifest(path)
+        if result:
+            return [result]
+    if not path.is_dir():
+        return []
     result = []
     subdirs = []
     for subpath in path.iterdir():
         if subpath.name == 'manifest.json':
-            found_stuff = read_keys(subpath)
-            if found_stuff:
-                # return found_stuff
-                found_stuff['dirpath'] = path
-                result.append(found_stuff)
+            info = read_manifest(subpath)
+            if info:
+                result.append(info)
         if subpath.is_dir():
             subdirs.append(subpath)
     for subpath in subdirs:
         for subsubpath in subpath.iterdir():
             if subsubpath.name == 'manifest.json':
-                found_stuff = read_keys(subsubpath)
-                if found_stuff:
-                    # return found_stuff
-                    found_stuff['dirpath'] = subpath
-                    result.append(found_stuff)
+                info = read_manifest(subsubpath)
+                if info:
+                    result.append(info)
             # we assume this is the deepest nesting level
     return result
 
 
-def read_keys(path):
+def read_manifest(path):
     """...and scan it for top level keys
     """
     result = {}
     with path.open('rb') as f:
-        try:
-            data = json5.load(f)
-        except json5.decoder.JSONDecodeError as e:
-            return f'{e} in {path}'
+        data = json5.load(f)
     if "UpdateKeys" in data:
         for value in data["UpdateKeys"]:
             items = value.split(':', 1)
@@ -99,10 +87,13 @@ def read_keys(path):
     for keyname in ["Name", "Author", "Description", "UniqueID", "Version", "MinimumApiVersion"]:
         if keyname in data:
             result[keyname] = data[keyname]
-    if "Dependencies" in data:
-        result["Deps"], error = read_dependencies(data["Dependencies"])
-        if error:
-            print(f"Geen 'IsRequired' key gevonden voor dep(s) in bestand {path}")
+    for keyname in ("Dependencies", "dependencies"):
+        if keyname in data:
+            result["Deps"], error = read_dependencies(data[keyname])
+            if error:
+                print(f"Geen 'IsRequired' key gevonden voor dep(s) in bestand {path}")
+    if result:
+        result['dirpath'] = path.parent
     return result
 
 
@@ -112,6 +103,8 @@ def read_dependencies(deplist):
     result = []
     error = False
     for depdict in deplist:
+        # if 'IsRequired' not in depdict:       Deze key wordt vaker vergeten dan dat hij
+        #     error = True                      netjes op True gezet wordt dus maar geen controle
         if 'IsRequired' not in depdict or depdict['IsRequired']:
             result.append(depdict["UniqueID"])
     return result, error
@@ -119,10 +112,13 @@ def read_dependencies(deplist):
 
 class JsonConf:
     "configuration to be stored externally in JSON format"
-    knownmodkeys = ['components', '_ScreenPos', '_ScreenName', '_ScreenText', '_Nexus', '_Nexus2',
+    MODS = 'moddirs'
+    knownmodkeys = ['components', '_ScreenPos', '_ScreenName', '_ScreenText', '_Nexus',
                     '_Selectable']
-    knownkeys = ['Name', 'Author','Description', 'Version', 'MinimumApiVersion', 'Deps', 'Dirname',
-                 '_Nexus']
+    COMPS, SCRPOS, SCRNAM, SCRTXT, NXSKEY, SEL = knownmodkeys
+    knownkeys = ['Name', 'Author', 'Description', 'Version', 'MinimumApiVersion', 'Deps', 'dirname',
+                 NXSKEY]
+    NAME, AUTH, DESC, VRS, APIVRS, DEPS, DIR = knownkeys[:7]
 
     def __init__(self, filename):
         self.filename = filename
@@ -137,141 +133,114 @@ class JsonConf:
     def save(self):
         "save configuration to json file"
         backup_path = pathlib.Path(self.filename + '~')
-        shutil.copyfile(self.filepath, backup_path)
+        shutil.copyfile(self.filename, str(backup_path))
         with self.filepath.open('w') as f:
             json.dump(self._data, f)
 
     def list_all_mod_dirs(self):
         "return a list of all known mod directories"
-        return list(self._data['moddirs'])
+        return list(self._data[self.MODS])
 
     def list_all_components(self):
         "return a list of all known mod components"
-        return list(self._data['components'])
+        return list(self._data[self.COMPS])
 
     def has_moddir(self, dirname):
         "return whether or not the given directory is in the config"
-        return dirname in self._data['moddirs']
+        return dirname in self._data[self.MODS]
 
     def has_component(self, dirname):
         "return whether or not the given component is in the config"
-        return dirname in self._data['components']
+        return dirname in self._data[self.COMPS]
 
     def list_components_for_dir(self, dirname):
         "return a list of components in the given mod directory"
-        if dirname not in self._data['moddirs']:
-            raise ValueError('mod directory not found in config')
-        return self._data['moddirs'][dirname]['components']
+        if dirname not in self._data[self.MODS]:
+            raise ValueError(f'mod directory {dirname} not found in config')
+        return self._data[self.MODS][dirname][self.COMPS]
 
     def get_diritem_data(self, dirname, key=None):
         "return the value for a given key for the given mod directory"
-        if dirname not in self._data['moddirs']:
-            raise ValueError('mod directory not found in config')
+        if dirname not in self._data[self.MODS]:
+            raise ValueError(f'mod directory {dirname} not found in config')
         if key is None:
-            return self._data['moddirs'][dirname]
+            return self._data[self.MODS][dirname]
         if key not in self.knownmodkeys:
-            raise ValueError(f"Unknown key '{key}'")
+            raise ValueError(f"Unknown key '{key}' for directory {dirname}")
         if key == '_Nexus':
-            return self._data['moddirs'][dirname].get(key, 0)
+            return self._data[self.MODS][dirname].get(key, 0)
         if key == '_Selectable':
-            return self._data['moddirs'][dirname].get(key, False)
-        return self._data['moddirs'][dirname].get(key, '')
+            return self._data[self.MODS][dirname].get(key, False)
+        return self._data[self.MODS][dirname].get(key, '')
 
-    def get_component_data(self, component, key):
+    def get_component_data(self, component, key=None):
         "return the value for a given key for the given component"
-        if component not in self._data['components']:
-            raise ValueError('component not found')
+        if component not in self._data[self.COMPS]:
+            raise ValueError(f'component {component} not found in config')
         if key is None:
-            return self._data['components'][component]
+            return self._data[self.COMPS][component]
         if key not in self.knownkeys:
-            raise ValueError(f"Unknown key '{key}'")
-        return self._data['components'][component].get(key, '')
+            raise ValueError(f"Unknown key '{key}' for component {component}")
+        return self._data[self.COMPS][component].get(key, '')
+
+    def add_diritem(self, dirname):
+        "add a new (empty) mod directory to the config"
+        if not self.has_moddir(dirname):
+            self._data[self.MODS][dirname] = {}
 
     def update_diritem(self, dirname, value):
         "set all values for the keys for the given mod directory at once"
         if self.has_moddir(dirname):
-            self._data['moddirs'][dirname] = value
+            self._data[self.MODS][dirname] = value
 
     def set_diritem_value(self, dirname, key, value):
         "set the value for a given key for the given mod directory"
         if self.has_moddir(dirname):
-            self._data['moddirs'][dirname][key] = value
+            if key not in self.knownmodkeys:
+                raise ValueError(f"Unknown key '{key}' for directory {dirname}")
+            self._data[self.MODS][dirname][key] = value
+
+    def add_componentdata(self, component):
+        "add a new (empty) component to the config"
+        if not self.has_component(component):
+            self._data[self.COMPS][component] = {}
 
     def update_componentdata(self, component, value):
         "set all values for the keys for the given component at once"
         if self.has_component(component):
-            self._data['components'][component] = value
+            self._data[self.COMPS][component] = value
 
     def set_componentdata_value(self, component, key, value):
         "set the value for a given key for the given component"
         if self.has_component(component):
-            self._data['components'][component][key] = value
+            if key not in self.knownkeys:
+                raise ValueError(f"Unknown key '{key}' for component {component}")
+            self._data[self.COMPS][component][key] = value
 
     def determine_nexuskey_for_mod(self, dirname):
         "copy nexuskey in config from component to moddir"
         nexusid = ''
-        extravalues = []
+        # extravalues = []
         for item in self.list_components_for_dir(dirname):
-            value = self.get_component_data(item, '_Nexus').strip().replace('?', '').split('@')[0]
-            if value and value != nexusid:
-                if not nexusid:
-                    nexusid = value
-                else:
-                    extravalues.append(value)
+            value = self.get_component_data(item, self.NXSKEY).strip().replace('?', '').split('@')[0]
+            if value and value != '-1':
+                value = int(value)
+                if value != nexusid:
+                    if not nexusid:
+                        nexusid = value
+                    # else:
+                    #     extravalues.append(value)
         if nexusid:
-            self.set_diritem_value(dirname, '_Nexus', int(nexusid))
-        if extravalues:
-            self.set_diritem_value(dirname, '_Nexus2', extravalues)
+            self.set_diritem_value(dirname, self.NXSKEY, int(nexusid))
+        # if extravalues:
+        #     self.set_diritem_value(dirname, self.MULTI, extravalues)
 
     def mergecomponents(self, title, dirnames):
         "old_to_new: fix situation for multiple components in multiple unpack directories"
         dirnames = dirnames.split(',')
         newdirname = dirnames[0]
-        componentlist = self.get_diritem_data(dirnames[0], 'components')
+        componentlist = self.get_diritem_data(dirnames[0], self.COMPS)
         for name in dirnames[1:]:
-            data = self._data['moddirs'].pop(name.strip())
-            componentlist.extend(data['components'])
-        self.set_diritem_value(dirnames[0], 'components', componentlist)
-
-
-if __name__ == "__main__":
-    root = pathlib.Path("~/.steam/steam/steamapps/common/Stardew Valley/Mods").expanduser()
-    data, messages = rebuild_all(root.iterdir())
-    for m in messages:
-        print(m)
-    with open('new_config.json', 'w') as f:
-       json.dump(data, f)
-    # with open('new_config', 'w') as f:
-    #    pprint.pprint(data, stream=f)
-
-data = {
-        "Alvadea's Farm Maps": [
-             {'_Nexus': '13187',
-              'Name': 'Alvadeas Mining Map',
-              'Author': 'Alvadea',
-              'Description': 'A new mining map with custom sprites',
-              'UniqueID': 'alvadea.minemap',
-              'Deps': []},
-             {'_Nexus': '15926',
-              'Name': 'Alvadeas Combat Map',
-              'Author': 'Alvadea',
-              'Description': 'A new combat map with custom sprites and a swamp',
-              'UniqueID': 'alvadea.combatmap',
-              'Deps': []}],
-        'ContentPatcher': [
-            {'_Nexus': '1915',
-             'Name': 'Content Patcher',
-             'Author': 'Pathoschild',
-             'Description': 'Loads content packs which edit game data, images, and maps without changing the game files.',
-             'UniqueID': 'Pathoschild.ContentPatcher'}],
-        'Cape Stardew 1.6': [
-            'Expecting property name enclosed in double quotes: line 10 column 5 (char 257) in /tmp/SDVMods/.Cape Stardew 1.6/OrbOfTheTides/(CP)OrbOfTheTides/manifest.json',
-            'Expecting property name enclosed in double quotes: line 13 column 4 (char 344) in /tmp/SDVMods/.Cape Stardew 1.6/OrbOfTheTides/OrbOfTheTidesMod/manifest.json',
-            'Expecting property name enclosed in double quotes: line 10 column 5 (char 279) in /tmp/SDVMods/.Cape Stardew 1.6/Cape Stardew/manifest.json',
-            {'Name': 'BL for Cape Stardew',
-             'Author': 'DreamyGloom',
-             'Description': 'Bus Locations Compatibility for Cape Stardew',
-             'UniqueID': 'dreamy.CapeBus'},
-            'Expecting property name enclosed in double quotes: line 2 column 5 (char 7) in /tmp/SDVMods/.Cape Stardew 1.6/(FTM) Cape Stardew/manifest.json',
-            'Expecting property name enclosed in double quotes: line 9 column 3 (char 235) in /tmp/SDVMods/.Cape Stardew 1.6/[CP]Annetta/manifest.json']}
-
+            data = self._data[self.MODS].pop(name.strip())
+            componentlist.extend(data[self.COMPS])
+        self.set_diritem_value(dirnames[0], self.COMPS, componentlist)
