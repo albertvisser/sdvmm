@@ -1,19 +1,7 @@
 """Stardew Valley Expansion manager
-Het idee: selecteer uit een lijst met mogelijkheden welke je actief wilt hebben
-
-Realisatie: aan de hand van een configuratiebestand waarin per expansie de requirements staan
-dat zijn namen die verwijzen naar entries in een lijst met Mod directories
-
-werkwijze:
-    1. verzamel alle mods die aan moeten staan in een lijst:
-        a. alles in de config entry
-        b. voor elke die een eigen config entry heeft ook alles
-        c. ontdubbelen voor het geval dat
-    2. alle mods uitzetten behalve degene die in het lijstje verzameld zijn
+Oosspronkelijk idee: selecteer uit een lijst met mogelijkheden welke je actief wilt hebben
 """
 import os
-import configparser
-import contextlib
 import json
 import pathlib
 import shutil
@@ -22,38 +10,31 @@ import subprocess
 from src import gui
 import src.jsonconfig as dmlj
 MODBASE = os.path.expanduser('~/.steam/steam/steamapps/common/Stardew Valley/Mods')
-CONFIG = os.path.join(MODBASE, 'sdv_mods.config')
-JSONCONFIG = os.path.join(MODBASE, 'sdv_mods_config.json')
+CONFIG = os.path.join(MODBASE, 'sdv_mods_config.json')
 DOWNLOAD = os.path.expanduser('~/Downloads/Stardew Valley Mods')
-SCRPOS = '_ScreenPos'
-SCRNAM = '_ScreenName'
-SCRTXT = '_ScreenText'
-NXSKEY = '_Nexus'
-SEL = '_Selectable'
+
 
 def main():
     "main line"
-    if not os.path.exists(JSONCONFIG):
-        build_jsonconf()
-    DoIt = Manager()   # (CONFIG)
+    if not os.path.exists(CONFIG):
+        messages = build_jsonconf()
+        if messages:
+            messages.insert(0, '')
+            messages.insert(0, 'Config was (re)built with the following messages:')
+            subprocess.run(['zenity', '--info', f'--text="{'\n'.join(messages)}"'])
+    DoIt = Manager()
     DoIt.build_and_start_gui()
 
 
 class Manager:
     "Processing class (the one that contains the application logic (except the GUI stuff)"
-    def __init__(self):  # , config):
-        # self.config = config
-        # self.conf = configparser.ConfigParser(delimiters=(':',), allow_no_value=True)
-        # self.conf.optionxform = str
-        # self.conf.read(self.config)
-        self.conf = dmlj.JsonConf(JSONCONFIG)
+    def __init__(self):
+        self.conf = dmlj.JsonConf(CONFIG)
         self.conf.load()
         self.modnames = []
         self.modbase = MODBASE
         self.downloads = DOWNLOAD
         self.directories = set()
-        self.screenpos = {}
-        self.screentext = {}
         self.screeninfo = {}
 
     def build_and_start_gui(self):
@@ -70,52 +51,36 @@ class Manager:
         temporarily from the config
         allows for the key not being present due to the screen never being reorganized
         """
-        # for item in self.conf.sections():
-        #     if item == 'Mod Directories':
-        #         continue
-        #     self.screenpos[item] = ['', '']  # screenpos is eigenlijk geen goede naam meer
-        #     if self.conf.has_option(item, SCRPOS):
-        #         self.screenpos[item][0] = self.conf[item][SCRPOS]
-        #         # self.conf.remove_option(item, SCRPOS)
-        #     if self.conf.has_option(item, NXSKEY):
-        #         self.screenpos[item][1] = self.conf[item][NXSKEY]
-        #     if self.conf.has_option(item, SCRTXT):
-        #         self.screentext[item] = self.conf[item][SCRTXT]
         for dirname in self.conf.list_all_mod_dirs():
-            item = self.conf.get_diritem_data(dirname, SCRNAM) or dirname
+            item = self.conf.get_diritem_data(dirname, self.conf.SCRNAM) or dirname
             oldinfo = self.screeninfo[item] if item in self.screeninfo else {'sel': False, 'pos': '',
                                                                              'key': '', 'txt': ''}
             self.screeninfo[item] = {
-                    'dir': dirname,
-                    'sel': self.conf.get_diritem_data(dirname, SEL) or oldinfo['sel'],
-                    'pos': self.conf.get_diritem_data(dirname, SCRPOS) or oldinfo['pos'],
-                    'key': self.conf.get_diritem_data(dirname, NXSKEY) or oldinfo['key'],
-                    'txt': self.conf.get_diritem_data(dirname, SCRTXT) or oldinfo['txt']}
+                'dir': dirname,
+                'sel': self.conf.get_diritem_data(dirname, self.conf.SEL) or oldinfo['sel'],
+                'pos': self.conf.get_diritem_data(dirname, self.conf.SCRPOS) or oldinfo['pos'],
+                'key': self.conf.get_diritem_data(dirname, self.conf.NXSKEY) or oldinfo['key'],
+                'txt': self.conf.get_diritem_data(dirname, self.conf.SCRTXT) or oldinfo['txt']}
 
-    def select_activations(self):
+    def select_activations(self, modnames):
         "expand the selection to a list of directories"
         # determine which directories should be activated
-        # conf['item'] is een lijst van modules bij een expansie
-        self.directories.clear()
-        for item in self.modnames:
-            self.directories |= set(self.conf['Mod Directories'][item].split(', '))
-            for entry in self.conf[item]:
-                if entry not in (SCRPOS, NXSKEY):
-                    self.add_activations(item, entry)
+        self.directories = set()  # []  # voor ontdubbelen is set beter, maar even alles onthouden
+        for item in modnames:
+            moddir = self.screeninfo[item]['dir']
+            self.directories.add(moddir)
+            self.add_dependencies(moddir)
 
-    def add_activations(self, section_name, entry):
+    def add_dependencies(self, moddir):
         "expand an item with a list of subitems"
-        # conf['item'] is een lijst van modules bij een expansie
-        # conf['item']['entry'] is een string van één of meer directories bij een module
-        directories = []
-        for dirname in self.conf[section_name]:
-            directories.extend(self.conf['Mod Directories'][entry].split(', '))
-        self.directories |= set(directories)
-        for dirname in self.conf[section_name]:
-            if dirname in self.conf:
-                for item in self.conf[dirname]:
-                    if item not in (SCRPOS, NXSKEY):
-                        self.add_activations(dirname, item)
+        for entry in self.conf.list_components_for_dir(moddir):
+            deps = self.conf.get_component_data(entry, self.conf.DEPS)
+            if not deps:
+                continue
+            for dep in deps:
+                depdir = self.conf.get_component_data(dep, self.conf.DIR)
+                self.directories.add(depdir)
+                self.add_dependencies(depdir)
 
     def activate(self):
         "activate by making directories hidden or not"
@@ -124,7 +89,8 @@ class Manager:
             if entry.is_file():
                 continue
             # if smapi, do not deactivate
-            if entry.name in self.conf['Mod Directories']['SMAPI']:
+            if entry.name in ('ConsoleCommands', 'SaveBackup'):
+                # skip SMAPI componenten
                 continue
             # if in list and deactivated, re-activate
             if entry.name.startswith('.'):
@@ -134,228 +100,182 @@ class Manager:
             elif entry.name not in self.directories:
                 os.rename(entry, os.path.join(self.modbase, '.' + entry.name))
 
-    def edit_config(self):
-        "open config file for editing"
-        # subprocess.run(['scite', CONFIG])
-        subprocess.run(['gnome-terminal', '--geometry=102x54+1072+0', '--', 'vim', CONFIG])
+    def manage_attributes(self):
+        """handle dialog for showing / changing screen name, selectability and extra text
 
-    def reload_config(self):
-        "reload config after editing"
-        # self.conf.read(self.config)
-        self.conf.load()
-        self.extract_screen_locations()
-        self.doit.refresh_widgets()
-
-    def check_config(self):
-        "check names in config files for spelling errors etc."
-        modnames = self.conf.options('Mod Directories')
-        errors = []
-        for name in self.conf.sections():
-            if name == 'Mod Directories':
-                continue
-            if name not in modnames:
-                errors.append(f'Unknown expansion / mod name: `{name}`')
-            for name2 in self.conf.options(name):
-                if name2 not in modnames and not name2.startswith('_'):
-                    errors.append(f'Unknown mod name `{name2}` for expansion/mod `{name}`')
-        return errors or ['No errors']
-
-    def add_to_config(self):
-        "add a new mod (with dependencies if any) to the configuration"
-        ok = gui.show_dialog(gui.NewModDialog, self.doit, self.conf['Mod Directories'],
-                             first_time=True)
-        if ok:
-            new_entries = self.doit.dialog_data
-            # print(new_entries)
-            for name, other in new_entries['mods']:
-                self.conf.set('Mod Directories', name, other)
-            for name, other in new_entries['deps'].items():
-                if other:
-                    self.conf.add_section(name)
-                    for item in other:
-                        self.conf.set(name, item, '')
-            for name in new_entries['set_active']:
-                try:
-                    self.conf.add_section(name)
-                except configparser.DuplicateSectionError:
-                    pass
-                else:
-                    self.doit.add_entries_for_name(name)
-            shutil.copyfile(self.config, self.config + '~')
-            with open(self.config, 'w') as cfg:
-                self.conf.write(cfg)
-            self.doit.refresh_widgets()
-
-    def add_remark(self):
-        """save screen remark in config
+        also the possibility to view components and dependencies
         """
-        oldremarks = dict(self.screentext)
-        gui.show_dialog(gui.RemarksDialog, self.doit, self.conf['Mod Directories'])
+        self.attr_changes = []  # list of changed mods
+        gui.show_dialog(gui.AttributesDialog, self.doit, self.conf)
+        # screeninfo is updated in the dialog, here we update the configuration
         changes = False
-        for modname, remark in self.screentext.items():  # changed remarks
-            if modname not in oldremarks or remark != oldremarks[modname]:
-                self.conf.set(modname, SCRTXT, remark)
-                changes = True
-        for modname in oldremarks:
-            if modname not in self.screentext:
-                self.conf.remove_option(modname, SCRTXT)
-                changes = True
+        for newname, oldname in self.attr_changes:
+            dirname = self.screeninfo[newname]['dir']
+            if oldname:
+                self.conf.set_diritem_value(dirname, self.conf.SCRNAM, newname)
+            self.conf.set_diritem_value(dirname, self.conf.SCRTXT, self.screeninfo[newname]['txt'])
+            self.conf.set_diritem_value(dirname, self.conf.SEL, self.screeninfo[newname]['sel'])
+            changes = True
         if changes:
-            shutil.copyfile(self.config, self.config + '~')
-            with open(self.config, 'w') as cfg:
-                self.conf.write(cfg)
-            self.doit.refresh_widgets()
+            self.conf.save()
 
     def update_config_from_screenpos(self):
         """rewrite and reread config after reorganizing screen
         """
-        # oldconf = self.conf
-        for item in self.conf.sections():
-            if item == 'Mod Directories':
-                continue
-            scrpos = self.screenpos[item]
-            if scrpos:
-                self.conf[item][SCRPOS] = scrpos
-        shutil.copyfile(self.config, self.config + '~')
-        with open(self.config, 'w') as cfg:
-            self.conf.write(cfg)
-        # reset conf to version without screen positions, to continue operation
-        # self.conf = oldconf
+        for item in self.screeninfo.values():
+            self.conf.set_diritem_data(item['dir'], self.conf.SCRPOS, item['pos'])
+        self.conf.save()
 
     def update_mods(self, names):
         "installeer de aangegeven mod files"
+        save_needed = got_new_mod = False
         report = []
         for zipfilename in names:
-            archive = zipfile.ZipFile(zipfilename)
-            names = archive.namelist()
-            roots = get_archive_roots(names)
-            # if len(root) != 1:
-            if not roots:
-            #     report.append(f'{zipfilename}: zipfile should contain only one base directory')
-                report.append(f'{zipfilename}: zipfile appears to be empty')
-                archive.close()
+            roots, mod_existed, mod_was_active, messages = self.install_zipfile(zipfilename)
+            report.extend(messages)
+            if not roots or roots == ['']:  # just (a) file(s), e.g. ConfigEditor.html
                 continue
-            #     # dit is geen probleem als ik de downloads directories gewoon in de config opneem
-            #     # als een comma separated list (vgl. SMAPI en BusLocations)
-            #     # de activeer routines snappen dit al
-            #     # nu het vervolg van deze methode nog
-            # root = root.pop()
-            justfiles = roots == {''}
-            if justfiles:
-                roots = []
-            dest = self.modbase
-            smapi_install = False
-            for rootitem in roots:
-                if rootitem.startswith('SMAPI'):
-                    smapi_install = True
-                    dest = '/tmp'
-                    break
-                if os.path.exists(os.path.join(self.modbase, rootitem)):
-                    mod_was_active = True
-                    if os.path.exists(os.path.join(self.modbase, f'.{rootitem}~')):
-                        shutil.rmtree(os.path.join(self.modbase, f'.{rootitem}~'))
-                    os.rename(os.path.join(self.modbase, f'{rootitem}'),
-                              os.path.join(self.modbase, f'.{rootitem}~'))
-                elif os.path.exists(os.path.join(self.modbase, f'.{rootitem}')):
-                    mod_was_active = False
-                    if os.path.exists(os.path.join(self.modbase, f'.{rootitem}~')):
-                        shutil.rmtree(os.path.join(self.modbase, f'.{rootitem}~'))
-                    os.rename(os.path.join(self.modbase, f'.{rootitem}'),
-                              os.path.join(self.modbase, f'.{rootitem}~'))
-                else:
-                    mod_was_active = False  # strictly speaking: should be "not applicable"
-            if smapi_install:
-                archive.close()
-                installdir = os.path.join('/tmp', roots.pop())
-                subprocess.run(['unzip', zipfilename, '-d', dest], check=True)
-                subprocess.run(['gnome-terminal'], cwd=installdir)  # , capture_output=True)
-                message = ("SMAPI-install is waiting in a terminal window to be finished"
-                           " by executing './install on Linux.sh'")
+            configdata = self.get_data_for_config(roots, mod_was_active)
+            moddir = self.determine_moddir(roots)
+            if mod_existed:
+                messages, conf_changed = self.update_mod_settings(moddir, configdata)
+                save_needed = save_needed or conf_changed
             else:
-                archive.extractall(dest)  # self.modbase)
-                archive.close()
-                configdata = {}
-                if os.path.exists(os.path.join(self.modbase, '__MACOSX')):
-                    shutil.rmtree(os.path.join(self.modbase, '__MACOSX'))
-                for rootitem in roots:
-                    configdata[rootitem] = self.read_manifest(rootitem)  # functie is nog WIP
-                    if not mod_was_active:
-                        os.rename(os.path.join(self.modbase, f'{rootitem}'),
-                                  os.path.join(self.modbase, f'.{rootitem}'))
-                message = f'{zipfilename} is successfully installed'
-                if not justfiles:
-                    if len(roots) > 1:
-                        root = ''
-                        while not root:
-                            root = self.gui.select_value('Select one of the directories as the'
-                                                         ' "mod base"', roots, False, True)
-                    else:
-                        root = roots[0]
-                    self.add_mod_to_config(root, configdata, mod_was_active)
+                messages = self.add_mod_to_config(moddir, configdata)
+                save_needed = got_new_mod = True
+            report.extend(messages)
             zipfilepath = os.path.abspath(zipfilename)
             os.rename(zipfilepath, os.path.join(os.path.dirname(zipfilepath), 'installed',
                                                 os.path.basename(zipfilepath)))
-            report.append(message)
+        if save_needed:
+            self.conf.save()
+        if got_new_mod:
+            self.screeninfo = {}
+            self.extract_screen_locations()
+            self.doit.refresh_widgets(first_time=True)
         return report
 
-    def determine_unpack_directory(self, dest, zipfilename):
-        """read the unpack directory to transfer to linedit fields
-        """
-        # dit is waarschijnlijk de handigste plek om ook de andere gegevens (nexus key, mod naam
-        # volgens manifest) op te halen en door te geven
+    def install_zipfile(self, zipfilename):
+        "unzip and update config if necessary"
+        # roots = []
         with zipfile.ZipFile(zipfilename) as archive:
-            roots = get_archive_roots(archive.namelist())
-        return '' if not roots else ', '.join(list(roots))
+            names = archive.namelist()
+            roots = get_archive_roots(names)
+            mod_existed, mod_was_active = check_if_active(roots)
+            smapi_install = check_if_smapi(roots)
+            if not smapi_install:
+                archive.extractall(self.modbase)
+        if not roots:
+            return [], None, None, [f'{zipfilename}: zipfile appears to be empty']
+        if smapi_install:
+            installdir = os.path.join('/tmp', roots.pop())
+            subprocess.run(['unzip', zipfilename, '-d', '/tmp'], check=True)
+            subprocess.run(['gnome-terminal'], cwd=installdir)  # , capture_output=True)
+            return [], None, None, ["SMAPI-install is waiting in a terminal window to be finished"
+                                    " by executing './install on Linux.sh'"]
+        if os.path.exists(os.path.join(self.modbase, '__MACOSX')):  # remove junk
+            shutil.rmtree(os.path.join(self.modbase, '__MACOSX'))
+        result = [f'{zipfilename} is successfully installed']
+        return roots, mod_existed, mod_was_active, result
 
-    def read_manifest(self, dirname):
-        "read manifest.json and extract nxskey and dependencies"
-        # modinfo = {'modname': '', NXSKEY: '', 'deps': []}
-        modinfo = dmlj.build_entry_from_dir(importpath)
-        return modinfo
-
-    def add_mod_to_config(self, moddir, configdata, mod_was_active):
-        "add info about mod to configuration"
-        new_mod = not conf.has_moddir(moddir)
-        if new_mod:
-            names = set()
-            keys = set()
-            self.conf.set_diritem_value(moddir, 'components', list(configdata))
-            for name, data in configdata.items():
-                for key, value in data.items():
-                    if key == 'Name':
-                        names.add(value)
-                    if key == '_Nexus':
-                        it = value.strip().replace('?', '').split('@')[0])
-                        if it and it:
-                            keys.add(int(it))
-                    self.conf.set_component_value(moddir, key, value)
-            self.conf.determine_value_for_nexuskey()
-            if len(names) > 1:
-                screentext = self.gui.select_value('Select or enter the screen name for this mod',
-                                                   texts)
-            else:
-                screentext = names.pop(0)
-            self.conf.set_diritem_value(moddir, '_Screentext', screentext)
-            self.conf.set_diritem_value(moddir, '_Selectable',
-                                        self.gui.ask_question('Do you want to be able to activate'
-                                                              ' this mod by itself?'))
+    def determine_moddir(self, roots):
+        "Ask for mod entry point if necessary"
+        if len(roots) > 1:
+            root = ''
+            while not root:
+                root = self.doit.select_value('Select one of the directories as the'
+                                              ' "mod base"', roots, False, True)
         else:
-            olddata = self.conf.get_diritem_data(moddir, 'components')
-            newdata = list(configdata)
-            if newdata != olddata:
-                print(f"componenten gewijzigd van {olddata} in {newdata}")
-                self.conf.set_diritem_value(moddir, 'components', newdata)
-            for name, data in configdata.items():
-                ...
-        # per component in configdata kijken of deze al bestaat in conf["components"]
-        # dest is de installdir, deze kan gezocht worden in conf["moddirs"]
-        # bij updaten: vergelijken oude informatie met nieuwe of blind vervangen?
-        # vragen of de mod (nog steeds niet) apart activatable moet zijn
+            root = roots[0]
+        return root
 
-            value = self.get_component_data(item, '_Nexus')
+    def get_data_for_config(self, roots, mod_was_active):
+        """inspect mod directory/ies for items to be included in configuration
+
+        while looping over them, deactivate when necessary
+        """
+        configdata = {}
+        for rootitem in roots:
+            importpath = pathlib.Path(self.modbase) / rootitem
+            configdata[rootitem] = dmlj.build_entry_from_dir(importpath)
+            if not mod_was_active:
+                os.rename(os.path.join(self.modbase, f'{rootitem}'),
+                          os.path.join(self.modbase, f'.{rootitem}'))
+        return configdata
+
+    def add_mod_to_config(self, moddir, configdata):
+        "add info about mod to configuration"
+        # {{<uitpakdir>: {<component>: {<key>: <value>, ...}, ...}, ...}}
+        if self.conf.has_moddir(moddir):
+            raise ValueError('"New" mod exists in configuration, should not be possible')
+        messages = []
+        names = set()
+        keys = set()
+        self.conf.add_diritem(moddir)
+        complist = []
+        for data in configdata.values():
+            for component, compdict in data.items():
+                complist.append(component)
+                self.conf.add_componentdata(component)
+                for key, value in compdict.items():
+                    if key == self.conf.NAME:
+                        names.add(value)
+                    elif key == self.conf.NXSKEY:
+                        keys.add(value.strip().replace('?', '').split('@')[0])
+                    self.conf.set_componentdata_value(component, key, value)
+        self.conf.set_diritem_value(moddir, self.conf.COMPS, complist)
+        # bepaal (voorlopige) schermtekst
+        screentext = sorted(names)[0] if names else '(new mod)'
+        self.conf.set_diritem_value(moddir, self.conf.SCRNAM, screentext)
+        select = ', multiple possibilities found' if names else ''
+        messages.append(f"  Screentext set to '{screentext}' {select}")
+        # bepaal updateid en check voor multiple
+        oldid, more_ids = determine_update_id(keys)
+        select = f', multiple values found: {more_ids} ' if more_ids else ''
+        self.conf.set_diritem_value(moddir, self.conf.NXSKEY, oldid)
+        messages.append(f"  Update ID set to {oldid} {select}")
+        messages.append('  Change the "Selectable" setting if you want to be able to activate'
+                        ' the mod')
+        self.conf.set_diritem_value(moddir, self.conf.SEL, False)
+        return messages
+
+    def update_mod_settings(self, moddir, configdata):
+        "update info about mod if necessary"
+        if not self.conf.has_moddir(moddir):
+            raise ValueError('Installed mod is not in configuration, should not be possible')
+        messages, conf_changed = [], False
+        olddata = self.conf.get_diritem_data(moddir, self.conf.COMPS)
+        newdata = []
+        for data in configdata.values():
+            for component in data:
+                newdata.append(component)
+        if newdata != olddata:
+            messages.append(f"  List of components changed from {olddata} to {newdata}")
+            self.conf.set_diritem_value(moddir, self.conf.COMPS, newdata)
+            conf_changed = True
+        for data in configdata.values():
+            for component, compdict in data.items():
+                oldcomp = self.conf.get_component_data(component)
+                for key, value in compdict.items():
+                    if key not in oldcomp:
+                        messages.append(f"  {component}: new key {key} added"
+                                        f" with value '{value}'")
+                        self.conf_changed = True
+                    elif value != oldcomp[key]:
+                        messages.append(f"  {component}: {key} changed from '{oldcomp[key]}'"
+                                        f" to '{value}'")
+                        conf_changed = True
+                for key, value in oldcomp.items():
+                    if key not in compdict:
+                        messages.append(f"  {component}: key {key} with value '{value}' removed")
+                        conf_changed = True
+                if conf_changed:
+                    self.conf.update_componentdata(component, compdict)
+        return messages, conf_changed
+
 
 def get_archive_roots(namelist):
-    "determione base directories for a list of filenames"
+    "determine base directories for a list of filenames"
     roots = set()
     for name in namelist:
         parent = os.path.dirname(name)
@@ -367,49 +287,58 @@ def get_archive_roots(namelist):
         if parent == '__MACOSX':
             continue
         roots.add(parent)
-    return roots
+    return sorted(roots)
+
+
+def check_if_smapi(roots):
+    "determine if mod is SMAPI"
+    for rootitem in roots:
+        if rootitem.startswith('SMAPI'):
+            return True
+    return False
+
+
+def check_if_active(roots):
+    "determine state of mod before installing"
+    mod_existed = mod_was_active = False
+    for rootitem in roots:
+        if os.path.exists(os.path.join(MODBASE, rootitem)):
+            oldmodname = rootitem
+        elif os.path.exists(os.path.join(MODBASE, f'.{rootitem}')):
+            oldmodname = f'.{rootitem}'
+        else:
+            oldmodname = ''
+        if oldmodname:
+            mod_existed = True
+            if os.path.exists(os.path.join(MODBASE, f'.{rootitem}~')):
+                shutil.rmtree(os.path.join(MODBASE, f'.{rootitem}~'))
+            os.rename(os.path.join(MODBASE, oldmodname),
+                      os.path.join(MODBASE, f'.{rootitem}~'))
+            mod_was_active = not oldmodname.startswith('.')
+        else:
+            mod_existed = False
+            mod_was_active = False  # strictly speaking: should be "not applicable"
+    return mod_existed, mod_was_active
+
+
+def determine_update_id(keys):
+    "loop over keys to get the one we need and to check if there are more"
+    oldid, more_ids = 0, []
+    for value in keys:
+        if value:
+            value = int(value)
+            if value and value > 0 and value != oldid:
+                if not oldid:
+                    oldid = value
+                else:
+                    more_ids.append(value)
+    return oldid, more_ids
 
 
 def build_jsonconf():
     """build new configuration from current state of mod directory
-
-    copy screen positions and additional texts from original config
     """
     data, messages = dmlj.rebuild_all(pathlib.Path(MODBASE).iterdir())
-    with open(JSONCONFIG, 'w') as f:
+    with open(CONFIG, 'w') as f:
         json.dump(data, f)
-    newconf = dmlj.JsonConf(JSONCONFIG)
-    newconf.load()
-    # copy screen positions and texts from original config
-    oldconfig = configparser.ConfigParser(delimiters=(':',), allow_no_value=True)
-    oldconfig.optionxform = str
-    oldconfig.read(CONFIG)
-    for item in oldconfig.sections():
-        if item == 'Mod Directories':
-            continue
-        dirname = oldconfig['Mod Directories'][item]
-        if len(dirname.split(', ')) > 1:
-            dirname = dirname.split(', ')[0]
-        if newconf.has_moddir(dirname):
-            if oldconfig.has_option(item, SCRPOS):
-                newconf.set_diritem_value(dirname, SCRPOS, oldconfig[item][SCRPOS])
-            if oldconfig.has_option(item, NXSKEY):
-                newconf.set_diritem_value(dirname, NXSKEY, int(oldconfig[item][NXSKEY]))
-            if oldconfig.has_option(item, SCRTXT):
-                newconf.set_diritem_value(dirname, SCRTXT, oldconfig[item][SCRTXT])
-            newconf.set_diritem_value(dirname, SEL, True)
-    newconf.save()
-    for item in oldconfig.options('Mod Directories'):
-        if item == 'SMAPI':
-            continue
-        dirname = oldconfig['Mod Directories'][item]
-        if len(dirname.split(', ')) > 1:
-            newconf.mergecomponents(item, dirname)
-            dirname = dirname.split(', ')[0]
-        if newconf.has_moddir(dirname):
-            newconf.set_diritem_value(dirname, SCRNAM, item)
-            if not newconf.get_diritem_data(dirname, NXSKEY):
-                newconf.determine_nexuskey_for_mod(dirname)
-            if not newconf.get_diritem_data(dirname, SEL):
-                newconf.set_diritem_value(dirname, SEL, False)
-    newconf.save()
+    return messages

@@ -2,7 +2,6 @@
 """
 import sys
 import os.path
-import functools
 import PyQt6.QtWidgets as qtw
 import PyQt6.QtGui as qgui
 download_dir = ''
@@ -42,6 +41,7 @@ class ShowMods(qtw.QWidget):
         self.containers = {}
         self.positions = {}
         self.gbox = qtw.QGridLayout()
+        self.activate_button = qtw.QPushButton('&Activate changes', self)
         self.refresh_widgets(first_time=True)
         self.vbox.addLayout(self.gbox)
         self.vbox.addSpacing(10)
@@ -55,24 +55,21 @@ class ShowMods(qtw.QWidget):
         btn = qtw.QPushButton('&Reorder mods on screen', self)
         btn.clicked.connect(self.reorder_gui)
         hbox.addWidget(btn)
-        btn = qtw.QPushButton('add &Mod to config', self)
-        btn.clicked.connect(self.master.add_to_config)
+        # btn = qtw.QPushButton('add &Mod to config', self)
+        # btn.clicked.connect(self.master.add_to_config)
+        # hbox.addWidget(btn)
+        btn = qtw.QPushButton('&Mod attributes', self)
+        btn.clicked.connect(self.master.manage_attributes)
         hbox.addWidget(btn)
-        btn = qtw.QPushButton('add/remove remar&Ks', self)
-        btn.clicked.connect(self.master.add_remark)
-        hbox.addWidget(btn)
-        btn = qtw.QPushButton('&Edit config', self)
-        btn.clicked.connect(self.master.edit_config)
-        hbox.addWidget(btn)
-        btn = qtw.QPushButton('Re&Load config', self)
-        btn.clicked.connect(self.master.reload_config)
-        hbox.addWidget(btn)
-        btn = qtw.QPushButton('&Check config', self)
-        btn.clicked.connect(self.check)
-        hbox.addWidget(btn)
-        btn = qtw.QPushButton('&Activate changes', self)
-        btn.clicked.connect(self.confirm)
-        hbox.addWidget(btn)
+        # btn = qtw.QPushButton('&Edit config', self)
+        # btn.clicked.connect(self.master.edit_config)
+        # hbox.addWidget(btn)
+        # btn = qtw.QPushButton('Re&Load config', self)
+        # btn.clicked.connect(self.master.reload_config)
+        # hbox.addWidget(btn)
+        self.activate_button.clicked.connect(self.confirm)
+        self.activate_button.setEnabled(False)
+        hbox.addWidget(self.activate_button)
         btn = qtw.QPushButton('&Done', self)
         btn.clicked.connect(self.close)
         hbox.addWidget(btn)
@@ -100,7 +97,7 @@ class ShowMods(qtw.QWidget):
         "build a list from the checked entries and pass it back to the caller"
         # self.master.modnames = [x.text().split(">", 1)[1].split("<", 1)[0]
         #                        for x, y in self.widgets.values() if y.isChecked()]
-        self.master.modnames = []
+        modnames = []
         for label, check in self.widgets.values():
             if check.isChecked():
                 labeltext = label.text()
@@ -108,12 +105,13 @@ class ShowMods(qtw.QWidget):
                     linktext = labeltext.split(">", 1)[1].split("<", 1)[0]
                 else:
                     linktext = labeltext
-                self.master.modnames.append(linktext)
-        self.master.select_activations()
+                modnames.append(linktext)
+        self.master.select_activations(modnames)
         if self.master.directories:   # alleen leeg als er niks aangevinkt is
             self.master.activate()
         self.refresh_widgets(reorder_widgets=False)  # is eigenlijk niet nodig?
         qtw.QMessageBox.information(self, 'Change Config', 'wijzigingen zijn doorgevoerd')
+        self.activate_button.setEnabled(False)
 
     def refresh_widgets(self, first_time=False, reorder_widgets=True):
         "set the checkboxes to the right values (first time: also create them)"
@@ -122,18 +120,6 @@ class ShowMods(qtw.QWidget):
             rownum, colnum = 0, 0
             highrow, highcol = 0, 0
             maxcol = 3
-            # for text, scrpos in self.master.screenpos.items():
-            #     realscrpos, linknum = scrpos
-            #     self.containers[text], self.widgets[text] = self.add_checkbox(text, linknum)
-            #     # print(f'{realscrpos=}', end=', ')
-            #     if realscrpos:
-            #         rownum, colnum = [int(y) for y in realscrpos.split('x', 1)]
-            #     else:   # fallback voor als het scherm nog niet eerder geordend was
-            #         colnum += 1
-            #         if colnum == maxcol:
-            #             rownum += 1
-            #             colnum = 0
-            #     self.positions[(rownum, colnum)] = text
             unplotted = []
             for text, data in self.master.screeninfo.items():
                 self.containers[text], self.widgets[text] = self.add_checkbox(text, data)
@@ -162,37 +148,28 @@ class ShowMods(qtw.QWidget):
         # print(self.positions) # wordt deze misschien niet bijgewerkt na reorderen?
         if reorder_widgets:
             if not first_time:
-                for text, layout in self.containers.items():
-                    # print('removing widget for', text)
+                for layout in self.containers.values():
                     self.gbox.removeItem(layout)
             for pos, text in self.positions.items():
-                # print('adding widget for', text)
                 self.gbox.addLayout(self.containers[text], pos[0], pos[1])
             if not first_time:
                 self.gbox.update()  # werkt helaas niet om de nieuwe volgorde te laten zien
         for text, check in self.widgets.items():
-            # loc = os.path.join(self.master.modbase,
-            #                    self.master.conf['Mod Directories'][text].split(', ')[0])
             loc = os.path.join(self.master.modbase, self.master.screeninfo[text]['dir'])
             check[1].setChecked(os.path.exists(loc))
 
-    # def add_checkbox(self, text, linknum):
     def add_checkbox(self, text, data):
         "add a checkbox with the given text"
         hbox = qtw.QHBoxLayout()
         check = qtw.QCheckBox()
         check.setEnabled(data['sel'])
+        check.stateChanged.connect(self.enable_button)
         label = qtw.QLabel()
-        modname = text
-        # if linknum:
         if data['key']:
             nexustext = '<a href="https://www.nexusmods.com/stardewvalley/mods/{}">{}</a>'
-            # text = nexustext.format(linknum, text)
             text = nexustext.format(data['key'], text)
             label.setOpenExternalLinks(True)
-        # if modname in self.master.screentext:
         if data['txt']:
-            # text += ' ' + self.master.screentext[modname]
             text += ' ' + data['txt']
         label.setText(text)
         hbox.addSpacing(50)
@@ -202,10 +179,9 @@ class ShowMods(qtw.QWidget):
         hbox.addSpacing(50)
         return hbox, (label, check)
 
-    def check(self):
-        "check for non-matching names in config file"
-        results = self.master.check_config()
-        qtw.QMessageBox.information(self, 'Check Config', '\n'.join(results))
+    def enable_button(self):
+        "make activating mods possible"
+        self.activate_button.setEnabled(True)
 
     def update(self):
         "(re)install downloaded mods"
@@ -217,7 +193,7 @@ class ShowMods(qtw.QWidget):
             qtw.QMessageBox.information(self, 'Change Config', '\n'.join(report))
 
     def add_entries_for_name(self, name):
-        "add entries for managing the new plugin in the gui"
+        "add entries for managing the new mod in the gui"
         self.containers[name], self.widgets[name] = self.add_checkbox(name, '')
         row, col = self.determine_next_row_col()
         self.positions[row, col] = name
@@ -231,18 +207,15 @@ class ShowMods(qtw.QWidget):
         for col in range(maxcol + 1):
             if (maxrow, col) not in self.positions:
                 return maxrow, col
-            row += 1
+            # row += 1
         return maxrow + 1, 0
 
     def reorder_gui(self):
-        "Bring up a dialog to reodere the names on the screen and process the results"
+        "Bring up a dialog to reorder the names on the screen and process the results"
         ok = show_dialog(ReorderDialog, self)
         if ok:
             self.master.update_config_from_screenpos()
-            self.widgets = {}
-            self.containers = {}
-            self.positions = {}
-            self.refresh_widgets()  # waarom eerst de bovenstaande leegmaken?
+            self.refresh_widgets()
 
     def select_value(self, caption, options, editable=True, mandatory=False):
         "Select or enter a value in a dialog"
@@ -258,193 +231,187 @@ class ShowMods(qtw.QWidget):
         return item
 
 
-class NewModDialog(qtw.QDialog):
-    """Dialog for adding a new mod with dependencies (if any)
-
-    also used for defining a new dependency
+class AttributesDialog(qtw.QDialog):
+    """Dialog for viewing and optionally changing a mod's properties
     """
-    def __init__(self, parent, modnames, first_time):
+    def __init__(self, parent, conf):
         self.parent = parent
-        self.parent.dialog_data = {'mods': [], 'deps': {}, 'set_active': []}
-        self.modnames = modnames
-        super().__init__(parent)
-        gbox = qtw.QGridLayout()
-        gbox.addWidget(qtw.QLabel('Mod name:', self), 0, 0)
-        self.first_name = qtw.QLineEdit(self)
-        self.first_name.setMinimumWidth(200)
-        gbox.addWidget(self.first_name, 0, 1)
-        gbox.addWidget(qtw.QLabel('Unpack directory:', self), 1, 0)
-        self.last_name = qtw.QLineEdit(self)
-        self.last_name.setMinimumWidth(200)
-        gbox.addWidget(self.last_name, 1, 1)
-        self.select = qtw.QPushButton('&Select\nfrom Downloads', self)
-        self.select.clicked.connect(self.select_mod)
-        gbox.addWidget(self.select, 0, 2, 2, 1)
-        self.can_activate = qtw.QCheckBox('Activatable', self)
-        if first_time:
-            self.can_activate.setChecked(True)
-        gbox.addWidget(self.can_activate, 2, 0)  # , 1, 2)
-
-        self.deps = []
-        self.vbox = qtw.QVBoxLayout()
-        btn = qtw.QPushButton('&Add dependency', self)
-        btn.clicked.connect(self.add_depline)
-        self.vbox.addWidget(btn)
-        gbox.addLayout(self.vbox, 3, 0, 1, 3)
-
-        hbox = qtw.QHBoxLayout()
-        hbox.addStretch()
-        btn = qtw.QPushButton('&Cancel', self)
-        btn.clicked.connect(self.reject)
-        hbox.addWidget(btn)
-        btn = qtw.QPushButton('&Update', self)
-        btn.clicked.connect(self.update_deps)
-        hbox.addWidget(btn)
-        hbox.addStretch()
-        gbox.addLayout(hbox, 4, 0, 1, 3)
-        self.setLayout(gbox)
-
-    def select_mod(self):
-        """choose a mod to determine the directory it unpacks into
-        """
-        filename, ok = qtw.QFileDialog.getOpenFileName(self, caption="Select mod",
-                                                       directory=self.parent.master.downloads,
-                                                       filter='Zip files (*.zip)')
-        if ok:
-            dirname = self.parent.master.determine_unpack_directory(filename)
-            # dit is waarschijnlijk het handigste punt voor het binnenhalen van andere gegevens
-            # (nexuskey, echte modnaam) vooropgesteld dat deze methode ze ook oplevert
-            self.first_name.setText(dirname)
-            self.last_name.setText(dirname)
-
-    def add_depline(self):
-        """add a combobox to define a new dependency
-        """
-        hbox = qtw.QHBoxLayout()
-        lbox = qtw.QComboBox(self)
-        lbox.setEditable(False)
-        lbox.addItems(['-- add a new mod --', '-- remove this mod --'])
-        lbox.addItems(self.modnames)
-        self.deps.append((lbox, ''))
-        lbox.activated.connect(functools.partial(self.process_dep, lbox))
-        self.can_activate.setEnabled(False)
-        hbox.addWidget(lbox)
-        self.vbox.addLayout(hbox)
-        self.update()
-
-    def process_dep(self, lbox, choice):
-        """react to manipulating the combobox
-        """
-        if choice == 0:
-            ok = show_dialog(NewModDialog, self, self.modnames, first_time=False)
-            if ok:
-                data = self.dialog_data
-                self.parent.dialog_data['mods'].extend(data['mods'])
-                for key, value in data['deps'].items():
-                    self.parent.dialog_data['deps'][key] = value
-                    # self.parent.dialog_data['deps'][data['mods'][0]] = value
-                if data['set_active']:
-                    self.parent.dialog_data['set_active'].append(data['set_active'][0])
-                if data['deps']:
-                    for ix, dep in enumerate(self.deps):
-                        if dep[0] == lbox:
-                            self.deps[ix] = (lbox, key)
-                            break
-                    lbox.addItem(key)
-                    lbox.setCurrentText(key)
-            return
-        if choice == 1:
-            self.remove_depline(lbox)
-            return
-        for ix, dep in enumerate(self.deps):
-            if dep[0] == lbox:
-                self.deps[ix] = (lbox, lbox.itemText(choice))
-                break
-
-    def remove_depline(self, lbox):
-        """remove a combobox for a dependency
-        """
-        self.vbox.removeWidget(lbox)
-        for dep in self.deps:
-            if dep[0] == lbox:
-                self.deps.remove(dep)
-                break
-        if not self.deps:
-            self.can_activate.setEnabled(True)
-        lbox.close()
-        self.update()
-
-    def update_deps(self):
-        """return the new mod configuration
-        """
-        modname = self.first_name.text()
-        self.parent.dialog_data['mods'].insert(0, (modname, self.last_name.text()))
-        self.parent.dialog_data['deps'][modname] = [x[1] for x in self.deps]
-        if self.can_activate.isChecked():
-            self.parent.dialog_data['set_active'].append(modname)
-        self.accept()
-
-
-class RemarksDialog(qtw.QDialog):
-    """Dialog for add ing or removing a remark following a mod's screen text
-    """
-    def __init__(self, parent, modnames):
-        self.parent = parent
-        self.modnames = modnames
+        self.conf = conf
+        self.choice = ''
+        self.modnames = {}
+        for x in conf.list_all_mod_dirs():
+            self.modnames[conf.get_diritem_data(x, conf.SCRNAM)] = x
         super().__init__(parent)
         vbox = qtw.QVBoxLayout()
-        lbox = qtw.QComboBox(self)
-        lbox.setEditable(False)
-        lbox.addItem('select a mod to change the screen text')
-        lbox.addItems(self.modnames)
-        lbox.currentTextChanged[str].connect(self.process)
-        vbox.addWidget(lbox)
+        self.lbox = qtw.QComboBox(self)
+        self.lbox.setEditable(False)
+        self.lbox.addItem('select a mod to change the screen text')
+        self.lbox.addItems(sorted(self.modnames))
+        self.lbox.currentTextChanged.connect(self.enable_select)
+        # self.lbox.activated.connect(self.enable_select)
+        vbox.addWidget(self.lbox)
+        self.select_button = qtw.QPushButton('View &Attributes')
+        self.select_button.clicked.connect(self.process)
+        self.select_button.setEnabled(False)
+        vbox.addWidget(self.select_button)
         hbox = qtw.QHBoxLayout()
-        self.text = qtw.QLineEdit(self)
-        self.text.setMinimumWidth(200)
-        self.text.setReadOnly(True)
-        hbox.addWidget(self.text)
-        self.clear_button = qtw.QPushButton()
-        self.clear_button.setIcon(qgui.QIcon.fromTheme(qgui.QIcon.ThemeIcon.EditClear))
-        self.clear_button.setDisabled(True)
-        self.clear_button.clicked.connect(self.clear_text)
-        hbox.addWidget(self.clear_button)
+        hbox.addWidget(qtw.QLabel('Screen Name:\n'
+                                  '(the suggestions in the box below are taken from\n'
+                                  'the mod components', self))
         vbox.addLayout(hbox)
         hbox = qtw.QHBoxLayout()
-        self.change_button = qtw.QPushButton('&Change')
+        # self.text = qtw.QLineEdit(self)
+        self.name = qtw.QComboBox(self)
+        # self.text.setMinimumWidth(200)
+        # self.text.setReadOnly(True)
+        hbox.addWidget(self.name)
+        self.clear_name_button = qtw.QPushButton()
+        self.clear_name_button.setIcon(qgui.QIcon.fromTheme(qgui.QIcon.ThemeIcon.EditClear))
+        # self.clear_button.resize(20, 20)
+        self.clear_name_button.setFixedSize(24, 24)
+        self.clear_name_button.setDisabled(True)
+        self.clear_name_button.clicked.connect(self.clear_name_text)
+        hbox.addWidget(self.clear_name_button)
+        vbox.addLayout(hbox)
+        hbox = qtw.QHBoxLayout()
+        hbox.addWidget(qtw.QLabel('Screen Text:\n'
+                                  '(to add some information e.q. if the mod is broken)', self))
+        vbox.addLayout(hbox)
+        hbox = qtw.QHBoxLayout()
+        self.text = qtw.QLineEdit(self)
+        hbox.addWidget(self.text)
+        self.clear_text_button = qtw.QPushButton()
+        self.clear_text_button.setIcon(qgui.QIcon.fromTheme(qgui.QIcon.ThemeIcon.EditClear))
+        # self.clear_button.resize(20, 20)
+        self.clear_text_button.setFixedSize(24, 24)
+        self.clear_text_button.setDisabled(True)
+        self.clear_text_button.clicked.connect(self.clear_text_text)
+        hbox.addWidget(self.clear_text_button)
+        vbox.addLayout(hbox)
+        hbox = qtw.QHBoxLayout()
+        self.activate_button = qtw.QCheckBox('This mod can be activated by itself', self)
+        hbox.addWidget(self.activate_button)
+        vbox.addLayout(hbox)
+        self.comps_button = qtw.QPushButton('View &Components')
+        self.comps_button.clicked.connect(self.view_components)
+        vbox.addWidget(self.comps_button)
+        self.comps_button.setDisabled(True)
+        self.deps_button = qtw.QPushButton('View &Dependencies')
+        self.deps_button.clicked.connect(self.view_dependencies)
+        vbox.addWidget(self.deps_button)
+        self.deps_button.setDisabled(True)
+        hbox = qtw.QHBoxLayout()
+        self.change_button = qtw.QPushButton('&Update')
         self.change_button.setDisabled(True)
-        self.change_button.clicked.connect(self.change_text)
+        self.change_button.clicked.connect(self.update)
         hbox.addWidget(self.change_button)
-        close_button = qtw.QPushButton('&Done')
+        close_button = qtw.QPushButton('&Exit')
         close_button.clicked.connect(self.accept)
         hbox.addWidget(close_button)
         vbox.addLayout(hbox)
         self.setLayout(vbox)
+        self.lbox.setFocus()
 
-    def process(self, choice):
+    def enable_select(self):
+        """disable buttons after selecting another mod
+        """
+        self.select_button.setEnabled(True)
+        self.comps_button.setDisabled(True)
+        self.deps_button.setDisabled(True)
+        self.change_button.setDisabled(True)
+
+    def process(self):
         "get description if any"
-        self.text.clear()
-        if choice in self.parent.master.screentext:
-            self.text.setText(self.parent.master.screentext[choice])
-        self.choice = choice
-        self.text.setReadOnly(False)
-        self.clear_button.setDisabled(False)
+        self.select_button.setDisabled(True)
+        self.choice = self.lbox.currentText()
+        self.name.clear()
+        self.name.addItem(self.choice)
+        items = set()
+        for x in self.conf.list_components_for_dir(self.modnames[self.choice]):
+            items.add(self.conf.get_component_data(x, self.conf.NAME))
+        self.name.addItems(sorted(list(items)))
+        self.clear_name_button.setDisabled(False)
+        self.text.setText(self.parent.master.screeninfo[self.choice]['txt'])
+        self.clear_text_button.setDisabled(False)
+        self.activate_button.setChecked(self.parent.master.screeninfo[self.choice]['sel'])
+        self.comps_button.setDisabled(False)
+        self.deps_button.setDisabled(False)
         self.change_button.setDisabled(False)
 
-    def clear_text(self):
-        "visually delete description if any"
+    def clear_name_text(self):
+        "visually delete screen text"
+        self.name.clear()
+
+    def clear_text_text(self):
+        "visually delete additional text if any"
         self.text.clear()
 
-    def change_text(self):
+    def view_components(self):
+        "list components for mod"
+        complist = []
+        # maxlen = 0
+        for comp in self.conf.list_components_for_dir(self.modnames[self.choice]):
+            text = (f'  {self.conf.get_component_data(comp, self.conf.NAME)} '
+                    f'  {self.conf.get_component_data(comp, self.conf.VRS)}\n'
+                    f'    ({comp})')
+            # maxlen = max(maxlen, len(text))
+            complist.append(text)
+        message = f'Components for {self.choice}:\n' + '\n'.join(complist)
+        qtw.QMessageBox.information(self, 'SDVMM mod info', message)
+        # box = qtw.QMessageBox(self)
+        # box.setWindowTitle('SDVMM mod info')
+        # box.setText(f'Components for {self.choice}:\n' + '\n'.join(complist))
+        # box.addButton(qtw.QMessageBox.StandardButton.Ok)
+        # box.setFixedSize(len(complist) * 10, maxlen * 10)
+        # box.resize(len(complist) * 10, maxlen * 10)
+        # box.exec()
+
+    def view_dependencies(self):
+        "list dependencies for mod"
+        deplist = set()
+        for comp in self.conf.list_components_for_dir(self.modnames[self.choice]):
+            for dep in self.conf.get_component_data(comp, self.conf.DEPS):
+                deplist.add(dep)
+        depnames = []
+        # maxlen = 0
+        for dep in sorted(deplist):
+            try:
+                depname = self.conf.get_component_data(dep, self.conf.NAME)
+            except ValueError:
+                depname = 'unknown component:'
+                depnames.append((depname, dep))
+            else:
+                depnames.append((depname, f'({dep})'))
+            # maxlen = max(maxlen, len(depname) + len(dep) + 4)
+        if not depnames:
+            depnames = [('None', '')]
+        message = f'Dependencies for {self.choice}:\n' + "\n".join(f' {x} {y}'
+                                                                   for (x, y) in sorted(depnames))
+        qtw.QMessageBox.information(self, 'SDVMM mod info', message)
+        # box = qtw.QMessageBox(self)
+        # box.setWindowTitle('SDVMM mod info')
+        # box.setText(f'Dependencies for {self.choice}:\n'
+        #             + "\n".join(f' {x} {y}' for (x, y) in sorted(depnames)))
+        # box.addButton(qtw.QMessageBox.StandardButton.Ok)
+        # box.setFixedSize(len(depnames) * 10, maxlen * 10)
+        # box.exec()
+
+    def update(self):
         "update screentext in dictionary"
-        newtext = self.text.text()
-        if not newtext:
-            self.parent.master.screentext.pop(self.choice)
-        else:
-            self.parent.master.screentext[self.choice] = newtext
-        self.text.setReadOnly(True)
-        self.clear_button.setDisabled(True)
+        # self.text.setReadOnly(True)
+        self.clear_name_button.setDisabled(True)
+        self.clear_text_button.setDisabled(True)
         self.change_button.setDisabled(True)
+        selectable = self.activate_button.isChecked()
+        self.parent.master.screeninfo[self.choice]['sel'] = selectable
+        text = self.text.text()
+        self.parent.master.screeninfo[self.choice]['txt'] = text
+        name = self.name.currentText()
+        if name != self.choice:
+            self.parent.master.screeninfo[name] = self.parent.master.screeninfo.pop(self.choice)
+            self.parent.master.attr_changes.append((name, self.choice))
+        else:
+            self.parent.master.attr_changes.append((self.choice, ''))
 
 
 class ReorderDialog(qtw.QDialog):
