@@ -2,13 +2,13 @@
 """
 import sys
 import os.path
+import contextlib
 import PyQt6.QtWidgets as qtw
 import PyQt6.QtGui as qgui
 download_dir = ''
 maxpercol = 10
 
 
-# def show_dialog(cls, parent, modnames, first_time):
 def show_dialog(cls, parent, *args, **kwargs):
     "generic function for handling a dialog (instead of calling it directly)"
     # parent.dialog_data = {'mods': [], 'deps': {}, 'set_active': []}
@@ -20,10 +20,21 @@ def show_dialog(cls, parent, *args, **kwargs):
 
 class ShowMods(qtw.QWidget):
     "GUI presenting the available mods/extensions to make selection possible of mods to (de)activate"
+    maxcol = 3
+
     def __init__(self, master):
         self.master = master
         self.app = qtw.QApplication(sys.argv)
         super().__init__()
+        self.lastrow, self.lastcol = 0, 0
+        self.unplotted = []
+        self.not_selectable = []
+        self.plotted_widgets = {}
+        self.plotted_positions = {}
+        self.unplotted_widgets = {}
+        self.unplotted_positions = {}
+        self.nonsel_widgets = {}
+        self.nonsel_positions = {}
 
     def setup_screen(self):
         "define the screen elements"
@@ -37,13 +48,15 @@ class ShowMods(qtw.QWidget):
                                   'De onderstreepte items zijn hyperlinks; ze leiden naar de pagina'
                                   ' waarvandaan ik ze van gedownload heb (doorgaans op Nexus)'))
         self.vbox.addLayout(hbox)
-        self.widgets = {}
-        self.containers = {}
-        self.positions = {}
-        self.gbox = qtw.QGridLayout()
+        self.gbox1 = qtw.QGridLayout()  # activatable mods
+        self.vbox.addLayout(self.gbox1)
+        self.vbox.addWidget(qtw.QLabel('Hieronder volgen afhankelijkheden; deze zijn niet'
+                                       ' apart te activeren maar je kunt wel zien of ze'
+                                       ' actief zijn'))
+        self.gbox2 = qtw.QGridLayout()  # dependencies
+        self.vbox.addLayout(self.gbox2)
         self.activate_button = qtw.QPushButton('&Activate changes', self)
         self.refresh_widgets(first_time=True)
-        self.vbox.addLayout(self.gbox)
         self.vbox.addSpacing(10)
         hbox = qtw.QHBoxLayout()
         hbox.addStretch()
@@ -52,21 +65,9 @@ class ShowMods(qtw.QWidget):
                        ' installeren')
         btn.clicked.connect(self.update)
         hbox.addWidget(btn)
-        btn = qtw.QPushButton('&Reorder mods on screen', self)
-        btn.clicked.connect(self.reorder_gui)
-        hbox.addWidget(btn)
-        # btn = qtw.QPushButton('add &Mod to config', self)
-        # btn.clicked.connect(self.master.add_to_config)
-        # hbox.addWidget(btn)
         btn = qtw.QPushButton('&Mod attributes', self)
         btn.clicked.connect(self.master.manage_attributes)
         hbox.addWidget(btn)
-        # btn = qtw.QPushButton('&Edit config', self)
-        # btn.clicked.connect(self.master.edit_config)
-        # hbox.addWidget(btn)
-        # btn = qtw.QPushButton('Re&Load config', self)
-        # btn.clicked.connect(self.master.reload_config)
-        # hbox.addWidget(btn)
         self.activate_button.clicked.connect(self.confirm)
         self.activate_button.setEnabled(False)
         hbox.addWidget(self.activate_button)
@@ -95,10 +96,9 @@ class ShowMods(qtw.QWidget):
 
     def confirm(self):
         "build a list from the checked entries and pass it back to the caller"
-        # self.master.modnames = [x.text().split(">", 1)[1].split("<", 1)[0]
-        #                        for x, y in self.widgets.values() if y.isChecked()]
         modnames = []
-        for label, check in self.widgets.values():
+        all_widgets = self.plotted_widgets | self.unplotted_widgets
+        for hbox, label, check in all_widgets.values():
             if check.isChecked():
                 labeltext = label.text()
                 if ">" in labeltext:
@@ -116,68 +116,98 @@ class ShowMods(qtw.QWidget):
     def refresh_widgets(self, first_time=False, reorder_widgets=True):
         "set the checkboxes to the right values (first time: also create them)"
         # on first-time we build all the checkbox containers
+        # otherwize we remove the variable elements from the gridboxes
         if first_time:
             rownum, colnum = 0, 0
-            highrow, highcol = 0, 0
-            maxcol = 3
-            unplotted = []
             for text, data in self.master.screeninfo.items():
-                self.containers[text], self.widgets[text] = self.add_checkbox(text, data)
                 if data['pos']:
                     rownum, colnum = [int(y) for y in data['pos'].split('x', 1)]
-                    highrow = rownum if rownum > highrow else highrow
-                    highcol = colnum if colnum > highcol else highcol
-                    self.positions[(rownum, colnum)] = text
-                else:   # fallback voor nog niet geplotte teksten
-                    unplotted.append(text)
-                rownum, colnum = highrow + 1, -1
-            self.positions[(rownum, colnum)] = "---"
-            hbox = qtw.QHBoxLayout()
-            hbox.addWidget(qtw.QLabel('Hieronder volgen afhankelijkheden; deze zijn niet'
-                                      ' apart te activeren maar je kunt wel zien of ze'
-                                      ' actief zijn'))
-            self.containers['---'] = hbox
-            rownum += 1
-            for text in sorted(unplotted):
-                colnum += 1
-                if colnum == maxcol:
-                    rownum += 1
-                    colnum = 0
-                self.positions[(rownum, colnum)] = text
-
-        # print(self.positions) # wordt deze misschien niet bijgewerkt na reorderen?
+                    self.plotted_widgets[(rownum, colnum)] = self.add_checkbox()
+                    self.plotted_positions[(rownum, colnum)] = text, data
+                    self.gbox1.addLayout(self.plotted_widgets[(rownum, colnum)][0], rownum, colnum)
+                    self.lastrow, self.lastcol = max((self.lastrow, self.lastcol), (rownum, colnum))
+                elif data['sel']:
+                    self.unplotted.append(text)
+                else:
+                    self.not_selectable.append(text)
+        elif reorder_widgets:
+            # for item in self.unplotted_widgets.values():
+            #     item[1].close()
+            #     item[2].close()
+            for key, value in self.unplotted_widgets.items():
+                label, check = value[1:]
+                check.close()
+                label.close()
+                self.gbox1.removeItem(self.gbox1.itemAtPosition(key[0], key[1]))
+            # for item in self.nonsel_widgets.values():
+            #     item[1].close()
+            #     item[2].close()
+            for key, value in self.nonsel_widgets.items():
+                label, check = value[1:]
+                check.close()
+                label.close()
+                self.gbox2.removeItem(self.gbox2.itemAtPosition(key[0], key[1]))
+        self.unplotted_positions, self.unplotted_widgets = self.add_items_to_grid(
+            self.gbox1, self.lastrow, self.lastcol, self.unplotted)
+        self.nonsel_positions, self.nonsel_widgets = self.add_items_to_grid(
+            self.gbox2, 0, -1, self.not_selectable)
+        sel_positions = self.plotted_positions | self.unplotted_positions
+        sel_widgets = self.plotted_widgets | self.unplotted_widgets
         if reorder_widgets:
-            if not first_time:
-                for layout in self.containers.values():
-                    self.gbox.removeItem(layout)
-            for pos, text in self.positions.items():
-                self.gbox.addLayout(self.containers[text], pos[0], pos[1])
-            if not first_time:
-                self.gbox.update()  # werkt helaas niet om de nieuwe volgorde te laten zien
-        for text, check in self.widgets.items():
-            loc = os.path.join(self.master.modbase, self.master.screeninfo[text]['dir'])
-            check[1].setChecked(os.path.exists(loc))
+            self.set_texts_for_grid(sel_positions, sel_widgets)
+            self.set_texts_for_grid(self.nonsel_positions, self.nonsel_widgets)
+        self.set_checks_for_grid(sel_positions, sel_widgets)
+        self.set_checks_for_grid(self.nonsel_positions, self.nonsel_widgets)
 
-    def add_checkbox(self, text, data):
+    def add_items_to_grid(self, grid, rownum, colnum, items):
+        """create the screen widgets and and remember their positions
+        """
+        widgets = {}
+        positions = {}
+        for text in sorted(items):
+            colnum += 1
+            if colnum == self.maxcol:
+                rownum += 1
+                colnum = 0
+            widgets[(rownum, colnum)] = self.add_checkbox()
+            positions[(rownum, colnum)] = text, self.master.screeninfo[text]
+            grid.addLayout(widgets[(rownum, colnum)][0], rownum, colnum)
+            self.master.screeninfo[text]['pos'] = f'{rownum}x{colnum}'
+        return positions, widgets
+
+    def set_texts_for_grid(self, positions, widgets):
+        """add texts to the widgets
+        """
+        for pos, info in positions.items():
+            text, data = info
+            label = widgets[pos][1]
+            self.build_screen_text(label, text, data['txt'], data['key'])
+
+    def set_checks_for_grid(self, positions, widgets):
+        "determine what value to set the cjeckboxes to"
+        for pos, info in positions.items():
+            data = info[1]
+            check = widgets[pos][2]
+            with contextlib.suppress(TypeError):
+                check.stateChanged.disconnect()
+            if data['sel']:
+                check.setEnabled(True)
+                check.stateChanged.connect(self.enable_button)
+            loc = os.path.join(self.master.modbase, data['dir'])
+            check.setChecked(os.path.exists(loc))
+
+    def add_checkbox(self):
         "add a checkbox with the given text"
         hbox = qtw.QHBoxLayout()
         check = qtw.QCheckBox()
-        check.setEnabled(data['sel'])
-        check.stateChanged.connect(self.enable_button)
+        check.setEnabled(False)
         label = qtw.QLabel()
-        if data['key']:
-            nexustext = '<a href="https://www.nexusmods.com/stardewvalley/mods/{}">{}</a>'
-            text = nexustext.format(data['key'], text)
-            label.setOpenExternalLinks(True)
-        if data['txt']:
-            text += ' ' + data['txt']
-        label.setText(text)
         hbox.addSpacing(50)
         hbox.addWidget(check)
         hbox.addWidget(label)
         hbox.addStretch()
         hbox.addSpacing(50)
-        return hbox, (label, check)
+        return hbox, label, check
 
     def enable_button(self):
         "make activating mods possible"
@@ -210,13 +240,6 @@ class ShowMods(qtw.QWidget):
             # row += 1
         return maxrow + 1, 0
 
-    def reorder_gui(self):
-        "Bring up a dialog to reorder the names on the screen and process the results"
-        ok = show_dialog(ReorderDialog, self)
-        if ok:
-            self.master.update_config_from_screenpos()
-            self.refresh_widgets()
-
     def select_value(self, caption, options, editable=True, mandatory=False):
         "Select or enter a value in a dialog"
         ok = False
@@ -229,6 +252,17 @@ class ShowMods(qtw.QWidget):
                 else:
                     ok = True
         return item
+
+    def build_screen_text(self, label, name, text, updateid):
+        """optionally turn screen text into a link and add remark
+        """
+        if updateid:
+            nexustext = '<a href="https://www.nexusmods.com/stardewvalley/mods/{}">{}</a>'
+            name = nexustext.format(updateid, name)
+            label.setOpenExternalLinks(True)
+        if text:
+            name += ' ' + text
+        label.setText(name)
 
 
 class AttributesDialog(qtw.QDialog):
@@ -358,13 +392,6 @@ class AttributesDialog(qtw.QDialog):
             complist.append(text)
         message = f'Components for {self.choice}:\n' + '\n'.join(complist)
         qtw.QMessageBox.information(self, 'SDVMM mod info', message)
-        # box = qtw.QMessageBox(self)
-        # box.setWindowTitle('SDVMM mod info')
-        # box.setText(f'Components for {self.choice}:\n' + '\n'.join(complist))
-        # box.addButton(qtw.QMessageBox.StandardButton.Ok)
-        # box.setFixedSize(len(complist) * 10, maxlen * 10)
-        # box.resize(len(complist) * 10, maxlen * 10)
-        # box.exec()
 
     def view_dependencies(self):
         "list dependencies for mod"
@@ -388,13 +415,6 @@ class AttributesDialog(qtw.QDialog):
         message = f'Dependencies for {self.choice}:\n' + "\n".join(f' {x} {y}'
                                                                    for (x, y) in sorted(depnames))
         qtw.QMessageBox.information(self, 'SDVMM mod info', message)
-        # box = qtw.QMessageBox(self)
-        # box.setWindowTitle('SDVMM mod info')
-        # box.setText(f'Dependencies for {self.choice}:\n'
-        #             + "\n".join(f' {x} {y}' for (x, y) in sorted(depnames)))
-        # box.addButton(qtw.QMessageBox.StandardButton.Ok)
-        # box.setFixedSize(len(depnames) * 10, maxlen * 10)
-        # box.exec()
 
     def update(self):
         "update screentext in dictionary"
@@ -403,8 +423,10 @@ class AttributesDialog(qtw.QDialog):
         self.clear_text_button.setDisabled(True)
         self.change_button.setDisabled(True)
         selectable = self.activate_button.isChecked()
+        oldselect = self.parent.master.screeninfo[self.choice]['sel']
         self.parent.master.screeninfo[self.choice]['sel'] = selectable
         text = self.text.text()
+        oldtext = self.parent.master.screeninfo[self.choice]['txt']
         self.parent.master.screeninfo[self.choice]['txt'] = text
         name = self.name.currentText()
         if name != self.choice:
@@ -413,146 +435,27 @@ class AttributesDialog(qtw.QDialog):
         else:
             self.parent.master.attr_changes.append((self.choice, ''))
 
-
-class ReorderDialog(qtw.QDialog):
-    "Mod volgorde op scherm veranderen"
-    # toon tablewidget met buttons voor toevoegen/weghalen kolommen en rijen (vgl HtmlEdit)
-    # bij refreshen laden met namen uit self.master.screenpos
-    # t.z.t. misschien direct in de main gui, met drag en drop o.i.d.i
-    def __init__(self, parent):
-        self._parent = parent
-        self.data = parent.master.screenpos
-        # self.headings = ['']
-        super().__init__(parent)
-        rowcount, colcount = self.determine_rows_cols()
-        self.colwidth = 200
-        # self.setWindowTitle('Screen Setup')
-        # self.setWindowIcon(self._parent.appicon)
-        vbox = qtw.QVBoxLayout()
-
-        self.table = qtw.QTableWidget(self)
-        self.table.setRowCount(rowcount)     # de eerste rij is voor de kolomtitels
-        self.table.setColumnCount(colcount)  # de eerste rij is voor de rijtitels
-        for col in range(colcount):
-            self.table.setColumnWidth(col - 1, self.colwidth)
-        # self.table_table.setHorizontalHeaderLabels(self.headings)
-        # self.hdr = self.table_table.horizontalHeader()
-        # self.table_table.verticalHeader().setVisible(False)
-        # self.hdr.setSectionsClickable(True)
-        # self.hdr.sectionClicked.connect(self.on_title)
-        hbox = qtw.QHBoxLayout()
-        hbox.addWidget(self.table)
-        self.populate()
-        vbox.addLayout(hbox)
-
-        hbox = qtw.QHBoxLayout()
-        hbox.addStretch()
-        button = qtw.QPushButton('&> Add Column', self)
-        button.clicked.connect(self.add_column)
-        hbox.addWidget(button)
-        button = qtw.QPushButton('&< Remove Last Column', self)
-        button.clicked.connect(self.remove_column)
-        hbox.addWidget(button)
-        button = qtw.QPushButton('(Re)&Position texts in grid', self)
-        button.clicked.connect(self.populate)
-        hbox.addWidget(button)
-        button = qtw.QPushButton('&+ Add Row', self)
-        button.clicked.connect(self.add_row)
-        hbox.addWidget(button)
-        button = qtw.QPushButton('&- Remove Last Row', self)
-        button.clicked.connect(self.remove_row)
-        hbox.addWidget(button)
-        hbox.addStretch()
-        vbox.addLayout(hbox)
-
-        hbox = qtw.QHBoxLayout()
-        self.ok_button = qtw.QPushButton('&Save', self)
-        self.ok_button.clicked.connect(self.accept)
-        self.ok_button.setDefault(True)
-        self.cancel_button = qtw.QPushButton('&Cancel', self)
-        self.cancel_button.clicked.connect(self.reject)
-        hbox.addStretch()
-        hbox.addWidget(self.ok_button)
-        hbox.addWidget(self.cancel_button)
-        hbox.addStretch()
-        vbox.addLayout(hbox)
-
-        self.setLayout(vbox)
-
-    def determine_rows_cols(self):
-        """derive number of rows and columns from texts to lay out
-        """
-        colcount = rowcount = 0
-        for pos in [x[0] for x in self.data.values()]:
-            if not pos:
-                break
-            row, col = [int(x) + 1 for x in pos.split('x')]
-            rowcount = max(rowcount, row)
-            colcount = max(colcount, col)
-        if colcount == 0:
-            colcount = 3
-            rowcount = len(self.data) // colcount
-            if len(self.data) % colcount > 0:
-                rowcount += 1
-        return rowcount, colcount
-
-    def add_column(self):
-        "new column at the end"
-        self.table.insertColumn(self.table.columnCount())
-        self.table.setColumnWidth(self.table.columnCount() - 1, self.colwidth)
-
-    def remove_column(self):
-        "remove last column"
-        self.table.removeColumn(self.table.columnCount() - 1)
-
-    def add_row(self):
-        "new row at the bottom"
-        self.table.insertRow(self.table.rowCount())
-
-    def remove_row(self):
-        "remove last roeself."
-        self.table.removeRow(self.table.rowCount() - 1)
-
-    def populate(self):
-        """(re)distribute texts over the table cells"""
-        self.table.clear()
-        if not list(self.data.values())[0]:
-            texts = list(self.data.keys())
-            textindex = 0
-            for colnum in range(self.table.columnCount()):
-                for rownum in range(self.table.rowCount()):
-                    if textindex < len(texts):
-                        item = qtw.QTableWidgetItem(texts[textindex])
-                        textindex += 1
-                        self.table.setItem(rownum, colnum, item)
-            return
-        for text, scrpos in sorted(self.data.items(), key=lambda x: (x[1], x[0])):
-            if scrpos[0]:
-                row, col = [int(x) for x in scrpos[0].split('x')]
+        rownum, colnum = [int(y) for y in self.parent.master.screeninfo[name]['pos'].split('x', 1)]
+        if oldselect:
+            label, check = self.parent.unplotted_widgets[(rownum, colnum)][1:]
+        else:
+            label, check = self.parent.nonsel_widgets[(rownum, colnum)][1:]
+        if selectable != oldselect:
+            if selectable:
+                self.parent.not_selectable.remove(name)
+                self.parent.unplotted.append(name)
             else:
-                row, col = self.table.rowCount(), 0
-                self.table.insertRow(row)
-            item = qtw.QTableWidgetItem(text)
-            self.table.setItem(row, col, item)
-
-    def accept(self):
-        """bij OK: de opgebouwde tabel via self.dialog_data doorgeven
-        aan het mainwindow
-        """
-        rows = self.table.rowCount()
-        cols = self.table.columnCount()
-        if rows * cols < len(self.data):
-            qtw.QMessageBox.information(self, 'Reorder names', "not enough room for all entries")
-            return
-        for row in range(rows):
-            for col in range(cols):
-                # try:
-                #     rowitems.append(str(self.table_table.item(row, col).text()))
-                # except AttributeError:
-                #     self._parent.meld('Graag nog even het laatste item bevestigen (...)')
-                #     return
-                item = self.table.item(row, col)
-                if item:
-                    self.data[item.text()] = f'{row}x{col}'
-        self._parent.master.screenpos = self.data
-        super().accept()
+                if name in self.parent.unplotted:
+                    self.parent.unplotted.remove(name)
+                    self.parent.not_selectable.append(name)
+                else:
+                    message = ("Onselecteerbaar maken van mods met coordinaten in de config"
+                               " is helaas nog niet mogelijk")
+                    qtw.QMessageBox.information(self, 'SDVMM', message)
+                    return
+            self.parent.refresh_widgets()  # not first_time
+        elif text != oldtext or name != self.choice:
+            # alleen schermtekst wijzigen
+            label.setOpenExternalLinks(False)
+            self.parent.build_screen_text(label, name, text,
+                                          self.parent.master.screeninfo[name]['key'])

@@ -40,13 +40,13 @@ class Manager:
     def build_and_start_gui(self):
         """build screen: make the user select from a list which expansions they want to have active
         """
-        self.extract_screen_locations()
+        self.extract_screeninfo()
         self.doit = gui.ShowMods(self)
         self.doit.setup_screen()
         self.doit.setup_actions()
         self.doit.show_screen()
 
-    def extract_screen_locations(self):
+    def extract_screeninfo(self):
         """read the 'position' key from the config entries that will be presented and remove them
         temporarily from the config
         allows for the key not being present due to the screen never being reorganized
@@ -151,7 +151,7 @@ class Manager:
             self.conf.save()
         if got_new_mod:
             self.screeninfo = {}
-            self.extract_screen_locations()
+            self.extract_screeninfo()
             self.doit.refresh_widgets(first_time=True)
         return report
 

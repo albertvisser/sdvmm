@@ -137,7 +137,7 @@ class TestManager:
             print('called Manager.extract_screen_locations')
         monkeypatch.setattr(testee.gui, 'ShowMods', MockShowMods)
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.extract_screen_locations = mock_extract
+        testobj.extract_screeninfo = mock_extract
         testobj.modnames = []
         testobj.build_and_start_gui()
         assert testobj.modnames == ['one', 'two', 'three']
@@ -147,7 +147,7 @@ class TestManager:
                                            'called gui.ShowMods.setup_actions()\n'
                                            'called gui.ShowMods.show_screen()\n')
 
-    def test_extract_screen_locations(self, monkeypatch, capsys):
+    def test_extract_screeninfo(self, monkeypatch, capsys):
         """unittest for Manager.extract_screen_locations
         """
         def mock_list():
@@ -176,7 +176,7 @@ class TestManager:
         testobj.conf.get_diritem_data = mock_get
         testobj.screeninfo = {'yyy': {'sel': 's', 'pos': 'p', 'key': 'k', 'txt': 't'}}
 
-        testobj.extract_screen_locations()
+        testobj.extract_screeninfo()
         assert testobj.screeninfo == {
                 'yyy': {'dir': 'yyy', 'sel': 's', 'pos': 'p', 'key': 'k', 'txt': 't'},
                 'xxx': {'dir': 'xxx', 'sel': False, 'pos': '', 'key': '', 'txt': ''}}
@@ -196,7 +196,7 @@ class TestManager:
         testobj.conf.list_all_mod_dirs = mock_list_2
         testobj.conf.get_diritem_data = mock_get_2
         testobj.screeninfo = {}
-        testobj.extract_screen_locations()
+        testobj.extract_screeninfo()
         assert testobj.screeninfo == {'scrxxx': {'dir': 'xxx', 'sel': 'sel', 'pos': 'scrpos',
                                                  'key': 'scrkey', 'txt': 'scrtxt'}}
         assert capsys.readouterr().out == ("called Conf.list_all_mod_dirs\n"
@@ -242,6 +242,7 @@ class TestManager:
                 if name in ('x', 'y'):
                     return ['z']
                 return []
+            return ''
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.conf.list_components_for_dir = mock_list
         testobj.conf.get_component_data = mock_get
@@ -358,7 +359,7 @@ class TestManager:
         def mock_rename(*args):
             print('called os.rename with args', args)
         def mock_extract():
-            print('called Manager.extract_screen_locations')
+            print('called Manager.extract_screeninfo')
         def mock_get(*args):
             print('called Manager.get_data_for_config with args', args)
             return ['done'], False
@@ -380,7 +381,7 @@ class TestManager:
         # monkeypatch.setattr(testee, 'check_if_active', mock_check)
         monkeypatch.setattr(testee.os, 'rename', mock_rename)
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.extract_screen_locations = mock_extract
+        testobj.extract_screeninfo = mock_extract
         testobj.install_zipfile = mock_install
         testobj.get_data_for_config = mock_get
         testobj.determine_moddir = mock_det
@@ -408,7 +409,7 @@ class TestManager:
             f"called Manager.add_mod_to_config with args ('root', (['done'], False))\n"
             f"called os.rename with args ('{tmp_path}/xxx', '{tmp_path}/installed/xxx')\n"
             "called JsonConf.save\n"
-            "called Manager.extract_screen_locations\n"
+            "called Manager.extract_screeninfo\n"
             "called gui.ShowMods.refresh_widgets with args {'first_time': True}\n")
 
         testobj.get_data_for_config = mock_get_2
@@ -420,7 +421,7 @@ class TestManager:
             f"called Manager.add_mod_to_config with args ('root', (['done'], True))\n"
             f"called os.rename with args ('{tmp_path}/yyy', '{tmp_path}/installed/yyy')\n"
             "called JsonConf.save\n"
-            "called Manager.extract_screen_locations\n"
+            "called Manager.extract_screeninfo\n"
             "called gui.ShowMods.refresh_widgets with args {'first_time': True}\n")
 
         testobj.install_zipfile = mock_install_4
@@ -475,7 +476,7 @@ class TestManager:
             f"called os.rename with args ('{tmp_path}/yyy', '{tmp_path}/installed/yyy')\n"
             "called JsonConf.save\n")
 
-    def test_install_zipfile(self, monkeypatch, capsys, tmp_path):
+    def test_install_zipfile(self, monkeypatch, capsys):  # , tmp_path):
         """unittest for Manager.install_zipfile
         """
         class MockZipFile:
@@ -507,12 +508,12 @@ class TestManager:
         def mock_check(arg):
             print(f'called check_if_active with arg {arg}')
             return False, False
-        def mock_check_2(arg):
-            print(f'called check_if_active with arg {arg}')
-            return True, False
-        def mock_check_3(arg):
-            print(f'called check_if_active with arg {arg}')
-            return True, True
+        # def mock_check_2(arg):
+        #     print(f'called check_if_active with arg {arg}')
+        #     return True, False
+        # def mock_check_3(arg):
+        #     print(f'called check_if_active with arg {arg}')
+        #     return True, True
         def mock_check_smapi(arg):
             print(f'called check_if_smapi with arg {arg}')
             return True
@@ -864,7 +865,7 @@ class TestManager:
                 "called Conf.get_component_data with arg newcomp\n")
 
 
-def test_get_archive_roots(capsys):
+def test_get_archive_roots():
     """unittest for Manager.get_archive_roots
     """
     assert testee.get_archive_roots([]) == []
@@ -873,7 +874,7 @@ def test_get_archive_roots(capsys):
     assert testee.get_archive_roots(['path/to/file', '__MACOSX/dir', '__MACOSX/xxx']) == ['path']
 
 
-def test_check_if_smapi(monkeypatch, capsys):
+def test_check_if_smapi():
     """unittest for Manager.check_if_smapi
     """
     assert not testee.check_if_smapi(['xxx', 'yyy'])
