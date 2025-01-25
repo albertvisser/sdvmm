@@ -463,7 +463,6 @@ class TestShowMods:
         assert capsys.readouterr().out == (
                 "called Manager.select_activations with arg []\n"
                 'called Manager.activate\n'
-                "called ShowMods.refresh_widgets with args {'reorder_widgets': False}\n"
                 "called MessageBox.information with args"
                 " ('Change Config', 'wijzigingen zijn doorgevoerd')\n"
                 "called PushButton.setEnabled with arg `False`\n")
@@ -489,7 +488,6 @@ class TestShowMods:
                 "called CheckBox.isChecked\n"
                 "called CheckBox.isChecked\n"
                 "called Manager.select_activations with arg ['Xxxxx', 'Bbbb']\n"
-                "called ShowMods.refresh_widgets with args {'reorder_widgets': False}\n"
                 "called MessageBox.information with args"
                 " ('Change Config', 'wijzigingen zijn doorgevoerd')\n"
                 "called PushButton.setEnabled with arg `False`\n")
@@ -578,18 +576,10 @@ class TestShowMods:
                 "called Showmods.set_texts_for_grid with args ({}, {})\n"
                 "called Showmods.set_checks_for_grid with args ({}, {})\n"
                 "called Showmods.set_checks_for_grid with args ({}, {})\n")
-        testobj.refresh_widgets(first_time=True, reorder_widgets=False)
-        assert testobj.unplotted == []
-        assert testobj.not_selectable == []
-        assert capsys.readouterr().out == (
-                f"called Showmods.add_items_to_grid with args ({testobj.gbox1}, 0, 0, [])\n"
-                f"called Showmods.add_items_to_grid with args ({testobj.gbox2}, 0, -1, [])\n"
-                "called Showmods.set_checks_for_grid with args ({}, {})\n"
-                "called Showmods.set_checks_for_grid with args ({}, {})\n")
         testobj.master.screeninfo = {'xx': {'pos': '1x1', 'sel': True},
                                      'yy': {'pos': '', 'sel': True},
                                      'zz': {'pos': '', 'sel': False}}
-        testobj.refresh_widgets(first_time=True, reorder_widgets=False)
+        testobj.refresh_widgets(first_time=True)
         assert testobj.plotted_widgets == {(1, 1): ('x', 'y', 'z')}
         assert testobj.plotted_positions == {(1, 1): ('xx', {'pos': '1x1', 'sel': True})}
         assert testobj.lastrow == 1
@@ -601,45 +591,11 @@ class TestShowMods:
                 "called Grid.addLayout with arg of type <class 'str'> at (1, 1)\n"
                 f"called Showmods.add_items_to_grid with args ({testobj.gbox1}, 1, 1, ['yy'])\n"
                 f"called Showmods.add_items_to_grid with args ({testobj.gbox2}, 0, -1, ['zz'])\n"
+                "called Showmods.set_texts_for_grid with args"
+                " ({(1, 1): ('xx', {'pos': '1x1', 'sel': True})}, {(1, 1): ('x', 'y', 'z')})\n"
+                "called Showmods.set_texts_for_grid with args ({}, {})\n"
                 "called Showmods.set_checks_for_grid with args"
                 " ({(1, 1): ('xx', {'pos': '1x1', 'sel': True})}, {(1, 1): ('x', 'y', 'z')})\n"
-                "called Showmods.set_checks_for_grid with args ({}, {})\n")
-        testobj.plotted_widgets = {}
-        testobj.plotted_positions = {}
-        testobj.unplotted = []
-        testobj.not_selectable = []
-        testobj.refresh_widgets(first_time=True, reorder_widgets=False)
-        assert testobj.plotted_widgets == {(1, 1): ('x', 'y', 'z')}
-        assert testobj.plotted_positions == {(1, 1): ('xx', {'pos': '1x1', 'sel': True})}
-        assert testobj.lastrow == 1
-        assert testobj.lastcol == 1
-        assert testobj.unplotted == ['yy']
-        assert testobj.not_selectable == ['zz']
-        assert capsys.readouterr().out == (
-                "called ShowMods.add_checkbox\n"
-                "called Grid.addLayout with arg of type <class 'str'> at (1, 1)\n"
-                f"called Showmods.add_items_to_grid with args ({testobj.gbox1}, 1, 1, ['yy'])\n"
-                f"called Showmods.add_items_to_grid with args ({testobj.gbox2}, 0, -1, ['zz'])\n"
-                "called Showmods.set_checks_for_grid with args"
-                " ({(1, 1): ('xx', {'pos': '1x1', 'sel': True})}, {(1, 1): ('x', 'y', 'z')})\n"
-                "called Showmods.set_checks_for_grid with args ({}, {})\n")
-        testobj.plotted_widgets = {}
-        testobj.plotted_positions = {}
-        testobj.lastrow = 0
-        testobj.lastcol = 0
-        testobj.unplotted = []
-        testobj.not_selectable = []
-        testobj.refresh_widgets(first_time=False, reorder_widgets=False)
-        assert testobj.plotted_widgets == {}
-        assert testobj.plotted_positions == {}
-        assert testobj.lastrow == 0
-        assert testobj.lastcol == 0
-        assert testobj.unplotted == []
-        assert testobj.not_selectable == []
-        assert capsys.readouterr().out == (
-                f"called Showmods.add_items_to_grid with args ({testobj.gbox1}, 0, 0, [])\n"
-                f"called Showmods.add_items_to_grid with args ({testobj.gbox2}, 0, -1, [])\n"
-                "called Showmods.set_checks_for_grid with args ({}, {})\n"
                 "called Showmods.set_checks_for_grid with args ({}, {})\n")
 
     def test_add_items_to_grid(self, monkeypatch, capsys):

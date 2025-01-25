@@ -109,11 +109,11 @@ class ShowMods(qtw.QWidget):
         self.master.select_activations(modnames)
         if self.master.directories:   # alleen leeg als er niks aangevinkt is
             self.master.activate()
-        self.refresh_widgets(reorder_widgets=False)  # is eigenlijk niet nodig?
+        # self.refresh_widgets(reorder_widgets=False)  # is eigenlijk niet nodig?
         qtw.QMessageBox.information(self, 'Change Config', 'wijzigingen zijn doorgevoerd')
         self.activate_button.setEnabled(False)
 
-    def refresh_widgets(self, first_time=False, reorder_widgets=True):
+    def refresh_widgets(self, first_time=False):  # , reorder_widgets=True):
         "set the checkboxes to the right values (first time: also create them)"
         # on first-time we build all the checkbox containers
         # otherwize we remove the variable elements from the gridboxes
@@ -130,18 +130,12 @@ class ShowMods(qtw.QWidget):
                     self.unplotted.append(text)
                 else:
                     self.not_selectable.append(text)
-        elif reorder_widgets:
-            # for item in self.unplotted_widgets.values():
-            #     item[1].close()
-            #     item[2].close()
+        else:  # if reorder_widgets:
             for key, value in self.unplotted_widgets.items():
                 label, check = value[1:]
                 check.close()
                 label.close()
                 self.gbox1.removeItem(self.gbox1.itemAtPosition(key[0], key[1]))
-            # for item in self.nonsel_widgets.values():
-            #     item[1].close()
-            #     item[2].close()
             for key, value in self.nonsel_widgets.items():
                 label, check = value[1:]
                 check.close()
@@ -153,9 +147,9 @@ class ShowMods(qtw.QWidget):
             self.gbox2, 0, -1, self.not_selectable)
         sel_positions = self.plotted_positions | self.unplotted_positions
         sel_widgets = self.plotted_widgets | self.unplotted_widgets
-        if reorder_widgets:
-            self.set_texts_for_grid(sel_positions, sel_widgets)
-            self.set_texts_for_grid(self.nonsel_positions, self.nonsel_widgets)
+        # if reorder_widgets:
+        self.set_texts_for_grid(sel_positions, sel_widgets)
+        self.set_texts_for_grid(self.nonsel_positions, self.nonsel_widgets)
         self.set_checks_for_grid(sel_positions, sel_widgets)
         self.set_checks_for_grid(self.nonsel_positions, self.nonsel_widgets)
 
