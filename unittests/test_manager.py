@@ -22,6 +22,7 @@ class MockConf:
     """testdouble object mimicking configparser.ConfigParser class
     """
     SCRNAM, SEL, SCRPOS, NXSKEY, SCRTXT, DIR, DEPS, COMPS, NAME, VER = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+    OPTOUT = 10
     def __init__(self, *args, **kwargs):
         print('called JsonConf.__init__ with args', args, kwargs)
     def load(self):
@@ -82,8 +83,9 @@ def test_main(monkeypatch, capsys, tmp_path):
     testee.main()
     assert capsys.readouterr().out == (
             "called build_jsonconf\n"
-            "called subprocess.run with args (['zenity', '--info',"
-            " '--text=\"Config was (re)built with the following messages:\\n\\nxxx\\nyyy\"'],)\n"
+            "Config was (re)built with the following messages:\n"
+            "xxx\n"
+            "yyy\n\n"
             "called Manager.__init__\n"
             "called Manager.build_and_start_gui()\n")
     testee.CONFIG.touch()
@@ -169,26 +171,30 @@ class TestManager:
                 return 'scrkey'
             if itemtype == testobj.conf.SCRTXT:
                 return 'scrtxt'
+            if itemtype == testobj.conf.OPTOUT:
+                return 'optout'
             return 'sel'
 
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.conf.list_all_mod_dirs = mock_list
         testobj.conf.get_diritem_data = mock_get
-        testobj.screeninfo = {'yyy': {'sel': 's', 'pos': 'p', 'key': 'k', 'txt': 't'}}
+        testobj.screeninfo = {'yyy': {'sel': 's', 'pos': 'p', 'key': 'k', 'txt': 't', 'opt': 'o'}}
 
         testobj.extract_screeninfo()
         assert testobj.screeninfo == {
-                'yyy': {'dir': 'yyy', 'sel': 's', 'pos': 'p', 'key': 'k', 'txt': 't'},
-                'xxx': {'dir': 'xxx', 'sel': False, 'pos': '', 'key': '', 'txt': ''}}
+                'yyy': {'dir': 'yyy', 'sel': 's', 'pos': 'p', 'key': 'k', 'txt': 't', 'opt': 'o'},
+                'xxx': {'dir': 'xxx', 'sel': False, 'pos': '', 'key': '', 'txt': '', 'opt': False}}
         assert capsys.readouterr().out == (
                 "called Conf.list_all_mod_dirs\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRNAM}')\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SEL}')\n"
+                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.OPTOUT}')\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRPOS}')\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.NXSKEY}')\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRTXT}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRNAM}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SEL}')\n"
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.OPTOUT}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRPOS}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.NXSKEY}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRTXT}')\n")
@@ -198,10 +204,11 @@ class TestManager:
         testobj.screeninfo = {}
         testobj.extract_screeninfo()
         assert testobj.screeninfo == {'scrxxx': {'dir': 'xxx', 'sel': 'sel', 'pos': 'scrpos',
-                                                 'key': 'scrkey', 'txt': 'scrtxt'}}
+                                                 'key': 'scrkey', 'txt': 'scrtxt', 'opt': 'optout'}}
         assert capsys.readouterr().out == ("called Conf.list_all_mod_dirs\n"
                                            "called Conf.get_diritem_data with args ('xxx', '0')\n"
                                            "called Conf.get_diritem_data with args ('xxx', '1')\n"
+                                           "called Conf.get_diritem_data with args ('xxx', '10')\n"
                                            "called Conf.get_diritem_data with args ('xxx', '2')\n"
                                            "called Conf.get_diritem_data with args ('xxx', '3')\n"
                                            "called Conf.get_diritem_data with args ('xxx', '4')\n")
@@ -230,17 +237,25 @@ class TestManager:
         """
         def mock_list(name):
             "stub"
-            print(f'called Conf.list_comonents_for_dir with arg {name}')
+            print(f'called Conf.list_components_for_dir with arg {name}')
             if name == 'moddir':
-                return ['x', 'y', 'z']
+                return ['w', 'x', 'y', 'z']
             return []
+        def mock_list_2(name):
+            "stub"
+            print(f'called Conf.list_comonents_for_dir with arg {name}')
+            raise ValueError
         def mock_get(name, itemtype):
             print(f"called Conf.get_component_data with args('{name}', '{itemtype}')")
             if itemtype == testobj.conf.DIR:
+                if name == 'r':
+                    return f'{name}parent/{name}dir'
                 return f'{name}dir'
             if itemtype == testobj.conf.DEPS:
-                if name in ('x', 'y'):
-                    return ['z']
+                if name in ('w', 'x'):
+                    return ['q']
+                if name == 'y':
+                    return ['r']
                 return []
             return ''
         testobj = self.setup_testobj(monkeypatch, capsys)
@@ -249,16 +264,25 @@ class TestManager:
         testobj.get_component_data = mock_get
         testobj.directories = set()
         testobj.add_dependencies('moddir')
-        assert testobj.directories == {'zdir'}
+        assert testobj.directories == {'qdir', 'rparent'}
         assert capsys.readouterr().out == (
-                "called Conf.list_comonents_for_dir with arg moddir\n"
+                "called Conf.list_components_for_dir with arg moddir\n"
+                f"called Conf.get_component_data with args('w', '{testobj.conf.DEPS}')\n"
+                f"called Conf.get_component_data with args('q', '{testobj.conf.DIR}')\n"
+                "called Conf.list_components_for_dir with arg qdir\n"
                 f"called Conf.get_component_data with args('x', '{testobj.conf.DEPS}')\n"
-                f"called Conf.get_component_data with args('z', '{testobj.conf.DIR}')\n"
-                "called Conf.list_comonents_for_dir with arg zdir\n"
+                f"called Conf.get_component_data with args('q', '{testobj.conf.DIR}')\n"
+                "called Conf.list_components_for_dir with arg qdir\n"
                 f"called Conf.get_component_data with args('y', '{testobj.conf.DEPS}')\n"
-                f"called Conf.get_component_data with args('z', '{testobj.conf.DIR}')\n"
-                "called Conf.list_comonents_for_dir with arg zdir\n"
+                f"called Conf.get_component_data with args('r', '{testobj.conf.DIR}')\n"
+                "called Conf.list_components_for_dir with arg rparent/rdir\n"
                 f"called Conf.get_component_data with args('z', '{testobj.conf.DEPS}')\n")
+        testobj.conf.list_components_for_dir = mock_list_2
+        testobj.directories = set()
+        testobj.add_dependencies('moddir')
+        assert not testobj.directories
+        assert capsys.readouterr().out == (
+                "called Conf.list_comonents_for_dir with arg moddir\n")
 
     def test_activate(self, monkeypatch, capsys, tmp_path):
         """unittest for Manager.activate
@@ -278,10 +302,10 @@ class TestManager:
         (testobj.modbase / 'dirname4').mkdir()
         testobj.directories = ['dirname2', 'dirname3']
         testobj.activate()
-        assert capsys.readouterr().out == ("called os.rename with args (<DirEntry '.dirname3'>,"
-                                           f" '{testobj.modbase}/dirname3')\n"
-                                           "called os.rename with args (<DirEntry 'dirname4'>,"
-                                           f" '{testobj.modbase}/.dirname4')\n")
+        assert capsys.readouterr().out == ("called os.rename with args (<DirEntry 'dirname4'>,"
+                                           f" '{testobj.modbase}/.dirname4')\n"
+                                           "called os.rename with args (<DirEntry '.dirname3'>,"
+                                           f" '{testobj.modbase}/dirname3')\n")
 
     def test_manage_attributes(self, monkeypatch, capsys):
         """unittest for Manager.manage_attributes
@@ -292,8 +316,10 @@ class TestManager:
         def mock_show_2(*args):
             print('called show_dialog with args', args)
             args[1].master.attr_changes = [('xxx', 'yyy'), ('zzz', '')]  # , ('', 'qqq')]i kan dit?
-            args[1].master.screeninfo = {'xxx': {'dir': 'xxx-dir', 'txt': 'xxx-txt', 'sel': True},
-                                         'zzz': {'dir': 'zzz-dir', 'txt': 'zzz-txt', 'sel': False}}
+            args[1].master.screeninfo = {'xxx': {'dir': 'xxx-dir', 'txt': 'xxx-txt', 'sel': True,
+                                                 'opt': False},
+                                         'zzz': {'dir': 'zzz-dir', 'txt': 'zzz-txt', 'sel': False,
+                                                 'opt': True}}
         def mock_set(*args):
             print('called Conf.set_diritem_value with args', args)
         monkeypatch.setattr(testee.gui, 'show_dialog', mock_show)
@@ -313,9 +339,25 @@ class TestManager:
                 "called Conf.set_diritem_value with args ('xxx-dir', 0, 'xxx')\n"
                 "called Conf.set_diritem_value with args ('xxx-dir', 4, 'xxx-txt')\n"
                 "called Conf.set_diritem_value with args ('xxx-dir', 1, True)\n"
+                "called Conf.set_diritem_value with args ('xxx-dir', 10, False)\n"
                 "called Conf.set_diritem_value with args ('zzz-dir', 4, 'zzz-txt')\n"
                 "called Conf.set_diritem_value with args ('zzz-dir', 1, False)\n"
+                "called Conf.set_diritem_value with args ('zzz-dir', 10, True)\n"
                 "called JsonConf.save\n")
+
+    def test_manage_savefiles(self, monkeypatch, capsys):
+        """unittest for Manager.manage_savefiles
+        """
+        def mock_show(*args):
+            print('called show_dialog with args', args)
+        monkeypatch.setattr(testee.gui, 'show_dialog', mock_show)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.doit = MockShowMods(testobj)
+        assert capsys.readouterr().out == f"called gui.ShowMods.__init__() with arg '{testobj}'\n"
+        testobj.manage_savefiles()
+        assert capsys.readouterr().out == (
+                "called show_dialog with args (<class 'src.gui.SaveGamesDialog'>,"
+                f" {testobj.doit}, {testobj.conf})\n")
 
     def test_update_config_from_screenpos(self, monkeypatch, capsys):
         """unittest for Manager.update_config_from_screenpos
@@ -410,7 +452,7 @@ class TestManager:
             f"called os.rename with args ('{tmp_path}/xxx', '{tmp_path}/installed/xxx')\n"
             "called JsonConf.save\n"
             "called Manager.extract_screeninfo\n"
-            "called gui.ShowMods.refresh_widgets with args {'first_time': True}\n")
+            "called gui.ShowMods.refresh_widgets with args {}\n")
 
         testobj.get_data_for_config = mock_get_2
         assert testobj.update_mods([str(tmp_path / 'yyy')]) == ['ok', 'done']
@@ -422,7 +464,7 @@ class TestManager:
             f"called os.rename with args ('{tmp_path}/yyy', '{tmp_path}/installed/yyy')\n"
             "called JsonConf.save\n"
             "called Manager.extract_screeninfo\n"
-            "called gui.ShowMods.refresh_widgets with args {'first_time': True}\n")
+            "called gui.ShowMods.refresh_widgets with args {}\n")
 
         testobj.install_zipfile = mock_install_4
         testobj.get_data_for_config = mock_get
@@ -926,28 +968,48 @@ def test_determine_update_id():
 def test_build_jsonconf(monkeypatch, capsys, tmp_path):
     """unittest for manager.build_jsonconf
     """
+    def mock_load(*args):
+        print('called json.load with args', args)
+        return {'moddirs': {'a': 'c'}, 'components': ['q', 's'], 'savedgames': {'x': 'z'}}
     def mock_rebuild(arg):
         print(f'called dmlj.rebuild_all with arg {list(arg)}')
-        return 'data', []
+        return {'moddirs': {'a': 'b'}, 'components': ['q', 'r'], 'savedgames': {'x': 'y'}}, []
     def mock_rebuild_2(arg):
         print(f'called dmlj.rebuild_all with arg {list(arg)}')
-        return 'data', ['xxx', 'yyy']
+        return ({'moddirs': {'a': 'b'}, 'components': ['q', 'r'], 'savedgames': {'x': 'y'}},
+                ['xxx', 'yyy'])
     def mock_dump(*args):
         print('called json.dump with args', args)
     monkeypatch.setattr(testee, 'MODBASE', str(tmp_path))
     (tmp_path / 'xxx').touch()
     (tmp_path / 'yyy').touch()
-    monkeypatch.setattr(testee, 'CONFIG', 'qqq')
+    monkeypatch.setattr(testee, 'CONFIG', str(tmp_path / 'qqq'))
     monkeypatch.setattr(testee.json, 'dump', mock_dump)
+    monkeypatch.setattr(testee.json, 'load', mock_load)
     monkeypatch.setattr(testee.dmlj, 'rebuild_all', mock_rebuild)
     assert testee.build_jsonconf() == []
     assert capsys.readouterr().out == (
-            f"called dmlj.rebuild_all with arg [{tmp_path / 'xxx'!r}, {tmp_path / 'yyy'!r}]\n"
-            "called json.dump with args ('data',"
-            " <_io.TextIOWrapper name='qqq' mode='w' encoding='UTF-8'>)\n")
+            f"called dmlj.rebuild_all with arg [{tmp_path / 'yyy'!r}, {tmp_path / 'xxx'!r}]\n"
+            "called json.dump with args ({'moddirs': {'a': 'b'}, 'components': ['q', 'r'],"
+            " 'savedgames': {}},"
+            f" <_io.TextIOWrapper name='{tmp_path / 'qqq'}' mode='w' encoding='UTF-8'>)\n")
+    (tmp_path / 'qqq').touch()
+    assert testee.build_jsonconf() == []
+    assert capsys.readouterr().out == (
+            f"called json.load with args (<_io.TextIOWrapper name='{tmp_path / 'qqq'}' mode='r'"
+            " encoding='UTF-8'>,)\n"
+            f"called dmlj.rebuild_all with arg [{tmp_path / 'qqq'!r}, {tmp_path / 'yyy'!r},"
+            f" {tmp_path / 'xxx'!r}]\n"
+            "called json.dump with args ({'moddirs': {'a': 'b'}, 'components': ['q', 'r'],"
+            " 'savedgames': {'x': 'z'}},"
+            f" <_io.TextIOWrapper name='{tmp_path / 'qqq'}' mode='w' encoding='UTF-8'>)\n")
     monkeypatch.setattr(testee.dmlj, 'rebuild_all', mock_rebuild_2)
     assert testee.build_jsonconf() == ['xxx', 'yyy']
     assert capsys.readouterr().out == (
-            f"called dmlj.rebuild_all with arg [{tmp_path / 'xxx'!r}, {tmp_path / 'yyy'!r}]\n"
-            "called json.dump with args ('data',"
-            " <_io.TextIOWrapper name='qqq' mode='w' encoding='UTF-8'>)\n")
+            f"called json.load with args (<_io.TextIOWrapper name='{tmp_path / 'qqq'}' mode='r'"
+            " encoding='UTF-8'>,)\n"
+            f"called dmlj.rebuild_all with arg [{tmp_path / 'qqq~'!r}, {tmp_path / 'qqq'!r},"
+            f" {tmp_path / 'yyy'!r}, {tmp_path / 'xxx'!r}]\n"
+            "called json.dump with args ({'moddirs': {'a': 'b'}, 'components': ['q', 'r'],"
+            " 'savedgames': {'x': 'z'}},"
+            f" <_io.TextIOWrapper name='{tmp_path / 'qqq'}' mode='w' encoding='UTF-8'>)\n")

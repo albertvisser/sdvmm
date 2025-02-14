@@ -10,6 +10,12 @@ import pathlib
 import shutil
 import json5
 import json
+try:
+    from lxml import etree as et
+except ImportError:
+    import xml.etree.ElementTree as et
+
+SAVEPATH = pathlib.Path('~/.config/StardewValley/Saves').expanduser()
 
 
 def rebuild_all(startdirs):
@@ -76,6 +82,7 @@ def read_dir(path):
 def read_manifest(path):
     """...and scan it for top level keys
     """
+    DEPS = "Deps"
     result = {}
     with path.open('rb') as f:
         data = json5.load(f)
@@ -89,9 +96,16 @@ def read_manifest(path):
             result[keyname] = data[keyname]
     for keyname in ("Dependencies", "dependencies"):
         if keyname in data:
-            result["Deps"], error = read_dependencies(data[keyname])
-            if error:
-                print(f"Geen 'IsRequired' key gevonden voor dep(s) in bestand {path}")
+            result[DEPS] = read_dependencies(data[keyname])
+    if 'ContentPackFor' in data:
+        # if DEPS not in result:
+        #     result[DEPS] = []
+        deps = result.setdefault(DEPS, [])
+        for key, value in data['ContentPackFor'].items():
+            if key == 'UniqueID':
+                dep = value
+                if dep not in deps:
+                    result[DEPS].append(dep)
     if result:
         result['dirpath'] = path.parent
     return result
@@ -101,24 +115,77 @@ def read_dependencies(deplist):
     """process dependencies
     """
     result = []
-    error = False
     for depdict in deplist:
-        # if 'IsRequired' not in depdict:       Deze key wordt vaker vergeten dan dat hij
-        #     error = True                      netjes op True gezet wordt dus maar geen controle
         if 'IsRequired' not in depdict or depdict['IsRequired']:
             result.append(depdict["UniqueID"])
-    return result, error
+    return result
+
+
+def merge_old_info(newdata, olddata):
+    """salvage information like screen texts, position, selectability from the earlier config
+    """
+    # breakpoint()
+    for key, value in newdata.items():
+        if key not in olddata:
+            # komt bv voor bij GingerIslandStart waar de CP component op hetzelfde niveau zit
+            # je zou dit moeten melden zodat je het later kunt corrigeren maar daar heb ik nog niks
+            # voor
+            # bij Swim Mod zie ik hetzelfde; daar heeft het zich vanzelf opgelost LIJKT HET:
+            # de drie uitpakdirectories zijn samengevoegd onder "componenten" MAAR de modddirs key
+            # heeft de waarde "true" in plaats van een directory naam
+            continue
+        oldvalue = olddata[key]
+        for name in ('_ScreenName', '_Selectable', '_Nexus', '_ScreenPos', '_ScreenText'):
+            if name in value:
+                if value[name] != oldvalue[name]:
+                    value[name] = oldvalue[name]
+            elif name in oldvalue:
+                value[name] = oldvalue[name]
+        # for name in ('_ScreenPos', '_ScreenText'):
+        #     if name in value:
+        #         value[name] = oldvalue[name]
+        #     elif name in oldvalue:
+        #         value[name] = oldvalue[name]
+        # newdata[key] = value
+    return newdata
+
+
+def get_savenames():
+    "get a list of the names of valid save file directories"
+    result = []
+    for item in SAVEPATH.iterdir():
+        if item.is_file() or item.is_symlink() or item.name.endswith('backup'):
+            continue
+        result.append(item.name)
+    return result
+
+
+def get_save_attrs(savename):
+    "return the values of specific elements in the savefile"
+    result = {}
+    for item in (SAVEPATH / savename).iterdir():
+        if item.name == savename:
+            savedata = et.ElementTree(file=str(item))
+            root = savedata.getroot()
+            for key in ('player/name', 'player/farmName', 'dayOfMonth', 'currentSeason', 'year'):
+                el = root.find(f'./{key}')
+                result[key] = el.text if el is not None else None
+            break
+    return result
 
 
 class JsonConf:
     "configuration to be stored externally in JSON format"
     MODS = 'moddirs'
     knownmodkeys = ['components', '_ScreenPos', '_ScreenName', '_ScreenText', '_Nexus',
-                    '_Selectable']
-    COMPS, SCRPOS, SCRNAM, SCRTXT, NXSKEY, SEL = knownmodkeys
+                    '_Selectable', '_DoNotTouch']
+    COMPS, SCRPOS, SCRNAM, SCRTXT, NXSKEY, SEL, OPTOUT = knownmodkeys
     knownkeys = ['Name', 'Author', 'Description', 'Version', 'MinimumApiVersion', 'Deps', 'dirname',
                  NXSKEY]
     NAME, AUTH, DESC, VRS, APIVRS, DEPS, DIR = knownkeys[:7]
+    SAVES = 'savedgames'
+    knownsavekeys = ['player', 'farmName', 'ingameDate', MODS]
+    PNAME, FNAME, GDATE = knownsavekeys[:-1]
 
     def __init__(self, filename):
         self.filename = filename
@@ -145,6 +212,10 @@ class JsonConf:
         "return a list of all known mod components"
         return list(self._data[self.COMPS])
 
+    def list_all_saveitems(self):
+        "return a list of Stardew Valley save files (or rather, directories)"
+        return get_savenames()
+
     def has_moddir(self, dirname):
         "return whether or not the given directory is in the config"
         return dirname in self._data[self.MODS]
@@ -167,9 +238,9 @@ class JsonConf:
             return self._data[self.MODS][dirname]
         if key not in self.knownmodkeys:
             raise ValueError(f"Unknown key '{key}' for directory {dirname}")
-        if key == '_Nexus':
+        if key == self.NXSKEY:
             return self._data[self.MODS][dirname].get(key, 0)
-        if key == '_Selectable':
+        if key in (self.SEL, self.OPTOUT):
             return self._data[self.MODS][dirname].get(key, False)
         return self._data[self.MODS][dirname].get(key, '')
 
@@ -182,6 +253,44 @@ class JsonConf:
         if key not in self.knownkeys:
             raise ValueError(f"Unknown key '{key}' for component {component}")
         return self._data[self.COMPS][component].get(key, '')
+
+    def get_saveitem_attrs(self, savename):
+        """return certain save game attributes from the config or, if they're not in the config yet,
+        get them from the save file and save them into the config
+        """
+        if self.SAVES not in self._data:
+            self._data[self.SAVES] = {}
+        if savename not in self._data[self.SAVES]:
+            attrs = get_save_attrs(savename)
+            self._data[self.SAVES][savename] = {}
+            self._data[self.SAVES][savename][self.PNAME] = attrs['player/name']
+            self._data[self.SAVES][savename][self.FNAME] = f"{attrs['player/farmName']} Farm"
+            ingame_date = f"{attrs['dayOfMonth']} {attrs['currentSeason']} year {attrs['year']}"
+            self._data[self.SAVES][savename][self.GDATE] = ingame_date
+        return (self._data[self.SAVES][savename][self.PNAME],
+                self._data[self.SAVES][savename][self.FNAME],
+                self._data[self.SAVES][savename][self.GDATE])
+
+    def get_mods_for_saveitem(self, savename):
+        """return the names of the mods that are associated with this save
+        """
+        if self.SAVES not in self._data:
+            self._data[self.SAVES] = {}
+        if savename not in self._data[self.SAVES]:
+            return []
+        modnames = self._data[self.SAVES][savename].get(self.MODS, [])
+        # for name in modnames:
+        return modnames
+
+    def update_saveitem_data(self, savename, key, value):
+        "set the value for a given key for the given savefile"
+        if key not in self.knownsavekeys:
+            raise ValueError(f"Unknown key '{key}' for savedata {savename}")
+        if self.SAVES not in self._data:
+            self._data[self.SAVES] = {}
+        if savename not in self._data[self.SAVES]:
+            self._data[self.SAVES][savename] = {}
+        self._data[self.SAVES][savename][key] = value
 
     def add_diritem(self, dirname):
         "add a new (empty) mod directory to the config"
@@ -235,12 +344,11 @@ class JsonConf:
         # if extravalues:
         #     self.set_diritem_value(dirname, self.MULTI, extravalues)
 
-    def mergecomponents(self, title, dirnames):
-        "old_to_new: fix situation for multiple components in multiple unpack directories"
-        dirnames = dirnames.split(',')
-        newdirname = dirnames[0]
-        componentlist = self.get_diritem_data(dirnames[0], self.COMPS)
-        for name in dirnames[1:]:
-            data = self._data[self.MODS].pop(name.strip())
-            componentlist.extend(data[self.COMPS])
-        self.set_diritem_value(dirnames[0], self.COMPS, componentlist)
+    # def mergecomponents(self, title, dirnames):
+    #     "old_to_new: fix situation for multiple components in multiple unpack directories"
+    #     dirnames = dirnames.split(',')
+    #     componentlist = self.get_diritem_data(dirnames[0], self.COMPS)
+    #     for name in dirnames[1:]:
+    #         data = self._data[self.MODS].pop(name.strip())
+    #         componentlist.extend(data[self.COMPS])
+    #     self.set_diritem_value(dirnames[0], self.COMPS, componentlist)

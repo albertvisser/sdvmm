@@ -1,5 +1,5 @@
 """Stardew Valley Expansion manager
-Oosspronkelijk idee: selecteer uit een lijst met mogelijkheden welke je actief wilt hebben
+Oorspronkelijk idee: selecteer uit een lijst met mogelijkheden welke je actief wilt hebben
 """
 import os
 import json
@@ -14,14 +14,15 @@ CONFIG = os.path.join(MODBASE, 'sdv_mods_config.json')
 DOWNLOAD = os.path.expanduser('~/Downloads/Stardew Valley Mods')
 
 
-def main():
+def main(rebuild=False):
     "main line"
-    if not os.path.exists(CONFIG):
+    if rebuild or not os.path.exists(CONFIG):
         messages = build_jsonconf()
         if messages:
-            messages.insert(0, '')
-            messages.insert(0, 'Config was (re)built with the following messages:')
-            subprocess.run(['zenity', '--info', f'--text="{'\n'.join(messages)}"'])
+            print('Config was (re)built with the following messages:')
+            for line in messages:
+                print(line)
+            print()
     DoIt = Manager()
     DoIt.build_and_start_gui()
 
@@ -54,10 +55,12 @@ class Manager:
         for dirname in self.conf.list_all_mod_dirs():
             item = self.conf.get_diritem_data(dirname, self.conf.SCRNAM) or dirname
             oldinfo = self.screeninfo[item] if item in self.screeninfo else {'sel': False, 'pos': '',
-                                                                             'key': '', 'txt': ''}
+                                                                             'key': '', 'txt': '',
+                                                                             'opt': False}
             self.screeninfo[item] = {
                 'dir': dirname,
                 'sel': self.conf.get_diritem_data(dirname, self.conf.SEL) or oldinfo['sel'],
+                'opt': self.conf.get_diritem_data(dirname, self.conf.OPTOUT) or oldinfo['opt'],
                 'pos': self.conf.get_diritem_data(dirname, self.conf.SCRPOS) or oldinfo['pos'],
                 'key': self.conf.get_diritem_data(dirname, self.conf.NXSKEY) or oldinfo['key'],
                 'txt': self.conf.get_diritem_data(dirname, self.conf.SCRTXT) or oldinfo['txt']}
@@ -73,13 +76,20 @@ class Manager:
 
     def add_dependencies(self, moddir):
         "expand an item with a list of subitems"
-        for entry in self.conf.list_components_for_dir(moddir):
+        try:
+            entries = self.conf.list_components_for_dir(moddir)
+        except ValueError:
+            return
+        for entry in entries:
             deps = self.conf.get_component_data(entry, self.conf.DEPS)
             if not deps:
                 continue
             for dep in deps:
                 depdir = self.conf.get_component_data(dep, self.conf.DIR)
-                self.directories.add(depdir)
+                if '/' in depdir:
+                    self.directories.add(depdir.split('/')[0])
+                else:
+                    self.directories.add(depdir)
                 self.add_dependencies(depdir)
 
     def activate(self):
@@ -115,9 +125,17 @@ class Manager:
                 self.conf.set_diritem_value(dirname, self.conf.SCRNAM, newname)
             self.conf.set_diritem_value(dirname, self.conf.SCRTXT, self.screeninfo[newname]['txt'])
             self.conf.set_diritem_value(dirname, self.conf.SEL, self.screeninfo[newname]['sel'])
+            self.conf.set_diritem_value(dirname, self.conf.OPTOUT, self.screeninfo[newname]['opt'])
             changes = True
         if changes:
             self.conf.save()
+
+    def manage_savefiles(self):
+        "handle dialog for selecting a savefile to perform actions on"
+        # changes = False
+        gui.show_dialog(gui.SaveGamesDialog, self.doit, self.conf)
+        # if changes:
+        #     self.conf.save()
 
     def update_config_from_screenpos(self):
         """rewrite and reread config after reorganizing screen
@@ -152,7 +170,7 @@ class Manager:
         if got_new_mod:
             self.screeninfo = {}
             self.extract_screeninfo()
-            self.doit.refresh_widgets(first_time=True)
+            self.doit.refresh_widgets()  # not first_time=True)
         return report
 
     def install_zipfile(self, zipfilename):
@@ -338,7 +356,17 @@ def determine_update_id(keys):
 def build_jsonconf():
     """build new configuration from current state of mod directory
     """
+    if os.path.exists(CONFIG):
+        with open(CONFIG) as f:
+            olddata = json.load(f)
+    else:
+        olddata = {'moddirs': {}, 'savedgames': {}}
     data, messages = dmlj.rebuild_all(pathlib.Path(MODBASE).iterdir())
+    # breakpoint()
+    data['moddirs'] = dmlj.merge_old_info(data['moddirs'], olddata['moddirs'])
+    data['savedgames'] = olddata['savedgames']
+    if os.path.exists(CONFIG):
+        shutil.copyfile(CONFIG, CONFIG + '~')
     with open(CONFIG, 'w') as f:
         json.dump(data, f)
     return messages

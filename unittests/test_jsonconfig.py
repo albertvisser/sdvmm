@@ -9,13 +9,10 @@ def test_rebuild_all(monkeypatch, capsys):
     """
     def mock_build(path):
         print(f"called build_entry_from_dir with arg {path}")
-        return {'x': {'y': 'yyy', 'z': 'zzz'}, 'x': {'b': 'bbb', 'c': 'ccc'}}
+        return {'x': {'y': 'yyy', 'z': 'zzz'}, 'a': {'b': 'bbb', 'c': 'ccc'}}
     def mock_build_2(path):
         print(f"called build_entry_from_dir with arg {path}")
         return {'x': {'y': 'yyy', 'z': 'zzz'}}
-    def mock_build_3(path):
-        print(f"called build_entry_from_dir with arg {path}")
-        return {'x': {'y': 'yyy', 'z': 'zzz'}, 'a': {'b': 'bbb', 'c': 'ccc'}}
     def mock_isdir(path):
         print(f"called path.isdir with arg {path}")
         return False
@@ -42,9 +39,9 @@ def test_rebuild_all(monkeypatch, capsys):
     assert capsys.readouterr().out == "called path.isdir with arg dirname~\n"
 
     startdirs = [testee.pathlib.Path('dirname')]
-    # dit kan eigenlijk niet: dubbele componenten in één uitpakdirectory
-    assert testee.rebuild_all(startdirs) == ({'moddirs': {'dirname': {'components': ['x']}},
-                                              'components': {'x': {'b': 'bbb', 'c': 'ccc'}}}, [])
+    assert testee.rebuild_all(startdirs) == ({'moddirs': {'dirname': {'components': ['x', 'a']}},
+                                              'components': {'a': {'b': 'bbb', 'c': 'ccc'},
+                                                             'x': {'y': 'yyy', 'z': 'zzz'}}}, [])
     assert capsys.readouterr().out == ("called path.isdir with arg dirname\n"
                                        "called build_entry_from_dir with arg dirname\n")
 
@@ -58,14 +55,6 @@ def test_rebuild_all(monkeypatch, capsys):
                                        "called build_entry_from_dir with arg dirname\n"
                                        "called path.isdir with arg dirname2\n"
                                        "called build_entry_from_dir with arg dirname2\n")
-
-    monkeypatch.setattr(testee, 'build_entry_from_dir', mock_build_3)
-    startdirs = [testee.pathlib.Path('dirname')]
-    assert testee.rebuild_all(startdirs) == ({'moddirs': {'dirname': {'components': ['x', 'a']}},
-                                              'components': {'a': {'b': 'bbb', 'c': 'ccc'},
-                                                             'x': {'y': 'yyy', 'z': 'zzz'}}}, [])
-    assert capsys.readouterr().out == ("called path.isdir with arg dirname\n"
-                                       "called build_entry_from_dir with arg dirname\n")
 
 
 def test_build_entry_from_dir(monkeypatch, capsys):
@@ -179,26 +168,10 @@ def test_read_dir(monkeypatch, capsys, tmp_path):
     assert testee.read_dir(path) == [{'x': 'y'}]
     assert capsys.readouterr().out == "called read_manifest with arg manifest.json\n"
 
-
+# 101-107
 def test_read_manifest(monkeypatch, capsys, tmp_path):
     """unittest for jsonconfig.read_manifest
     """
-    # {
-    #     "Name": "Hover Labels",
-    #     "Author": "Achtuur",
-    #     "Version": "2.1.1",
-    #     "Description": "Adds labels to things when you hover over them",
-    #     "UniqueID": "Achtuur.HoverLabels",
-    #     "EntryDll": "HoverLabels.dll",
-    #     "MinimumApiVersion": "4.0.0",
-    #     "dependencies": [
-    #         {
-    #             "UniqueID": "Achtuur.AchtuurCore",
-    #             "MinimumVersion": "1.3.0"
-    #         }
-    #     ],
-    #     "UpdateKeys": [ "Nexus:17501" ]
-    # }
     def mock_load(*args):
         print('called json5.load with args', args)
         return {}
@@ -209,16 +182,25 @@ def test_read_manifest(monkeypatch, capsys, tmp_path):
                 'deps': ['x'], 'UpdateKeys': ['xxx']}
     def mock_load_3(*args):
         print('called json5.load with args', args)
-        return {'dependencies': [], 'UpdateKeys': ['Other:1234']}
+        return {'dependencies': [], 'ContentPackFor': {}, 'UpdateKeys': ['Other:1234']}
     def mock_load_4(*args):
         print('called json5.load with args', args)
         return {'Dependencies': ['x'], 'UpdateKeys': ['Nexus:99']}
+    def mock_load_5(*args):
+        print('called json5.load with args', args)
+        return {'ContentPackFor': {'UniqueID': 'y'}, 'UpdateKeys': ['Nexus:99']}
+    def mock_load_6(*args):
+        print('called json5.load with args', args)
+        return {'Dependencies': ['x', 'y'], 'ContentPackFor': {'UniqueID': 'y'},
+                'UpdateKeys': ['Nexus:99']}
+    def mock_load_7(*args):
+        print('called json5.load with args', args)
+        return {'Dependencies': ['x', 'y'], 'ContentPackFor': {'UniqueID': 'z', 'required': True},
+                'UpdateKeys': ['Nexus:99']}
     def mock_read(arg):
         print(f"called read_dependencies with arg {arg}")
-        return ['qqq'], True
-    def mock_read_2(arg):
-        print(f"called read_dependencies with arg {arg}")
-        return ['aaa', 'bbb'], False
+        # return ['qqq']
+        return arg  # ['qqq']
     path = tmp_path / 'testfile'
     path.touch()
     monkeypatch.setattr(testee.json5, 'load', mock_load)
@@ -234,33 +216,102 @@ def test_read_manifest(monkeypatch, capsys, tmp_path):
     assert capsys.readouterr().out == (
             f"called json5.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n")
     monkeypatch.setattr(testee.json5, 'load', mock_load_3)
-    monkeypatch.setattr(testee, 'read_dependencies', mock_read_2)
-    assert testee.read_manifest(path) == {'Deps': ['aaa', 'bbb'], 'dirpath': path.parent}
+    assert testee.read_manifest(path) == {'Deps': [], 'dirpath': path.parent}
     assert capsys.readouterr().out == (
             f"called json5.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n"
             "called read_dependencies with arg []\n")
+    # 92, 104-107, 129-140
     monkeypatch.setattr(testee.json5, 'load', mock_load_4)
-    monkeypatch.setattr(testee, 'read_dependencies', mock_read)
-    assert testee.read_manifest(path) == {'_Nexus': '99', 'Deps': ['qqq'],
+    assert testee.read_manifest(path) == {'_Nexus': '99', 'Deps': ['x'], 'dirpath': path.parent}
+    assert capsys.readouterr().out == (
+            f"called json5.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n"
+            "called read_dependencies with arg ['x']\n")
+    # 104-107, 129-140
+    monkeypatch.setattr(testee.json5, 'load', mock_load_5)
+    result = testee.read_manifest(path)
+    assert result == {'_Nexus': '99', 'Deps': ['y'], 'dirpath': path.parent}
+    assert capsys.readouterr().out == (
+            f"called json5.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n")
+    # 104->103, 106->103, 129-140
+    monkeypatch.setattr(testee.json5, 'load', mock_load_6)
+    assert testee.read_manifest(path) == {'_Nexus': '99', 'Deps': ['x', 'y'], 'dirpath': path.parent}
+    assert capsys.readouterr().out == (
+            f"called json5.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n"
+            "called read_dependencies with arg ['x', 'y']\n")
+    # 106-103, 129-140  -> 104-103
+    monkeypatch.setattr(testee.json5, 'load', mock_load_7)
+    # breakpoint()
+    assert testee.read_manifest(path) == {'_Nexus': '99', 'Deps': ['x', 'y', 'z'],
                                           'dirpath': path.parent}
     assert capsys.readouterr().out == (
             f"called json5.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n"
-            "called read_dependencies with arg ['x']\n"
-            f"Geen 'IsRequired' key gevonden voor dep(s) in bestand {tmp_path}/testfile\n")
+            "called read_dependencies with arg ['x', 'y']\n")
 
 
 def test_read_dependencies():
     """unittest for jsonconfig.read_dependencies
     """
-    #     "dependencies": [
-    #         {
-    #             "UniqueID": "Achtuur.AchtuurCore",
-    #             "MinimumVersion": "1.3.0"
-    #         }
-    #     ],
     deplist = [{'UniqueID': 'xxx'}, {'UniqueID': 'yyy', "IsRequired": False},
                {'UniqueID': 'zzz', "IsRequired": True}]
-    assert testee.read_dependencies(deplist) == (['xxx', 'zzz'], False)
+    assert testee.read_dependencies(deplist) == ['xxx', 'zzz']
+
+
+def test_merge_old_info():
+    """unittest for jsonconfig.merge_old_info
+    """
+    assert testee.merge_old_info({}, {'x': 'y'}) == {}
+    assert testee.merge_old_info({'a': {'x': 'y'}}, {'b': {'x': 'z'}}) == {'a': {'x': 'y'}}
+    assert testee.merge_old_info({
+        'a': {}}, {'a': {'_ScreenName': 'y', '_Selectable': 'x', '_Nexus': 'q', '_ScreenPos': 'r',
+                         '_ScreenText': 's'}}) == {'a': {'_ScreenName': 'y', '_Selectable': 'x',
+                                                         '_Nexus': 'q', '_ScreenPos': 'r',
+                                                         '_ScreenText': 's'}}
+    assert testee.merge_old_info({
+        'a': {'_ScreenName': '', '_Selectable': '', '_Nexus': '', '_ScreenPos': '',
+              '_ScreenText': ''}}, {'a': {
+                  '_ScreenName': 'y', '_Selectable': 'x', '_Nexus': 'q', '_ScreenPos': 'r',
+                  '_ScreenText': 's'}}) == {'a': {'_ScreenName': 'y', '_Selectable': 'x',
+                                                  '_Nexus': 'q', '_ScreenPos': 'r',
+                                                  '_ScreenText': 's'}}
+    assert testee.merge_old_info({
+        'a': {'_ScreenName': 'y', '_Selectable': 'x', '_Nexus': 'q', '_ScreenPos': 'r',
+              '_ScreenText': 's'}}, {'a': {
+                  '_ScreenName': 'y', '_Selectable': 'x', '_Nexus': 'q', '_ScreenPos': 'r',
+                  '_ScreenText': 's'}}) == {'a': {'_ScreenName': 'y', '_Selectable': 'x',
+                                                  '_Nexus': 'q', '_ScreenPos': 'r',
+                                                  '_ScreenText': 's'}}
+    assert testee.merge_old_info({'a': {'x': 'y'}}, {'a': {'x': 'z'}}) == {'a': {'x': 'y'}}
+
+
+def test_get_savenames(monkeypatch, tmp_path):
+    "unittest for jsonconfig.get_savenames"
+    monkeypatch.setattr(testee, 'SAVEPATH', tmp_path)
+    assert testee.get_savenames() == []
+    (tmp_path / 'a-file').touch()
+    (tmp_path / 'a-link').symlink_to(tmp_path / 'a-file')
+    (tmp_path / 'a-directory').mkdir()
+    (tmp_path / 'another-link').symlink_to(tmp_path / 'a-directory')
+    (tmp_path / 'a-directory.backup').mkdir()
+    assert testee.get_savenames() == ['a-directory']
+
+
+def test_get_save_attrs(monkeypatch, tmp_path):
+    "unittest for jsonconfig.get_save_attrs"
+    monkeypatch.setattr(testee, 'SAVEPATH', tmp_path)
+    (tmp_path / 'xxxx').mkdir()
+    assert testee.get_save_attrs('xxxx') == {}
+    (tmp_path / 'xxxx' / 'yyyy').touch()
+    assert testee.get_save_attrs('xxxx') == {}
+    (tmp_path / 'xxxx' / 'xxxx').write_text('<SaveGame><player/><day>1</day></SaveGame>')
+    assert testee.get_save_attrs('xxxx') == {'player/name': None, 'player/farmName': None,
+                                             'dayOfMonth': None, 'currentSeason': None, 'year': None}
+    (tmp_path / 'xxxx' / 'xxxx').write_text('<SaveGame><player><name>PName</name>'
+                                            '<farmName>FName</farmName></player>'
+                                            '<dayOfMonth>1</dayOfMonth>'
+                                            '<currentSeason>2</currentSeason>'
+                                            '<year>3</year></SaveGame>')
+    assert testee.get_save_attrs('xxxx') == {'player/name': 'PName', 'player/farmName': 'FName',
+                                             'dayOfMonth': '1', 'currentSeason': '2', 'year': '3'}
 
 
 class TestJsonConf:
@@ -353,7 +404,18 @@ class TestJsonConf:
         """
         testobj = self.setup_testobj('', monkeypatch, capsys)
         testobj._data = {'components': {'xxx': {}, 'yyy': {}}}
-        assert testobj.list_all_components() ==  ['xxx', 'yyy']
+        assert testobj.list_all_components() == ['xxx', 'yyy']
+
+    def test_list_all_savenames(self, monkeypatch, capsys):
+        """unittest for JsonConf.list_all_savenames
+        """
+        def mock_get():
+            print('called get_savenames')
+            return ['xxx']
+        monkeypatch.setattr(testee, 'get_savenames', mock_get)
+        testobj = self.setup_testobj('', monkeypatch, capsys)
+        assert testobj.list_all_saveitems() == ['xxx']
+        assert capsys.readouterr().out == "called get_savenames\n"
 
     def test_has_moddir(self, monkeypatch, capsys):
         """unittest for JsonConf.has_moddir
@@ -417,6 +479,61 @@ class TestJsonConf:
         assert str(exc.value) == "Unknown key 'ppp' for component xxx"
         assert testobj.get_component_data('xxx', 'qqq') == '...'
         assert testobj.get_component_data('xxx', 's') == ''
+
+    def test_get_saveitem_attrs(self, monkeypatch, capsys):
+        """unittest for JsonConf.get_saveitem_attrs
+        """
+        def mock_get(savename):
+            print(f"called get_saveitem_attrs with arg '{savename}'")
+            return {'player/name': 'xxx', 'player/farmName': 'yyy', 'dayOfMonth': '01',
+                    'currentSeason': '02', 'year': '03'}
+        monkeypatch.setattr(testee, 'get_save_attrs', mock_get)
+        testobj = self.setup_testobj('', monkeypatch, capsys)
+        testobj._data = {}
+        assert testobj.get_saveitem_attrs('xxx') == ('xxx', 'yyy Farm', '01 02 year 03')
+        assert testobj._data == {'savedgames': {'xxx': {'player': 'xxx', 'farmName': 'yyy Farm',
+                                                        'ingameDate': '01 02 year 03'}}}
+        assert capsys.readouterr().out == "called get_saveitem_attrs with arg 'xxx'\n"
+        testobj._data = {testobj.SAVES: {'yyy': 'zzz'}}
+        assert testobj.get_saveitem_attrs('xxx') == ('xxx', 'yyy Farm', '01 02 year 03')
+        assert testobj._data == {'savedgames': {'yyy': 'zzz',
+                                                'xxx': {'player': 'xxx', 'farmName': 'yyy Farm',
+                                                        'ingameDate': '01 02 year 03'}}}
+        assert capsys.readouterr().out == "called get_saveitem_attrs with arg 'xxx'\n"
+        testobj._data = {testobj.SAVES: {'xxx': {testobj.PNAME: 'qqq', testobj.FNAME: 'rrr',
+                                                 testobj.GDATE: 'ss tt year uu'}}}
+        assert testobj.get_saveitem_attrs('xxx') == ('qqq', 'rrr', 'ss tt year uu')
+        assert testobj._data == {'savedgames': {'xxx': {'player': 'qqq', 'farmName': 'rrr',
+                                                        'ingameDate': 'ss tt year uu'}}}
+        assert capsys.readouterr().out == ""
+
+    def test_get_mods_for_saveitem(self, monkeypatch, capsys):
+        """unittest for JsonConf.get_mods_for_saveitem
+        """
+        testobj = self.setup_testobj('', monkeypatch, capsys)
+        testobj._data = {}
+        assert testobj.get_mods_for_saveitem('xxx') == []
+        testobj._data = {testobj.SAVES: {'xxx': {testobj.MODS: ['qqq']}}}
+        assert testobj.get_mods_for_saveitem('xxx') == ['qqq']
+
+    def test_update_saveitem_data(self, monkeypatch, capsys):
+        """unittest for JsonConf.update_saveitem_data
+        """
+        testobj = self.setup_testobj('', monkeypatch, capsys)
+        with pytest.raises(ValueError) as e:
+            testobj.update_saveitem_data('xxxx', 'unknown', 'new value')
+        assert str(e.value) == "Unknown key 'unknown' for savedata xxxx"
+        testobj._data = {}
+        testobj.update_saveitem_data('xxxx', testobj.PNAME, 'yyyy')
+        assert testobj._data == {'savedgames': {'xxxx': {'player': 'yyyy'}}}
+        testobj.update_saveitem_data('xxxx', testobj.FNAME, 'zzzz')
+        assert testobj._data == {'savedgames': {'xxxx': {'player': 'yyyy', 'farmName': 'zzzz'}}}
+        testobj.update_saveitem_data('xxxx', testobj.GDATE, 'qqqq')
+        assert testobj._data == {'savedgames': {'xxxx': {'player': 'yyyy', 'farmName': 'zzzz',
+                                                         'ingameDate': 'qqqq'}}}
+        testobj.update_saveitem_data('xxxx', testobj.MODS, 'rrrr')
+        assert testobj._data == {'savedgames': {'xxxx': {'player': 'yyyy', 'farmName': 'zzzz',
+                                                         'ingameDate': 'qqqq', 'moddirs': 'rrrr'}}}
 
     def test_add_diritem(self, monkeypatch, capsys):
         """unittest for JsonConf.add_diritem
@@ -538,26 +655,26 @@ class TestJsonConf:
                 "called JsonConf.set_diritem.value with args ('dirname', '_Nexus', 99)\n")
                 # "called JsonConf.set_diritem.value with args ('dirname', '_Nexus2', [100])\n")
 
-    def test_mergecomponents(self, monkeypatch, capsys):
-        """unittest for JsonConf.mergecomponents
-        """
-        def mock_get(*args):
-            print('called JsonConf.get_diritem.data with args', args)
-            return ['xxx', 'yyy']
-        def mock_set(*args):
-            print('called JsonConf.set_diritem.value with args', args)
-        testobj = self.setup_testobj('', monkeypatch, capsys)
-        testobj.get_diritem_data = mock_get
-        testobj.set_diritem_value = mock_set
-        testobj.mergecomponents('title', 'dirname')
-        assert capsys.readouterr().out == (
-                "called JsonConf.get_diritem.data with args ('dirname', 'components')\n"
-                "called JsonConf.set_diritem.value with args"
-                " ('dirname', 'components', ['xxx', 'yyy'])\n")
-        testobj._data = {'moddirs': {'dirname2': {'components': ['aaa', 'bbb']}}}
-        testobj.mergecomponents('title', 'dirname1, dirname2')
-        assert testobj._data == {'moddirs': {}}
-        assert capsys.readouterr().out == (
-                "called JsonConf.get_diritem.data with args ('dirname1', 'components')\n"
-                "called JsonConf.set_diritem.value with args"
-                " ('dirname1', 'components', ['xxx', 'yyy', 'aaa', 'bbb'])\n")
+    # def test_mergecomponents(self, monkeypatch, capsys):
+    #     """unittest for JsonConf.mergecomponents
+    #     """
+    #     def mock_get(*args):
+    #         print('called JsonConf.get_diritem.data with args', args)
+    #         return ['xxx', 'yyy']
+    #     def mock_set(*args):
+    #         print('called JsonConf.set_diritem.value with args', args)
+    #     testobj = self.setup_testobj('', monkeypatch, capsys)
+    #     testobj.get_diritem_data = mock_get
+    #     testobj.set_diritem_value = mock_set
+    #     testobj.mergecomponents('title', 'dirname')
+    #     assert capsys.readouterr().out == (
+    #             "called JsonConf.get_diritem.data with args ('dirname', 'components')\n"
+    #             "called JsonConf.set_diritem.value with args"
+    #             " ('dirname', 'components', ['xxx', 'yyy'])\n")
+    #     testobj._data = {'moddirs': {'dirname2': {'components': ['aaa', 'bbb']}}}
+    #     testobj.mergecomponents('title', 'dirname1, dirname2')
+    #     assert testobj._data == {'moddirs': {}}
+    #     assert capsys.readouterr().out == (
+    #             "called JsonConf.get_diritem.data with args ('dirname1', 'components')\n"
+    #             "called JsonConf.set_diritem.value with args"
+    #             " ('dirname1', 'components', ['xxx', 'yyy', 'aaa', 'bbb'])\n")

@@ -9,7 +9,7 @@ showmods = """\
 called QWidget.setWindowTitle()
 called VBox.__init__
 called HBox.__init__
-called Label.__init__ with args ('Dit overzicht toont de namen van expansies die je kunt activeren (inclusief die al geactiveerd zijn).\\nIn de achterliggende configuratie is geregeld welke mods hiervoor eventueel nog meer aangezet moeten worden\\nDe onderstreepte items zijn hyperlinks; ze leiden naar de pagina waarvandaan ik ze van gedownload heb (doorgaans op Nexus)',)
+called Label.__init__ with args ('Dit overzicht toont de namen van mods die je kunt activeren (inclusief die al geactiveerd zijn).\\nIn de achterliggende configuratie is geregeld welke mods hiervoor eventueel nog meer aangezet moeten worden\\nDe onderstreepte items zijn hyperlinks; ze leiden naar de pagina waarvandaan ik ze van gedownload heb (doorgaans op Nexus)',)
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLabel'>
 called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>
 called Grid.__init__
@@ -33,6 +33,9 @@ called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushBut
 called Signal.connect with args ({testobj.confirm},)
 called PushButton.setEnabled with arg `False`
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
+called PushButton.__init__ with args ('&Select Savefile', {testobj}) {{}}
+called Signal.connect with args ({testobj.master.manage_savefiles},)
+called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
 called PushButton.__init__ with args ('&Done', {testobj}) {{}}
 called Signal.connect with args ({testobj.close},)
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
@@ -40,70 +43,7 @@ called HBox.addStretch
 called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>
 called QWidget.setLayout()
 """
-# called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
-# called PushButton.__init__ with args ('&Reorder mods on screen', {testobj}) {{}}
-# called Signal.connect with args ({testobj.reorder_gui},)
-# called PushButton.__init__ with args ('add &Mod to config', {testobj}) {{}}
-# called Signal.connect with args ({testobj.master.add_to_config},)
-# called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
-# called PushButton.__init__ with args ('&Edit config', {testobj}) {{}}
-# called Signal.connect with args ({testobj.master.edit_config},)
-# called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
-# called PushButton.__init__ with args ('Re&Load config', {testobj}) {{}}
-# called Signal.connect with args ({testobj.master.reload_config},)
-# called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
-# called PushButton.__init__ with args ('&Check config', {testobj}) {{}}
-# called Signal.connect with args ({testobj.check},)
-# called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
-newmod = """\
-called Dialog.__init__ with args {testobj.parent} () {{}}
-called Grid.__init__
-called Label.__init__ with args ('Mod name:', {testobj})
-called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLabel'> at (0, 0)
-called LineEdit.__init__
-called LineEdit.setMinimumWidth with arg `200`
-called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLineEdit'> at (0, 1)
-called Label.__init__ with args ('Unpack directory:', {testobj})
-called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLabel'> at (1, 0)
-called LineEdit.__init__
-called LineEdit.setMinimumWidth with arg `200`
-called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLineEdit'> at (1, 1)
-called PushButton.__init__ with args ('&Select\\nfrom Downloads', {testobj}) {{}}
-called Signal.connect with args ({testobj.select_mod},)
-called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'> at (0, 2, 2, 1)
-called CheckBox.__init__ with text 'Activatable'{checked}
-called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockCheckBox'> at (2, 0)
-called VBox.__init__
-called PushButton.__init__ with args ('&Add dependency', {testobj}) {{}}
-called Signal.connect with args ({testobj.add_depline},)
-called VBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
-called Grid.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockVBoxLayout'> at (3, 0, 1, 3)
-called HBox.__init__
-called HBox.addStretch
-called PushButton.__init__ with args ('&Cancel', {testobj}) {{}}
-called Signal.connect with args ({testobj.reject},)
-called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
-called PushButton.__init__ with args ('&Update', {testobj}) {{}}
-called Signal.connect with args ({testobj.update_deps},)
-called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
-called HBox.addStretch
-called Grid.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'> at (4, 0, 1, 3)
-called Dialog.setLayout
-"""
-add_depline = """\
-called CheckBox.__init__
-called HBox.__init__
-called ComboBox.__init__
-called ComboBox.setEditable with arg `False`
-called ComboBox.addItems with arg ['-- add a new mod --', '-- remove this mod --']
-called ComboBox.addItems with arg ['x', 'y']
-called Signal.connect with args (functools.partial({testobj.process_dep}, {testobj.deps[0][0]}),)
-called CheckBox.setEnabled with arg False
-called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockComboBox'>
-called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>
-called NewModDialog.update
-"""
-remarks = """\
+attrs = """\
 called Conf.list_all_mod_dirs
 called Conf.get_diritem_data with args ('xxx', 'SCRNAM')
 called Conf.get_diritem_data with args ('yyy', 'SCRNAM')
@@ -125,6 +65,7 @@ called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLabel'>
 called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>
 called HBox.__init__
 called ComboBox.__init__
+called ComboBox.setEditable with arg `True`
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockComboBox'>
 called PushButton.__init__ with args () {{}}
 called Icon.fromTheme with args ()
@@ -149,10 +90,10 @@ called PushButton.setDisabled with arg `True`
 called Signal.connect with args ({testobj.clear_text_text},)
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
 called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>
-called HBox.__init__
 called CheckBox.__init__ with text 'This mod can be activated by itself'
-called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockCheckBox'>
-called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>
+called VBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockCheckBox'>
+called CheckBox.__init__ with text 'Do not touch when (de)activating for a save'
+called VBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockCheckBox'>
 called PushButton.__init__ with args ('View &Components',) {{}}
 called Signal.connect with args ({testobj.view_components},)
 called VBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
@@ -173,60 +114,61 @@ called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLay
 called Dialog.setLayout
 called ComboBox.setFocus
 """
-reorder = """\
-called Widget.__init__
+saveitems = """\
+called Conf.list_all_mod_savetemitems
+called Conf.list_all_mod_dirs
+called Conf.get_diritem_data with args ('xxx', 'SCRNAM')
+called Conf.get_diritem_data with args ('yyy', 'SCRNAM')
 called Dialog.__init__ with args {testobj.parent} () {{}}
-called ReorderDialog.determine_rows_cols
-called VBox.__init__
-called Table.__init__ with args ({testobj},)
-called Header.__init__
-called Header.__init__
-called Table.setRowCount with arg '1'
-called Table.setColumnCount with arg '1'
-called Table.setColumnWidth with args (-1, 200)
-called HBox.__init__
-called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockTable'>
-called ReorderDialog.populate
-called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>
-called HBox.__init__
-called HBox.addStretch
-called PushButton.__init__ with args ('&> Add Column', {testobj}) {{}}
-called Signal.connect with args ({testobj.add_column},)
-called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
-called PushButton.__init__ with args ('&< Remove Last Column', {testobj}) {{}}
-called Signal.connect with args ({testobj.remove_column},)
-called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
-called PushButton.__init__ with args ('(Re)&Position texts in grid', {testobj}) {{}}
-called Signal.connect with args ({testobj.populate},)
-called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
-called PushButton.__init__ with args ('&+ Add Row', {testobj}) {{}}
-called Signal.connect with args ({testobj.add_row},)
-called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
-called PushButton.__init__ with args ('&- Remove Last Row', {testobj}) {{}}
-called Signal.connect with args ({testobj.remove_row},)
-called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
-called HBox.addStretch
-called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>
-called HBox.__init__
-called PushButton.__init__ with args ('&Save', {testobj}) {{}}
+called ComboBox.__init__
+called ComboBox.setEditable with arg `False`
+called ComboBox.addItem with arg `select a saved game`
+called ComboBox.addItems with arg ['qqq', 'rrr']
+called Signal.connect with args ({testobj.get_savedata},)
+called LineEdit.__init__
+called LineEdit.__init__
+called LineEdit.__init__
+called PushButton.__init__ with args ('&Update config',) {{}}
+called PushButton.setDisabled with arg `True`
+called Signal.connect with args ({testobj.update_all},)
+called PushButton.__init__ with args ('&Activate Mods',) {{}}
+called PushButton.setDisabled with arg `True`
+called Signal.connect with args ({testobj.confirm},)
+called PushButton.__init__ with args ('&Exit',) {{}}
 called Signal.connect with args ({testobj.accept},)
-called PushButton.setDefault with arg `True`
-called PushButton.__init__ with args ('&Cancel', {testobj}) {{}}
-called Signal.connect with args ({testobj.reject},)
-called HBox.addStretch
+called VBox.__init__
+called VBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockComboBox'>
+called Grid.__init__
+called Label.__init__ with args ('Player name:', {testobj})
+called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLabel'> at (0, 0)
+called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLineEdit'> at (0, 1)
+called Label.__init__ with args ('Farm name:', {testobj})
+called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLabel'> at (1, 0)
+called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLineEdit'> at (1, 1)
+called Label.__init__ with args ('In-game date:', {testobj})
+called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLabel'> at (2, 0)
+called Grid.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLineEdit'> at (2, 1)
+called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockGridLayout'>
+called VBox.__init__
+called Label.__init__ with args ('Uses:', {testobj})
+called VBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLabel'>
+called SaveGamesDialog.add_modselector
+called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockVBoxLayout'>
+called VBox.addStretch
+called HBox.__init__
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
-called HBox.addStretch
+called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
 called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>
 called Dialog.setLayout
+called ComboBox.setFocus
 """
 
 
 @pytest.fixture
 def expected_output():
     "fixture returning output to be expected from (mostly) gui setup methods"
-    results = {'showmods': showmods, 'newmod': newmod, 'add_depline': add_depline,
-               'reorder': reorder, 'remarks': remarks}
+    results = {'showmods': showmods, 'attrs': attrs, 'saves': saveitems}
     return results
 
 
@@ -266,6 +208,10 @@ class MockManager:
         """stub
         """
         print('called Manager.manage_attributes()')
+    def manage_savefiles(self):
+        """stub
+        """
+        print('called Manager.manage_savefiles()')
     def reorder_gui(self):
         """stub
         """
@@ -501,10 +447,8 @@ class TestShowMods:
         def mock_add_items(*args):
             print("called Showmods.add_items_to_grid with args", args)
             return {}, {}
-        def mock_set1(*args):
-            print("called Showmods.set_texts_for_grid with args", args)
-        def mock_set2(*args):
-            print("called Showmods.set_checks_for_grid with args", args)
+        def mock_refresh(**kwargs):
+            print("called Showmods.refresh_widget_data with args", kwargs)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.master.screeninfo = {}
         testobj.plotted_widgets = {}
@@ -513,17 +457,16 @@ class TestShowMods:
         testobj.lastcol = 0
         testobj.unplotted = []
         testobj.unplotted_widgets = {}
-        testobj.unplotted_positions = {}
+        # testobj.unplotted_positions = {}
         testobj.not_selectable = []
         testobj.nonsel_widgets = {}
-        testobj.nonsel_positions = {}
+        # testobj.nonsel_positions = {}
         testobj.gbox1 = mockqtw.MockGridLayout()
         testobj.gbox2 = mockqtw.MockGridLayout()
         assert capsys.readouterr().out == "called Grid.__init__\ncalled Grid.__init__\n"
         testobj.add_checkbox = mock_add
         testobj.add_items_to_grid = mock_add_items
-        testobj.set_texts_for_grid = mock_set1
-        testobj.set_checks_for_grid = mock_set2
+        testobj.refresh_widget_data = mock_refresh
         testobj.refresh_widgets()
         assert testobj.plotted_widgets == {}
         assert testobj.plotted_positions == {}
@@ -538,10 +481,11 @@ class TestShowMods:
         assert capsys.readouterr().out == (
                 f"called Showmods.add_items_to_grid with args ({testobj.gbox1}, 0, 0, [])\n"
                 f"called Showmods.add_items_to_grid with args ({testobj.gbox2}, 0, -1, [])\n"
-                "called Showmods.set_texts_for_grid with args ({}, {})\n"
-                "called Showmods.set_texts_for_grid with args ({}, {})\n"
-                "called Showmods.set_checks_for_grid with args ({}, {})\n"
-                "called Showmods.set_checks_for_grid with args ({}, {})\n")
+                "called Showmods.refresh_widget_data with args {'texts_also': True}\n")
+                # "called Showmods.set_texts_for_grid with args ({}, {})\n"
+                # "called Showmods.set_texts_for_grid with args ({}, {})\n"
+                # "called Showmods.set_checks_for_grid with args ({}, {})\n"
+                # "called Showmods.set_checks_for_grid with args ({}, {})\n")
         label1 = mockqtw.MockLabel()
         check1 = mockqtw.MockCheckBox()
         label2 = mockqtw.MockLabel()
@@ -572,10 +516,11 @@ class TestShowMods:
                 "called Grid.removeItem with args (None,)\n"
                 f"called Showmods.add_items_to_grid with args ({testobj.gbox1}, 0, 0, [])\n"
                 f"called Showmods.add_items_to_grid with args ({testobj.gbox2}, 0, -1, [])\n"
-                "called Showmods.set_texts_for_grid with args ({}, {})\n"
-                "called Showmods.set_texts_for_grid with args ({}, {})\n"
-                "called Showmods.set_checks_for_grid with args ({}, {})\n"
-                "called Showmods.set_checks_for_grid with args ({}, {})\n")
+                "called Showmods.refresh_widget_data with args {'texts_also': True}\n")
+                # "called Showmods.set_texts_for_grid with args ({}, {})\n"
+                # "called Showmods.set_texts_for_grid with args ({}, {})\n"
+                # "called Showmods.set_checks_for_grid with args ({}, {})\n"
+                # "called Showmods.set_checks_for_grid with args ({}, {})\n")
         testobj.master.screeninfo = {'xx': {'pos': '1x1', 'sel': True},
                                      'yy': {'pos': '', 'sel': True},
                                      'zz': {'pos': '', 'sel': False}}
@@ -591,30 +536,64 @@ class TestShowMods:
                 "called Grid.addLayout with arg of type <class 'str'> at (1, 1)\n"
                 f"called Showmods.add_items_to_grid with args ({testobj.gbox1}, 1, 1, ['yy'])\n"
                 f"called Showmods.add_items_to_grid with args ({testobj.gbox2}, 0, -1, ['zz'])\n"
-                "called Showmods.set_texts_for_grid with args"
-                " ({(1, 1): ('xx', {'pos': '1x1', 'sel': True})}, {(1, 1): ('x', 'y', 'z')})\n"
-                "called Showmods.set_texts_for_grid with args ({}, {})\n"
+                "called Showmods.refresh_widget_data with args {'texts_also': True}\n")
+                # "called Showmods.set_texts_for_grid with args"
+                # " ({(1, 1): ('xx', {'pos': '1x1', 'sel': True})}, {(1, 1): ('x', 'y', 'z')})\n"
+                # "called Showmods.set_texts_for_grid with args ({}, {})\n"
+                # "called Showmods.set_checks_for_grid with args"
+                # " ({(1, 1): ('xx', {'pos': '1x1', 'sel': True})}, {(1, 1): ('x', 'y', 'z')})\n"
+                # "called Showmods.set_checks_for_grid with args ({}, {})\n")
+
+    def test_refresh_widget_data(self, monkeypatch, capsys):
+        """unittest for ShowMods.refresh_widgets
+        """
+        def mock_set1(*args):
+            print("called Showmods.set_texts_for_grid with args", args)
+        def mock_set2(*args):
+            print("called Showmods.set_checks_for_grid with args", args)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.set_texts_for_grid = mock_set1
+        testobj.set_checks_for_grid = mock_set2
+        testobj.plotted_widgets = {'x': '1', 'y': '2'}
+        testobj.plotted_positions = {'a': 1, 'b': 2}
+        testobj.unplotted_widgets = {'x': '3', 'z': '4'}
+        testobj.unplotted_positions = {'a': 3, 'c': 4}
+        testobj.nonsel_widgets = {'q': 'r'}
+        testobj.nonsel_positions = {'p': 's'}
+        testobj.refresh_widget_data()
+        assert capsys.readouterr().out == (
                 "called Showmods.set_checks_for_grid with args"
-                " ({(1, 1): ('xx', {'pos': '1x1', 'sel': True})}, {(1, 1): ('x', 'y', 'z')})\n"
-                "called Showmods.set_checks_for_grid with args ({}, {})\n")
+                " ({'a': 3, 'b': 2, 'c': 4}, {'x': '3', 'y': '2', 'z': '4'})\n"
+                "called Showmods.set_checks_for_grid with args ({'p': 's'}, {'q': 'r'})\n")
+        testobj.refresh_widget_data(texts_also=True)
+        assert capsys.readouterr().out == (
+                "called Showmods.set_texts_for_grid with args"
+                " ({'a': 3, 'b': 2, 'c': 4}, {'x': '3', 'y': '2', 'z': '4'})\n"
+                "called Showmods.set_texts_for_grid with args ({'p': 's'}, {'q': 'r'})\n"
+                "called Showmods.set_checks_for_grid with args"
+                " ({'a': 3, 'b': 2, 'c': 4}, {'x': '3', 'y': '2', 'z': '4'})\n"
+                "called Showmods.set_checks_for_grid with args ({'p': 's'}, {'q': 'r'})\n")
 
     def test_add_items_to_grid(self, monkeypatch, capsys):
         """unittest for ShowMods.add_items_to_grid
         """
         def mock_add(*args):
             print("called ShowMods.add_checkbox")
-            return 'a', 'b', 'c'
+            return 'hbox', 'btn', cbox
         testobj = self.setup_testobj(monkeypatch, capsys)
+        cbox = mockqtw.MockCheckBox()
         testobj.add_checkbox = mock_add
-        testobj.master.screeninfo = {'x': {}, 'y': {}, 'z': {}}
+        testobj.master.screeninfo = {'x': {'sel': True}, 'y': {'sel': True}, 'z': {'sel': False}}
         gbox = mockqtw.MockGridLayout()
-        assert capsys.readouterr().out == "called Grid.__init__\n"
+        assert capsys.readouterr().out == "called CheckBox.__init__\ncalled Grid.__init__\n"
         assert testobj.add_items_to_grid(gbox, 1, 1, []) == ({}, {})
         assert capsys.readouterr().out == ""
         assert testobj.add_items_to_grid(gbox, 1, 1, ['x', 'y', 'z']) == (
-                {(1, 2): ('x', {'pos': '1x2'}), (2, 0): ('y', {'pos': '2x0'}),
-                 (2, 1): ('z', {'pos': '2x1'})},
-                {(1, 2): ('a', 'b', 'c'), (2, 0): ('a', 'b', 'c'), (2, 1): ('a', 'b', 'c')})
+                {(1, 2): ('x', {'pos': '1x2', 'sel': True}),
+                 (2, 0): ('y', {'pos': '2x0', 'sel': True}),
+                 (2, 1): ('z', {'pos': '2x1', 'sel': False})},
+                {(1, 2): ('hbox', 'btn', cbox), (2, 0): ('hbox', 'btn', cbox),
+                 (2, 1): ('hbox', 'btn', cbox)})
         assert capsys.readouterr().out == (
                 "called ShowMods.add_checkbox\n"
                 "called Grid.addLayout with arg of type <class 'str'> at (1, 2)\n"
@@ -664,15 +643,8 @@ class TestShowMods:
                      (1, 2): ('ccc', {'dir': 'rrr', 'sel': False})}
         testobj.set_checks_for_grid(positions, widgets)
         assert capsys.readouterr().out == (
-                "called Signal.disconnect\n"
-                "called CheckBox.setEnabled with arg True\n"
-                f"called Signal.connect with args ({testobj.enable_button},)\n"
                 "called CheckBox.setChecked with arg False\n"
-                "called Signal.disconnect\n"
-                "called CheckBox.setEnabled with arg True\n"
-                f"called Signal.connect with args ({testobj.enable_button},)\n"
                 "called CheckBox.setChecked with arg True\n"
-                "called Signal.disconnect\n"
                 "called CheckBox.setChecked with arg False\n")
 
     def test_add_checkbox(self, monkeypatch, capsys):
@@ -683,7 +655,7 @@ class TestShowMods:
         monkeypatch.setattr(testee.qtw, 'QLabel', mockqtw.MockLabel)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.master.screentext = {}
-        obj1, obj2, obj3 = testobj.add_checkbox()
+        obj1, obj2, obj3 = testobj.add_checkbox(False)
         assert isinstance(obj1, testee.qtw.QHBoxLayout)
         assert isinstance(obj2, testee.qtw.QLabel)
         assert isinstance(obj3, testee.qtw.QCheckBox)
@@ -691,11 +663,23 @@ class TestShowMods:
             "called HBox.__init__\n"
             "called CheckBox.__init__\n"
             "called CheckBox.setEnabled with arg False\n"
-            # f"called Signal.connect with args ({testobj.enable_button},)\n"
             "called Label.__init__\n"
-            # "called Label.setOpenExternalLinks with arg 'True'\n"
-            # "called Label.setText with arg"
-            # ' `<a href="https://www.nexusmods.com/stardewvalley/mods/1">xxxx</a>`\n'
+            "called HBox.addSpacing\n"
+            "called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockCheckBox'>\n"
+            "called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLabel'>\n"
+            "called HBox.addStretch\n"
+            "called HBox.addSpacing\n")
+        obj1, obj2, obj3 = testobj.add_checkbox(True)
+        assert isinstance(obj1, testee.qtw.QHBoxLayout)
+        assert isinstance(obj2, testee.qtw.QLabel)
+        assert isinstance(obj3, testee.qtw.QCheckBox)
+        assert capsys.readouterr().out == (
+            "called HBox.__init__\n"
+            "called CheckBox.__init__\n"
+            "called CheckBox.setEnabled with arg False\n"
+            "called CheckBox.setEnabled with arg True\n"
+            f"called Signal.connect with args ({testobj.enable_button},)\n"
+            "called Label.__init__\n"
             "called HBox.addSpacing\n"
             "called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockCheckBox'>\n"
             "called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLabel'>\n"
@@ -743,35 +727,35 @@ class TestShowMods:
                 "called Manager.update_mods with arg ['name1', 'name2']\n"
                 "called MessageBox.information with args ('Change Config', 'xxx\\nyyy')\n")
 
-    def test_add_entries_for_name(self, monkeypatch, capsys):
-        """unittest for ShowMods.add_entries_for_name
-        """
-        def mock_add(*args):
-            print("called Manager.add_checkbox with args", args)
-            return 'hbox', ('label', 'check')
-        def mock_determine():
-            print('called Manager.determine_newt_row_col')
-            return 1, 2
-        testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.containers, testobj.widgets, testobj.positions = {}, {}, {}
-        testobj.add_checkbox = mock_add
-        testobj.determine_next_row_col = mock_determine
-        testobj.add_entries_for_name('name')
-        assert testobj.containers['name'] == 'hbox'
-        assert testobj.widgets['name'] == ('label', 'check')
-        assert testobj.positions[1, 2] == 'name'
-        assert capsys.readouterr().out == ("called Manager.add_checkbox with args ('name', '')\n"
-                                           'called Manager.determine_newt_row_col\n')
+    # def test_add_entries_for_name(self, monkeypatch, capsys):
+    #     """unittest for ShowMods.add_entries_for_name
+    #     """
+    #     def mock_add(*args):
+    #         print("called Manager.add_checkbox with args", args)
+    #         return 'hbox', ('label', 'check')
+    #     def mock_determine():
+    #         print('called Manager.determine_newt_row_col')
+    #         return 1, 2
+    #     testobj = self.setup_testobj(monkeypatch, capsys)
+    #     testobj.containers, testobj.widgets, testobj.positions = {}, {}, {}
+    #     testobj.add_checkbox = mock_add
+    #     testobj.determine_next_row_col = mock_determine
+    #     testobj.add_entries_for_name('name')
+    #     assert testobj.containers['name'] == 'hbox'
+    #     assert testobj.widgets['name'] == ('label', 'check')
+    #     assert testobj.positions[1, 2] == 'name'
+    #     assert capsys.readouterr().out == ("called Manager.add_checkbox with args ('name', '')\n"
+    #                                        'called Manager.determine_newt_row_col\n')
 
-    def test_determine_next_row_col(self, monkeypatch, capsys):
-        """unittest for ShowMods.deteremine_next_row_col
-        """
-        testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.positions = {(0, 0): '', (0, 1): '', (0, 2): '', (1, 0): '', (1, 1): ''}
-        assert testobj.determine_next_row_col() == (1, 2)
-        # heb ik hier nou alweer row en col omgedraaid?
-        testobj.positions = {(0, 0): '', (0, 1): '', (0, 2): '', (1, 0): '', (1, 1): '', (1, 2): ''}
-        assert testobj.determine_next_row_col() == (2, 0)
+    # def test_determine_next_row_col(self, monkeypatch, capsys):
+    #     """unittest for ShowMods.deteremine_next_row_col
+    #     """
+    #     testobj = self.setup_testobj(monkeypatch, capsys)
+    #     testobj.positions = {(0, 0): '', (0, 1): '', (0, 2): '', (1, 0): '', (1, 1): ''}
+    #     assert testobj.determine_next_row_col() == (1, 2)
+    #     # heb ik hier nou alweer row en col omgedraaid?
+    #     testobj.positions = {(0, 0): '', (0, 1): '', (0, 2): '', (1, 0): '', (1, 1): '', (1, 2): ''}
+    #     assert testobj.determine_next_row_col() == (2, 0)
 
     def test_select_value(self, monkeypatch, capsys):
         """unittest for ShowMods.select_value
@@ -780,7 +764,7 @@ class TestShowMods:
             nonlocal counter
             print('called InputDialog.getItem with args', args, kwargs)
             counter += 1
-            return counter != 1, f'item{counter}'
+            return f'item{counter}', counter != 1
         monkeypatch.setattr(testee.qtw.QInputDialog, 'getItem', mock_get)
         monkeypatch.setattr(testee.qtw, 'QMessageBox', mockqtw.MockMessageBox)
         testobj = self.setup_testobj(monkeypatch, capsys)
@@ -817,14 +801,20 @@ class TestShowMods:
 class MockConf:
     """stub for jsonconfig.JsonConf object
     """
-    SCRNAM = 'SCRNAM'
-    NAME = 'Name'
-    DEPS = 'Deps'
-    VRS = 'Version'
+    SCRNAM, NAME, DEPS, VRS = 'SCRNAM', 'Name', 'Deps', 'Version'
+    PNAME, FNAME, GDATE, MODS = 'Pname', 'Fname', 'Gdate', 'Mods'
+    OPTOUT, DIR = '_DoNotTouch', 'dirname'
+    def save(self):
+        "stub"
+        print('called Conf.save')
     def list_all_mod_dirs(self):
         "stub"
         print('called Conf.list_all_mod_dirs')
         return ['xxx', 'yyy']
+    def list_all_saveitems(self):
+        "stub"
+        print('called Conf.list_all_mod_savetemitems')
+        return ['qqq', 'rrr']
     def list_components_for_dir(self, name):
         "stub"
         print(f"called Conf.list_components_for_dir with arg '{name}'")
@@ -843,6 +833,17 @@ class MockConf:
         if args[1] == self.VRS:
             return f'{args[0]}_version'
         return f'{args[0]}_name'
+    def get_saveitem_attrs(self, value):
+        "stub"
+        print(f"called Conf.get_saveitem_attrs with arg {value}")
+        return []
+    def get_mods_for_saveitem(self, name):
+        "stub"
+        print(f"called Conf.get_mods_for_saveitem with arg {name}")
+        return []
+    def update_saveitem_data(self, *args):
+        "stub"
+        print('called Conf.update_saveitem_data with args', args)
 
 
 class TestAttributesDialog:
@@ -866,7 +867,7 @@ class TestAttributesDialog:
         return testobj
 
     def test_init(self, monkeypatch, capsys, expected_output):
-        """unittest for NewModDialog.__init__
+        """unittest for AttributesDialog.__init__
         """
         monkeypatch.setattr(testee.qtw.QDialog, '__init__', mockqtw.MockDialog.__init__)
         monkeypatch.setattr(testee.qtw.QDialog, 'setLayout', mockqtw.MockDialog.setLayout)
@@ -889,6 +890,7 @@ class TestAttributesDialog:
         conf = MockConf()
         testobj = testee.AttributesDialog(parent, conf)
         assert testobj.parent == parent
+        assert testobj.conf == conf
         assert testobj.modnames == {'xxx_name': 'xxx', 'yyy_name': 'yyy'}
         assert isinstance(testobj.lbox, testee.qtw.QComboBox)
         assert isinstance(testobj.select_button, testee.qtw.QPushButton)
@@ -900,7 +902,7 @@ class TestAttributesDialog:
         assert isinstance(testobj.comps_button, testee.qtw.QPushButton)
         assert isinstance(testobj.deps_button, testee.qtw.QPushButton)
         assert isinstance(testobj.change_button, testee.qtw.QPushButton)
-        assert capsys.readouterr().out == expected_output['remarks'].format(testobj=testobj)
+        assert capsys.readouterr().out == expected_output['attrs'].format(testobj=testobj)
 
     def test_enable_select(self, monkeypatch, capsys):
         """unittest for AttributesDialog.enable_select
@@ -931,7 +933,7 @@ class TestAttributesDialog:
         testobj.conf = MockConf()
         testobj.parent = types.SimpleNamespace(
                 master=types.SimpleNamespace(
-                    screeninfo={'current text': {'txt': 'xxx', 'sel': True}}))
+                    screeninfo={'current text': {'txt': 'xxx', 'sel': True, 'opt': False}}))
         testobj.modnames = {'current text': {'aaa'}}
         testobj.select_button = mockqtw.MockPushButton()
         testobj.lbox = mockqtw.MockComboBox()
@@ -940,6 +942,7 @@ class TestAttributesDialog:
         testobj.text = mockqtw.MockLineEdit()
         testobj.clear_text_button = mockqtw.MockPushButton()
         testobj.activate_button = mockqtw.MockCheckBox()
+        testobj.exempt_button = mockqtw.MockCheckBox()
         testobj.comps_button = mockqtw.MockPushButton()
         testobj.deps_button = mockqtw.MockPushButton()
         testobj.change_button = mockqtw.MockPushButton()
@@ -949,6 +952,7 @@ class TestAttributesDialog:
                                            "called PushButton.__init__ with args () {}\n"
                                            "called LineEdit.__init__\n"
                                            "called PushButton.__init__ with args () {}\n"
+                                           "called CheckBox.__init__\n"
                                            "called CheckBox.__init__\n"
                                            "called PushButton.__init__ with args () {}\n"
                                            "called PushButton.__init__ with args () {}\n"
@@ -968,6 +972,7 @@ class TestAttributesDialog:
                 "called LineEdit.setText with arg `xxx`\n"
                 "called PushButton.setDisabled with arg `False`\n"
                 "called CheckBox.setChecked with arg True\n"
+                "called CheckBox.setChecked with arg False\n"
                 "called PushButton.setDisabled with arg `False`\n"
                 "called PushButton.setDisabled with arg `False`\n"
                 "called PushButton.setDisabled with arg `False`\n")
@@ -985,6 +990,7 @@ class TestAttributesDialog:
                 "called LineEdit.setText with arg `xxx`\n"
                 "called PushButton.setDisabled with arg `False`\n"
                 "called CheckBox.setChecked with arg True\n"
+                "called CheckBox.setChecked with arg False\n"
                 "called PushButton.setDisabled with arg `False`\n"
                 "called PushButton.setDisabled with arg `False`\n"
                 "called PushButton.setDisabled with arg `False`\n")
@@ -1099,6 +1105,7 @@ class TestAttributesDialog:
                 master=types.SimpleNamespace(
                     screeninfo={'current text': {'txt': 'xxx', 'sel': True, 'pos': '2x2'}},
                     attr_changes=[]),
+                plotted_widgets={},
                 unplotted=['current text'], unplotted_widgets={(2, 2): ('', label, check)},
                 not_selectable=[], nonsel_widgets={},
                 refresh_widgets=mock_refresh,
@@ -1108,6 +1115,7 @@ class TestAttributesDialog:
         testobj.text = mockqtw.MockLineEdit()
         testobj.clear_text_button = mockqtw.MockPushButton()
         testobj.activate_button = mockqtw.MockCheckBox()
+        testobj.exempt_button = mockqtw.MockCheckBox()
         testobj.change_button = mockqtw.MockPushButton()
         assert capsys.readouterr().out == ("called Label.__init__\n"
                                            "called CheckBox.__init__\n"
@@ -1116,19 +1124,21 @@ class TestAttributesDialog:
                                            "called LineEdit.__init__\n"
                                            "called PushButton.__init__ with args () {}\n"
                                            "called CheckBox.__init__\n"
+                                           "called CheckBox.__init__\n"
                                            "called PushButton.__init__ with args () {}\n")
         testobj.choice = 'current text'
         testobj.update()
         assert testobj.parent.unplotted == []
         assert testobj.parent.not_selectable == ['current text']
         assert testobj.parent.master.screeninfo == {'current text': {'txt': '', 'sel': False,
-                                                                     'pos': '2x2'}}
+                                                                     'opt': False, 'pos': '2x2'}}
         assert testobj.parent.master.attr_changes == [('current text', '')]
         assert capsys.readouterr().out == ("called PushButton.setDisabled with arg `True`\n"
                                            "called PushButton.setDisabled with arg `True`\n"
                                            "called PushButton.setDisabled with arg `True`\n"
                                            "called CheckBox.isChecked\n"
                                            "called LineEdit.text\n"
+                                           "called CheckBox.isChecked\n"
                                            "called ComboBox.currentText\n"
                                            "called ShowMods.refresh_widgets with args ()\n")
         testobj.activate_button.setChecked(True)
@@ -1140,13 +1150,14 @@ class TestAttributesDialog:
         assert testobj.parent.unplotted == ['current text']
         assert testobj.parent.not_selectable == []
         assert testobj.parent.master.screeninfo == {'current text': {'txt': '', 'sel': True,
-                                                                     'pos': '2x2'}}
+                                                                     'opt': False, 'pos': '2x2'}}
         assert testobj.parent.master.attr_changes == [('current text', '')]
         assert capsys.readouterr().out == ("called PushButton.setDisabled with arg `True`\n"
                                            "called PushButton.setDisabled with arg `True`\n"
                                            "called PushButton.setDisabled with arg `True`\n"
                                            "called CheckBox.isChecked\n"
                                            "called LineEdit.text\n"
+                                           "called CheckBox.isChecked\n"
                                            "called ComboBox.currentText\n"
                                            "called ShowMods.refresh_widgets with args ()\n")
 
@@ -1159,13 +1170,15 @@ class TestAttributesDialog:
         testobj.parent.master.attr_changes = []
         testobj.update()
         assert testobj.parent.master.screeninfo == {'current text': {'txt': 'qqq', 'sel': True,
-                                                                     'pos': '2x2', 'key': 'qq'}}
+                                                                     'opt': False, 'pos': '2x2',
+                                                                     'key': 'qq'}}
         assert testobj.parent.master.attr_changes == [('current text', '')]
         assert capsys.readouterr().out == ("called PushButton.setDisabled with arg `True`\n"
                                            "called PushButton.setDisabled with arg `True`\n"
                                            "called PushButton.setDisabled with arg `True`\n"
                                            "called CheckBox.isChecked\n"
                                            "called LineEdit.text\n"
+                                           "called CheckBox.isChecked\n"
                                            "called ComboBox.currentText\n"
                                            "called Label.setOpenExternalLinks with arg 'False'\n"
                                            "called ShowMods.build_screen_text with args "
@@ -1176,13 +1189,15 @@ class TestAttributesDialog:
         testobj.parent.master.attr_changes = []
         testobj.update()
         assert testobj.parent.master.screeninfo == {'current text': {'txt': 'qqq', 'sel': True,
-                                                                     'pos': '2x2', 'key': 'qq'}}
+                                                                     'opt': False, 'pos': '2x2',
+                                                                     'key': 'qq'}}
         assert testobj.parent.master.attr_changes == [('current text', 'xxx')]
         assert capsys.readouterr().out == ("called PushButton.setDisabled with arg `True`\n"
                                            "called PushButton.setDisabled with arg `True`\n"
                                            "called PushButton.setDisabled with arg `True`\n"
                                            "called CheckBox.isChecked\n"
                                            "called LineEdit.text\n"
+                                           "called CheckBox.isChecked\n"
                                            "called ComboBox.currentText\n"
                                            "called Label.setOpenExternalLinks with arg 'False'\n"
                                            "called ShowMods.build_screen_text with args "
@@ -1196,7 +1211,8 @@ class TestAttributesDialog:
         testobj.parent.unplotted = []
         testobj.update()
         assert testobj.parent.master.screeninfo == {'current text': {'txt': 'qqq', 'sel': False,
-                                                                     'pos': '2x2', 'key': 'qq'}}
+                                                                     'pos': '2x2', 'key': 'qq',
+                                                                     'opt': False}}
         assert testobj.parent.master.attr_changes == [('current text', 'xxx')]
         assert capsys.readouterr().out == (
                 "called PushButton.setDisabled with arg `True`\n"
@@ -1204,6 +1220,7 @@ class TestAttributesDialog:
                 "called PushButton.setDisabled with arg `True`\n"
                 "called CheckBox.isChecked\n"
                 "called LineEdit.text\n"
+                "called CheckBox.isChecked\n"
                 "called ComboBox.currentText\n"
                 f"called MessageBox.information with args `{testobj}` `SDVMM` `Onselecteerbaar"
                 " maken van mods met coordinaten in de config is helaas nog niet mogelijk`\n")
@@ -1216,7 +1233,8 @@ class TestAttributesDialog:
         assert capsys.readouterr().out == "called LineEdit.setText with arg `yyy`\n"
         testobj.update()
         assert testobj.parent.master.screeninfo == {'current text': {'txt': 'yyy', 'sel': False,
-                                                                     'pos': '2x2', 'key': 'qq'}}
+                                                                     'pos': '2x2', 'key': 'qq',
+                                                                     'opt': False}}
         assert testobj.parent.master.attr_changes == [('current text', '')]
         assert capsys.readouterr().out == (
                 "called PushButton.setDisabled with arg `True`\n"
@@ -1224,4 +1242,398 @@ class TestAttributesDialog:
                 "called PushButton.setDisabled with arg `True`\n"
                 "called CheckBox.isChecked\n"
                 "called LineEdit.text\n"
+                "called CheckBox.isChecked\n"
                 "called ComboBox.currentText\n")
+
+
+class TestSaveGamesDialog:
+    """unittest for gui.SaveGamesDialog
+    """
+    def setup_testobj(self, monkeypatch, capsys):
+        """stub for gui.SaveGamesDialog object
+
+        create the object skipping the normal initialization
+        intercept messages during creation
+        return the object so that other methods can be monkeypatched in the caller
+        """
+        def mock_init(self, *args):
+            print('called SaveGamesDialog.__init__ with args', args)
+        # def mock_accept(self):
+        #     print('called SaveGamesDialog.accept')
+        monkeypatch.setattr(testee.SaveGamesDialog, '__init__', mock_init)
+        # monkeypatch.setattr(testee.SaveGamesDialog, 'accept', mock_accept)
+        testobj = testee.SaveGamesDialog()
+        assert capsys.readouterr().out == 'called SaveGamesDialog.__init__ with args ()\n'
+        return testobj
+
+    def test_init(self, monkeypatch, capsys, expected_output):
+        """unittest for SaveGamesDialog.__init__
+        """
+        def mock_add(self):
+            print('called SaveGamesDialog.add_modselector')
+        monkeypatch.setattr(testee.qtw.QDialog, '__init__', mockqtw.MockDialog.__init__)
+        monkeypatch.setattr(testee.qtw.QDialog, 'setLayout', mockqtw.MockDialog.setLayout)
+        monkeypatch.setattr(testee.qtw, 'QGridLayout', mockqtw.MockGridLayout)
+        monkeypatch.setattr(testee.qtw, 'QVBoxLayout', mockqtw.MockVBoxLayout)
+        monkeypatch.setattr(testee.qtw, 'QHBoxLayout', mockqtw.MockHBoxLayout)
+        monkeypatch.setattr(testee.qtw, 'QLabel', mockqtw.MockLabel)
+        monkeypatch.setattr(testee.qtw, 'QLineEdit', mockqtw.MockLineEdit)
+        monkeypatch.setattr(testee.qtw, 'QComboBox', mockqtw.MockComboBox)
+        # monkeypatch.setattr(testee.qtw, 'QCheckBox', mockqtw.MockCheckBox)
+        # monkeypatch.setattr(mockqtw.MockComboBox, 'currentTextChanged', {str: mockqtw.MockSignal()})
+        # monkeypatch.setattr(testee.qgui, 'QIcon', mockqtw.MockIcon)
+        monkeypatch.setattr(testee.qtw, 'QPushButton', mockqtw.MockPushButton)
+        monkeypatch.setattr(testee.SaveGamesDialog, 'confirm', lambda: 'dummy')
+        monkeypatch.setattr(testee.SaveGamesDialog, 'update_all', lambda: 'dummy')
+        monkeypatch.setattr(testee.SaveGamesDialog, 'add_modselector', mock_add)
+        parent = mockqtw.MockWidget()
+        assert capsys.readouterr().out == "called Widget.__init__\n"
+        conf = MockConf()
+        testobj = testee.SaveGamesDialog(parent, conf)
+        assert testobj.parent == parent
+        assert testobj.conf == conf
+        assert testobj.savenames == ['qqq', 'rrr']
+        assert testobj.modnames == {'xxx_name': 'xxx', 'yyy_name': 'yyy'}
+        assert isinstance(testobj.savegame_selector, testee.qtw.QComboBox)
+        assert isinstance(testobj.pname, testee.qtw.QLineEdit)
+        assert isinstance(testobj.fname, testee.qtw.QLineEdit)
+        assert isinstance(testobj.gdate, testee.qtw.QLineEdit)
+        assert isinstance(testobj.update_button, testee.qtw.QPushButton)
+        assert isinstance(testobj.confirm_button, testee.qtw.QPushButton)
+        assert testobj.oldsavename == ''
+        assert testobj.widgets == []
+        assert isinstance(testobj.vbox2, testee.qtw.QVBoxLayout)
+        assert capsys.readouterr().out == expected_output['saves'].format(testobj=testobj)
+
+    def test_add_modselector(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialog.add_modselector
+        """
+        monkeypatch.setattr(testee.qtw, 'QHBoxLayout', mockqtw.MockHBoxLayout)
+        monkeypatch.setattr(testee.qtw, 'QComboBox', mockqtw.MockComboBox)
+        monkeypatch.setattr(testee.qtw, 'QPushButton', mockqtw.MockPushButton)
+        monkeypatch.setattr(testee.qgui, 'QIcon', mockqtw.MockIcon)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.vbox2 = mockqtw.MockVBoxLayout()
+        testobj.modnames = ['yyy', 'xxx']
+        testobj.widgets = []
+        testobj.add_modselector()
+        assert len(testobj.widgets) == 1
+        assert isinstance(testobj.widgets[0][0], testee.qtw.QPushButton)
+        assert isinstance(testobj.widgets[0][1], testee.qtw.QComboBox)
+        assert isinstance(testobj.widgets[0][2], testee.qtw.QHBoxLayout)
+        assert capsys.readouterr().out == (
+            "called VBox.__init__\n"
+            "called HBox.__init__\n"
+            "called ComboBox.__init__\n"
+            "called ComboBox.setEditable with arg `False`\n"
+            "called ComboBox.addItems with arg ['select a mod']\n"
+            "called ComboBox.addItems with arg ['xxx', 'yyy']\n"
+            f"called Signal.connect with args (functools.partial({testobj.process_mod},"
+            f" {testobj.widgets[0][1]}),)\n"
+            "called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockComboBox'>\n"
+            "called PushButton.__init__ with args () {}\n"
+            "called Icon.fromTheme with args ()\n"
+            "called PushButton.setIcon with arg `None`\n"
+            "called PushButton.setFixedSize with args (24, 24)\n"
+            "called PushButton.setEnabled with arg `False`\n"
+            f"called Signal.connect with args (functools.partial({testobj.remove_mod},"
+            f" {testobj.widgets[0][0]}),)\n"
+            "called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>\n"
+            "called VBox.insertLayout with arg1 0 and arg2 of type"
+            " <class 'mockgui.mockqtwidgets.MockHBoxLayout'>\n")
+
+    def test_process_mod(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialog.process_mod
+        """
+        def mock_add():
+            print('called SaveGamesDialog.add_modselector')
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.add_modselector = mock_add
+        testobj.update_button = mockqtw.MockPushButton()
+        testobj.widgets = []
+        lbox = mockqtw.MockComboBox()
+        btn = mockqtw.MockPushButton()
+        lbox2 = mockqtw.MockComboBox()
+        assert capsys.readouterr().out == ("called PushButton.__init__ with args () {}\n"
+                                           "called ComboBox.__init__\n"
+                                           "called PushButton.__init__ with args () {}\n"
+                                           "called ComboBox.__init__\n")
+        testobj.process_mod(lbox, 'select a mod')
+        assert capsys.readouterr().out == ""
+        with pytest.raises(IndexError):
+            testobj.process_mod(lbox, 'xxxx')
+        assert capsys.readouterr().out == "called PushButton.setEnabled with arg `True`\n"
+        testobj.widgets = [['qq', 'rr', 'ss']]
+        testobj.process_mod(lbox, 'xxxx')
+        assert capsys.readouterr().out == "called PushButton.setEnabled with arg `True`\n"
+        testobj.widgets = [['qq', lbox2, 'ss'], [btn, lbox, 'ss']]
+        testobj.process_mod(lbox, 'xxxx')
+        assert capsys.readouterr().out == ("called PushButton.setEnabled with arg `True`\n"
+                                           "called PushButton.setEnabled with arg `True`\n"
+                                           "called SaveGamesDialog.add_modselector\n")
+
+    def test_remove_mod(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialog.remove_mod
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.widgets = []
+        lbox = mockqtw.MockComboBox()
+        btn = mockqtw.MockPushButton()
+        hbox = mockqtw.MockHBoxLayout()
+        testobj.vbox2 = mockqtw.MockVBoxLayout()
+        assert capsys.readouterr().out == ("called ComboBox.__init__\n"
+                                           "called PushButton.__init__ with args () {}\n"
+                                           "called HBox.__init__\n"
+                                           "called VBox.__init__\n")
+        testobj.remove_mod(btn)
+        assert not testobj.widgets
+        assert capsys.readouterr().out == ""
+        testobj.widgets = [('x', 'y', 'z')]
+        testobj.remove_mod(btn)
+        assert len(testobj.widgets) == 1
+        assert capsys.readouterr().out == ""
+        testobj.widgets = [(btn, lbox, hbox)]
+        testobj.remove_mod(btn)
+        assert not testobj.widgets
+        assert capsys.readouterr().out == (
+                "called VBox.removeWidget with arg of type"
+                " <class 'mockgui.mockqtwidgets.MockPushButton'>\n"
+                "called PushButton.close\n"
+                "called VBox.removeWidget with arg of type"
+                " <class 'mockgui.mockqtwidgets.MockComboBox'>\n"
+                "called ComboBox.close\n"
+                "called VBox.removeItem\n")
+
+    def test_confirm(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialog.confirm
+        """
+        def mock_list_dirs():
+            print('called Conf.list_all_mod_dirs')
+            return []
+        def mock_list_comps(arg):
+            print(f"called Conf.list_components_for_dir with arg '{arg}'")
+            return []
+        def mock_get_diritem_data(*args):
+            print("called Conf.get_diritem_data with args", args)
+            if args == ('xxx', '_DoNotTouch'):
+                return False
+            if args == ('yyy', '_DoNotTouch'):
+                return True
+            if args == ('zzz', '_DoNotTouch'):
+                return True
+        def mock_get_component_data(*args):
+            print("called Conf.get_component_data with args", args)
+            if args[0] == 'xxx':
+                return 'aaa'
+            if args[0] == 'yyy':
+                return '.bbb'
+        def mock_get_mods(name):
+            print(f"called Conf.get_mods_for_saveitem with arg {name}")
+            return ['qqq', 'rrr']
+        def mock_select(self, names):
+            print(f'called Manager.select_activations with arg {names}')
+            self.directories = []
+        def mock_refresh():
+            print('called ShowMods.refresh_widget_data')
+        def mock_exists(*args):
+            print('called os.path.exists with args', args)
+            return False
+        def mock_exists_2(*args):
+            print('called os.path.exists with args', args)
+            return True
+        monkeypatch.setattr(testee.qtw, 'QMessageBox', mockqtw.MockMessageBox)
+        monkeypatch.setattr(testee.os.path, 'exists', mock_exists)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.conf = MockConf()
+        testobj.conf.get_diritem_data = mock_get_diritem_data
+        testobj.conf.get_component_data = mock_get_component_data
+        testobj.conf.get_mods_for_saveitem = mock_get_mods
+        testobj.parent = mockqtw.MockWidget()
+        testobj.parent.refresh_widget_data = mock_refresh
+        testobj.parent.master = MockManager()
+        testobj.savegame_selector = mockqtw.MockComboBox()
+        testobj.savegame_selector.setCurrentText('ppp')
+        assert capsys.readouterr().out == ("called Widget.__init__\n"
+                                           "called ComboBox.__init__\n"
+                                           "called ComboBox.setCurrentText with arg `ppp`\n")
+        testobj.confirm()
+        assert capsys.readouterr().out == (
+                "called ComboBox.currentText\n"
+                "called Conf.get_mods_for_saveitem with arg current text\n"
+                "called Conf.list_all_mod_dirs\n"
+                "called Conf.get_diritem_data with args ('xxx', '_DoNotTouch')\n"
+                "called Conf.get_diritem_data with args ('yyy', '_DoNotTouch')\n"
+                "called os.path.exists with args ('modbase/yyy',)\n"
+                "called Manager.select_activations with arg ['qqq', 'rrr']\n"
+                "called Manager.activate\n"
+                "called ShowMods.refresh_widget_data\n"
+                "called MessageBox.information with args"
+                f" `{testobj}` `Change Config` `wijzigingen zijn doorgevoerd`\n")
+
+        monkeypatch.setattr(MockManager, 'select_activations', mock_select)
+        monkeypatch.setattr(testee.os.path, 'exists', mock_exists_2)
+        testobj.conf.list_components_for_dir = mock_list_comps
+        testobj.parent.master.directories = ['sss', 'ttt']
+        testobj.confirm()
+        assert capsys.readouterr().out == (
+                "called ComboBox.currentText\n"
+                "called Conf.get_mods_for_saveitem with arg current text\n"
+                "called Conf.list_all_mod_dirs\n"
+                "called Conf.get_diritem_data with args ('xxx', '_DoNotTouch')\n"
+                "called Conf.get_diritem_data with args ('yyy', '_DoNotTouch')\n"
+                "called os.path.exists with args ('modbase/yyy',)\n"
+                "called Conf.get_diritem_data with args ('yyy', 'SCRNAM')\n"
+                "called Manager.select_activations with arg ['qqq', 'rrr', 'yyy']\n"
+                "called ShowMods.refresh_widget_data\n"
+                "called MessageBox.information with args"
+                f" `{testobj}` `Change Config` `wijzigingen zijn doorgevoerd`\n")
+
+        testobj.conf.list_all_mod_dirs = mock_list_dirs
+        testobj.parent.master.directories = ['sss', 'ttt']
+        testobj.confirm()
+        assert capsys.readouterr().out == (
+                "called ComboBox.currentText\n"
+                "called Conf.get_mods_for_saveitem with arg current text\n"
+                "called Conf.list_all_mod_dirs\n"
+                "called Manager.select_activations with arg ['qqq', 'rrr']\n"
+                "called ShowMods.refresh_widget_data\n"
+                "called MessageBox.information with args"
+                f" `{testobj}` `Change Config` `wijzigingen zijn doorgevoerd`\n")
+
+    def test_update_all(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialog.update
+        """
+        def mock_update(arg):
+            print(f'called SavedGamesDialog with arg {arg}')
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.conf = MockConf()
+        testobj.update = mock_update
+        testobj.savegame_selector = mockqtw.MockComboBox()
+        assert capsys.readouterr().out == "called ComboBox.__init__\n"
+        testobj.update_all()
+        assert capsys.readouterr().out == ("called ComboBox.currentText\n"
+                                           "called SavedGamesDialog with arg current text\n"
+                                           "called Conf.save\n")
+
+    def test_update(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialog.update
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.pname = mockqtw.MockLineEdit('xxx')
+        testobj.fname = mockqtw.MockLineEdit('yyy')
+        testobj.gdate = mockqtw.MockLineEdit('zzz')
+        testobj.update_button = mockqtw.MockPushButton()
+        testobj.conf = MockConf()
+        testobj.widgets = []
+        lbox = mockqtw.MockComboBox()
+        testobj.old_pname = 'xxx'
+        testobj.old_fname = 'yyy'
+        testobj.old_gdate = 'zzz'
+        testobj.oldmods = []
+        assert capsys.readouterr().out == ("called LineEdit.__init__\n"
+                                           "called LineEdit.__init__\n"
+                                           "called LineEdit.__init__\n"
+                                           "called PushButton.__init__ with args () {}\n"
+                                           "called ComboBox.__init__\n")
+        testobj.update('save_name')
+        assert capsys.readouterr().out == ("called LineEdit.text\n"
+                                           "called LineEdit.text\n"
+                                           "called LineEdit.text\n"
+                                           "called PushButton.setDisabled with arg `True`\n")
+        testobj.widgets = [lbox]
+        testobj.oldmods = ['current text']
+        testobj.update('save_name')
+        assert capsys.readouterr().out == (
+                "called LineEdit.text\n"
+                "called LineEdit.text\n"
+                "called LineEdit.text\n"
+                "called Conf.update_saveitem_data with args ('save_name', 'Mods', [])\n"
+                "called PushButton.setDisabled with arg `True`\n")
+
+        testobj.old_pname = 'aaa'
+        testobj.old_fname = 'bbb'
+        testobj.old_gdate = 'ccc'
+        testobj.oldmods = ['qqq']
+        testobj.update('save_name')
+        assert capsys.readouterr().out == (
+                "called LineEdit.text\n"
+                "called Conf.update_saveitem_data with args ('save_name', 'Pname', 'xxx')\n"
+                "called LineEdit.text\n"
+                "called Conf.update_saveitem_data with args ('save_name', 'Fname', 'yyy')\n"
+                "called LineEdit.text\n"
+                "called Conf.update_saveitem_data with args ('save_name', 'Gdate', 'zzz')\n"
+                "called Conf.update_saveitem_data with args ('save_name', 'Mods', [])\n"
+                "called PushButton.setDisabled with arg `True`\n")
+
+    def test_get_savedata(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialog.get_savedata
+        """
+        def mock_update(name):
+            print(f'called SaveGamesDialog with arg {name}')
+        def mock_add(self):
+            print('called SaveGamesDialog.add_modselector')
+            self.widgets = [[btn, lbox, hbox]]
+        def mock_get_attrs(value):
+            "stub"
+            print(f"called Conf.get_saveitem_attrs with arg {value}")
+            return 'oldpname', 'oldfname', 'oldgdate'
+        def mock_get_mods(name):
+            "stub"
+            print(f"called Conf.get_mods_for_saveitem with arg {name}")
+            return ['newmodname']
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.conf = MockConf()
+        testobj.update = mock_update
+        monkeypatch.setattr(testee.SaveGamesDialog, 'add_modselector', mock_add)
+        btn = mockqtw.MockPushButton()
+        lbox = mockqtw.MockComboBox()
+        hbox = mockqtw.MockHBoxLayout()
+        testobj.vbox2 = mockqtw.MockVBoxLayout()
+        testobj.pname = mockqtw.MockLineEdit()
+        testobj.fname = mockqtw.MockLineEdit()
+        testobj.gdate = mockqtw.MockLineEdit()
+        testobj.update_button = mockqtw.MockPushButton()
+        testobj.confirm_button = mockqtw.MockPushButton()
+        assert capsys.readouterr().out == ("called PushButton.__init__ with args () {}\n"
+                                           "called ComboBox.__init__\n"
+                                           "called HBox.__init__\n"
+                                           "called VBox.__init__\n"
+                                           "called LineEdit.__init__\n"
+                                           "called LineEdit.__init__\n"
+                                           "called LineEdit.__init__\n"
+                                           "called PushButton.__init__ with args () {}\n"
+                                           "called PushButton.__init__ with args () {}\n")
+        testobj.widgets = []
+
+        testobj.get_savedata('select a saved game')
+        assert capsys.readouterr().out == ""
+
+        testobj.oldsavename = ''
+        testobj.get_savedata('xxx')
+        assert capsys.readouterr().out == ("called Conf.get_saveitem_attrs with arg xxx\n"
+                                           "called PushButton.setDisabled with arg `True`\n"
+                                           "called PushButton.setEnabled with arg `True`\n")
+        testobj.oldsavename = 'yyy'
+        testobj.get_savedata('xxx')
+        assert capsys.readouterr().out == ("called SaveGamesDialog with arg yyy\n"
+                                           "called SaveGamesDialog.add_modselector\n"
+                                           "called Conf.get_saveitem_attrs with arg xxx\n"
+                                           "called PushButton.setDisabled with arg `True`\n"
+                                           "called PushButton.setEnabled with arg `True`\n")
+        testobj.widgets = [[btn, lbox, hbox]]
+        testobj.conf.get_saveitem_attrs = mock_get_attrs
+        testobj.conf.get_mods_for_saveitem = mock_get_mods
+        testobj.get_savedata('xxx')
+        assert capsys.readouterr().out == ("called SaveGamesDialog with arg xxx\n"
+                                           "called PushButton.close\n"
+                                           "called ComboBox.close\n"
+                                           "called VBox.removeItem\n"
+                                           "called SaveGamesDialog.add_modselector\n"
+                                           "called Conf.get_saveitem_attrs with arg xxx\n"
+                                           "called LineEdit.setText with arg `oldpname`\n"
+                                           "called LineEdit.setText with arg `oldfname`\n"
+                                           "called LineEdit.setText with arg `oldgdate`\n"
+                                           "called Conf.get_mods_for_saveitem with arg xxx\n"
+                                           "called ComboBox.setCurrentText with arg `newmodname`\n"
+                                           "called PushButton.setDisabled with arg `True`\n"
+                                           "called PushButton.setEnabled with arg `True`\n")
