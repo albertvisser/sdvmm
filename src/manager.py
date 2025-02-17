@@ -68,7 +68,8 @@ class Manager:
     def select_activations(self, modnames):
         "expand the selection to a list of directories"
         # determine which directories should be activated
-        self.directories = set()  # []  # voor ontdubbelen is set beter, maar even alles onthouden
+        self.directories = set()
+        self.components_checked = []
         for item in modnames:
             moddir = self.screeninfo[item]['dir']
             self.directories.add(moddir)
@@ -81,6 +82,9 @@ class Manager:
         except ValueError:
             return
         for entry in entries:
+            if entry in self.components_checked:
+                continue
+            self.components_checked.append(entry)
             deps = self.conf.get_component_data(entry, self.conf.DEPS)
             if not deps:
                 continue

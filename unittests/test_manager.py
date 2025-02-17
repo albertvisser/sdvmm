@@ -239,7 +239,7 @@ class TestManager:
             "stub"
             print(f'called Conf.list_components_for_dir with arg {name}')
             if name == 'moddir':
-                return ['w', 'x', 'y', 'z']
+                return ['w', 'x', 'y', 'x', 'z']
             return []
         def mock_list_2(name):
             "stub"
@@ -262,6 +262,7 @@ class TestManager:
         testobj.conf.list_components_for_dir = mock_list
         testobj.conf.get_component_data = mock_get
         testobj.get_component_data = mock_get
+        testobj.components_checked = []
         testobj.directories = set()
         testobj.add_dependencies('moddir')
         assert testobj.directories == {'qdir', 'rparent'}
@@ -278,6 +279,7 @@ class TestManager:
                 "called Conf.list_components_for_dir with arg rparent/rdir\n"
                 f"called Conf.get_component_data with args('z', '{testobj.conf.DEPS}')\n")
         testobj.conf.list_components_for_dir = mock_list_2
+        testobj.components_checked = []
         testobj.directories = set()
         testobj.add_dependencies('moddir')
         assert not testobj.directories
