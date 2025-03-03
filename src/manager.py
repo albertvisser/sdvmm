@@ -57,8 +57,10 @@ class Manager:
             oldinfo = self.screeninfo[item] if item in self.screeninfo else {'sel': False, 'pos': '',
                                                                              'key': '', 'txt': '',
                                                                              'opt': False}
+            realdirname = get_toplevel(self.conf.get_component_data(
+                self.conf.get_diritem_data(dirname, self.conf.COMPS)[0], self.conf.DIR))
             self.screeninfo[item] = {
-                'dir': dirname,
+                'dir': realdirname,
                 'sel': self.conf.get_diritem_data(dirname, self.conf.SEL) or oldinfo['sel'],
                 'opt': self.conf.get_diritem_data(dirname, self.conf.OPTOUT) or oldinfo['opt'],
                 'pos': self.conf.get_diritem_data(dirname, self.conf.SCRPOS) or oldinfo['pos'],
@@ -69,32 +71,20 @@ class Manager:
         "expand the selection to a list of directories"
         # determine which directories should be activated
         self.directories = set()
-        self.components_checked = []
         for item in modnames:
             moddir = self.screeninfo[item]['dir']
-            self.directories.add(moddir)
-            self.add_dependencies(moddir)
+            for entry in self.conf.list_components_for_dir(moddir):
+                compdir = get_toplevel(self.conf.get_component_data(entry, self.conf.DIR))
+                self.directories.add(compdir)
+                self.add_dependencies(entry)
 
-    def add_dependencies(self, moddir):
+    def add_dependencies(self, entry):
         "expand an item with a list of subitems"
-        try:
-            entries = self.conf.list_components_for_dir(moddir)
-        except ValueError:
-            return
-        for entry in entries:
-            if entry in self.components_checked:
-                continue
-            self.components_checked.append(entry)
-            deps = self.conf.get_component_data(entry, self.conf.DEPS)
-            if not deps:
-                continue
-            for dep in deps:
-                depdir = self.conf.get_component_data(dep, self.conf.DIR)
-                if '/' in depdir:
-                    self.directories.add(depdir.split('/')[0])
-                else:
-                    self.directories.add(depdir)
-                self.add_dependencies(depdir)
+        deps = self.conf.get_component_data(entry, self.conf.DEPS)
+        for dep in deps:
+            depdir = get_toplevel(self.conf.get_component_data(dep, self.conf.DIR))
+            self.directories.add(depdir)
+            self.add_dependencies(dep)
 
     def activate(self):
         "activate by making directories hidden or not"
@@ -294,6 +284,12 @@ class Manager:
                 if conf_changed:
                     self.conf.update_componentdata(component, compdict)
         return messages, conf_changed
+
+
+def get_toplevel(dirname):
+    """extract name of directory to rename from config entry
+    """
+    return dirname.split('/')[0] if '/' in dirname else dirname
 
 
 def get_archive_roots(namelist):

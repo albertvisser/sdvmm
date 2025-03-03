@@ -154,12 +154,14 @@ class TestManager:
         """
         def mock_list():
             print('called Conf.list_all_mod_dirs')
-            return ['xxx', 'yyy']
+            return []
         def mock_list_2():
             print('called Conf.list_all_mod_dirs')
-            return ['xxx']
+            return ['xxx', 'yyy']
         def mock_get(name, itemtype):
             print(f"called Conf.get_diritem_data with args ('{name}', '{itemtype}')")
+            if itemtype == testobj.conf.COMPS:
+                return ['']
             return ''
         def mock_get_2(name, itemtype):
             print(f"called Conf.get_diritem_data with args ('{name}', '{itemtype}')")
@@ -173,78 +175,176 @@ class TestManager:
                 return 'scrtxt'
             if itemtype == testobj.conf.OPTOUT:
                 return 'optout'
+            if itemtype == testobj.conf.COMPS:
+                return ['comps']
             return 'sel'
+        def mock_gett(name):
+            print(f"called get_toplevel with arg '{name}'")
+            return name
+        def mock_getc(name, itemtype):
+            print(f"called Conf.get_component_data with args ('{name}', '{itemtype}')")
+            return ''
+        def mock_getc_2(name, itemtype):
+            print(f"called Conf.get_component_data with args ('{name}', '{itemtype}')")
+            return name
 
+        monkeypatch.setattr(testee, 'get_toplevel', mock_gett)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.conf.list_all_mod_dirs = mock_list
         testobj.conf.get_diritem_data = mock_get
+        testobj.conf.get_component_data = mock_getc
         testobj.screeninfo = {'yyy': {'sel': 's', 'pos': 'p', 'key': 'k', 'txt': 't', 'opt': 'o'}}
 
         testobj.extract_screeninfo()
+        assert testobj.screeninfo == {'yyy': {'sel': 's', 'pos': 'p', 'key': 'k', 'txt': 't',
+                                              'opt': 'o'}}
+        assert capsys.readouterr().out == "called Conf.list_all_mod_dirs\n"
+
+        testobj.conf.list_all_mod_dirs = mock_list_2
+        testobj.screeninfo = {}
+        testobj.extract_screeninfo()
         assert testobj.screeninfo == {
-                'yyy': {'dir': 'yyy', 'sel': 's', 'pos': 'p', 'key': 'k', 'txt': 't', 'opt': 'o'},
-                'xxx': {'dir': 'xxx', 'sel': False, 'pos': '', 'key': '', 'txt': '', 'opt': False}}
+                'xxx': {'dir': '', 'sel': False, 'pos': '', 'key': '', 'txt': '', 'opt': False},
+                # 'yyy': {'dir': '', 'sel': 's', 'pos': 'p', 'key': 'k', 'txt': 't', 'opt': 'o'},
+                'yyy': {'dir': '', 'sel': False, 'pos': '', 'key': '', 'txt': '', 'opt': False}}
         assert capsys.readouterr().out == (
                 "called Conf.list_all_mod_dirs\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRNAM}')\n"
+                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.COMPS}')\n"
+                f"called Conf.get_component_data with args ('', '{testobj.conf.DIR}')\n"
+                f"called get_toplevel with arg ''\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SEL}')\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.OPTOUT}')\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRPOS}')\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.NXSKEY}')\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRTXT}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRNAM}')\n"
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.COMPS}')\n"
+                f"called Conf.get_component_data with args ('', '{testobj.conf.DIR}')\n"
+                f"called get_toplevel with arg ''\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SEL}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.OPTOUT}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRPOS}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.NXSKEY}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRTXT}')\n")
 
-        testobj.conf.list_all_mod_dirs = mock_list_2
         testobj.conf.get_diritem_data = mock_get_2
         testobj.screeninfo = {}
         testobj.extract_screeninfo()
-        assert testobj.screeninfo == {'scrxxx': {'dir': 'xxx', 'sel': 'sel', 'pos': 'scrpos',
+        assert testobj.screeninfo == {'scrxxx': {'dir': '', 'sel': 'sel', 'pos': 'scrpos',
+                                                 'key': 'scrkey', 'txt': 'scrtxt', 'opt': 'optout'},
+                                      'scryyy': {'dir': '', 'sel': 'sel', 'pos': 'scrpos',
                                                  'key': 'scrkey', 'txt': 'scrtxt', 'opt': 'optout'}}
-        assert capsys.readouterr().out == ("called Conf.list_all_mod_dirs\n"
-                                           "called Conf.get_diritem_data with args ('xxx', '0')\n"
-                                           "called Conf.get_diritem_data with args ('xxx', '1')\n"
-                                           "called Conf.get_diritem_data with args ('xxx', '10')\n"
-                                           "called Conf.get_diritem_data with args ('xxx', '2')\n"
-                                           "called Conf.get_diritem_data with args ('xxx', '3')\n"
-                                           "called Conf.get_diritem_data with args ('xxx', '4')\n")
+        assert capsys.readouterr().out == (
+                "called Conf.list_all_mod_dirs\n"
+                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRNAM}')\n"
+                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.COMPS}')\n"
+                f"called Conf.get_component_data with args ('comps', '{testobj.conf.DIR}')\n"
+                f"called get_toplevel with arg ''\n"
+                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SEL}')\n"
+                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.OPTOUT}')\n"
+                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRPOS}')\n"
+                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.NXSKEY}')\n"
+                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRTXT}')\n"
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRNAM}')\n"
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.COMPS}')\n"
+                f"called Conf.get_component_data with args ('comps', '{testobj.conf.DIR}')\n"
+                f"called get_toplevel with arg ''\n"
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SEL}')\n"
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.OPTOUT}')\n"
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRPOS}')\n"
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.NXSKEY}')\n"
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRTXT}')\n")
+
+        testobj.conf.get_component_data = mock_getc_2
+        testobj.extract_screeninfo()
+        assert testobj.screeninfo == {
+                'scryyy': {'dir': 'comps', 'sel': 'sel', 'pos': 'scrpos', 'key': 'scrkey',
+                        'txt': 'scrtxt', 'opt': 'optout'},
+                'scrxxx': {'dir': 'comps', 'sel': 'sel', 'pos': 'scrpos', 'key': 'scrkey',
+                        'txt': 'scrtxt', 'opt': 'optout'}}
+        assert capsys.readouterr().out == (
+                "called Conf.list_all_mod_dirs\n"
+                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRNAM}')\n"
+                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.COMPS}')\n"
+                f"called Conf.get_component_data with args ('comps', '{testobj.conf.DIR}')\n"
+                f"called get_toplevel with arg 'comps'\n"
+                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SEL}')\n"
+                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.OPTOUT}')\n"
+                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRPOS}')\n"
+                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.NXSKEY}')\n"
+                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRTXT}')\n"
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRNAM}')\n"
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.COMPS}')\n"
+                f"called Conf.get_component_data with args ('comps', '{testobj.conf.DIR}')\n"
+                f"called get_toplevel with arg 'comps'\n"
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SEL}')\n"
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.OPTOUT}')\n"
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRPOS}')\n"
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.NXSKEY}')\n"
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRTXT}')\n")
 
     def test_select_activations(self, monkeypatch, capsys):
         """unittest for Manager.select_activations
         """
+        def mock_list(name):
+            print(f'called Conf.list_components_for_dir with arg {name}')
+            return []
+        def mock_list_2(name):
+            print(f'called Conf.list_components_for_dir with arg {name}')
+            return [name]
         def mock_add(name):
             """stub
             """
-            print(f'called self.add_dependencies with arg {name}')
+            print(f'called Conf.add_dependencies with arg {name}')
+        def mock_get(name, itemtype):
+            print(f"called Conf.get_component_data with args ('{name}', '{itemtype}')")
+            return name
+        def mock_gett(name):
+            print(f"called get_toplevel with arg '{name}'")
+            return name
+        monkeypatch.setattr(testee, 'get_toplevel', mock_gett)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.add_dependencies = mock_add
+        testobj.conf.get_component_data = mock_get
         testobj.select_activations([])
         assert testobj.directories == set()
         assert capsys.readouterr().out == ""
 
+        testobj.conf.list_components_for_dir = mock_list
+        testobj.screeninfo = {'test': {'dir': 'xxx'}, 'other': {'dir': 'yyy'}}
+        testobj.select_activations(['test', 'other'])
+        assert testobj.directories == set()
+        assert capsys.readouterr().out == ("called Conf.list_components_for_dir with arg xxx\n"
+                                           "called Conf.list_components_for_dir with arg yyy\n")
+
+        testobj.conf.list_components_for_dir = mock_list_2
         testobj.screeninfo = {'test': {'dir': 'xxx'}, 'other': {'dir': 'yyy'}}
         testobj.select_activations(['test', 'other'])
         assert testobj.directories == {'xxx', 'yyy'}
-        assert capsys.readouterr().out == ("called self.add_dependencies with arg xxx\n"
-                                           "called self.add_dependencies with arg yyy\n")
+        assert capsys.readouterr().out == (
+                "called Conf.list_components_for_dir with arg xxx\n"
+                f"called Conf.get_component_data with args ('xxx', '{testobj.conf.DIR}')\n"
+                "called get_toplevel with arg 'xxx'\n"
+                "called Conf.add_dependencies with arg xxx\n"
+                "called Conf.list_components_for_dir with arg yyy\n"
+                f"called Conf.get_component_data with args ('yyy', '{testobj.conf.DIR}')\n"
+                "called get_toplevel with arg 'yyy'\n"
+                "called Conf.add_dependencies with arg yyy\n")
 
     def test_add_dependencies(self, monkeypatch, capsys):
         """unittest for Manager.add_dependencies
         """
-        def mock_list(name):
-            "stub"
-            print(f'called Conf.list_components_for_dir with arg {name}')
-            if name == 'moddir':
-                return ['w', 'x', 'y', 'x', 'z']
-            return []
-        def mock_list_2(name):
-            "stub"
-            print(f'called Conf.list_comonents_for_dir with arg {name}')
-            raise ValueError
+        # def mock_list(name):
+        #     "stub"
+        #     print(f'called Conf.list_components_for_dir with arg {name}')
+        #     if name == 'moddir':
+        #         return ['w', 'x', 'y', 'x', 'z']
+        #     return []
+        # def mock_list_2(name):
+        #     "stub"
+        #     print(f'called Conf.list_comonents_for_dir with arg {name}')
+        #     raise ValueError
         def mock_get(name, itemtype):
             print(f"called Conf.get_component_data with args('{name}', '{itemtype}')")
             if itemtype == testobj.conf.DIR:
@@ -253,38 +353,35 @@ class TestManager:
                 return f'{name}dir'
             if itemtype == testobj.conf.DEPS:
                 if name in ('w', 'x'):
-                    return ['q']
-                if name == 'y':
-                    return ['r']
+                    return [f'{name}q']
+                if name == 'comp.name':
+                    return ['w', 'x']
                 return []
             return ''
+        def mock_gett(name):
+            print(f"called get_toplevel with arg '{name}'")
+            return name
+        monkeypatch.setattr(testee, 'get_toplevel', mock_gett)
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.conf.list_components_for_dir = mock_list
         testobj.conf.get_component_data = mock_get
-        testobj.get_component_data = mock_get
         testobj.components_checked = []
         testobj.directories = set()
-        testobj.add_dependencies('moddir')
-        assert testobj.directories == {'qdir', 'rparent'}
+        testobj.add_dependencies('comp.name')
+        assert testobj.directories == {'wdir', 'wqdir', 'xdir', 'xqdir'}
         assert capsys.readouterr().out == (
-                "called Conf.list_components_for_dir with arg moddir\n"
+                f"called Conf.get_component_data with args('comp.name', '{testobj.conf.DEPS}')\n"
+                f"called Conf.get_component_data with args('w', '{testobj.conf.DIR}')\n"
+                "called get_toplevel with arg 'wdir'\n"
                 f"called Conf.get_component_data with args('w', '{testobj.conf.DEPS}')\n"
-                f"called Conf.get_component_data with args('q', '{testobj.conf.DIR}')\n"
-                "called Conf.list_components_for_dir with arg qdir\n"
+                f"called Conf.get_component_data with args('wq', '{testobj.conf.DIR}')\n"
+                "called get_toplevel with arg 'wqdir'\n"
+                f"called Conf.get_component_data with args('wq', '{testobj.conf.DEPS}')\n"
+                f"called Conf.get_component_data with args('x', '{testobj.conf.DIR}')\n"
+                "called get_toplevel with arg 'xdir'\n"
                 f"called Conf.get_component_data with args('x', '{testobj.conf.DEPS}')\n"
-                f"called Conf.get_component_data with args('q', '{testobj.conf.DIR}')\n"
-                "called Conf.list_components_for_dir with arg qdir\n"
-                f"called Conf.get_component_data with args('y', '{testobj.conf.DEPS}')\n"
-                f"called Conf.get_component_data with args('r', '{testobj.conf.DIR}')\n"
-                "called Conf.list_components_for_dir with arg rparent/rdir\n"
-                f"called Conf.get_component_data with args('z', '{testobj.conf.DEPS}')\n")
-        testobj.conf.list_components_for_dir = mock_list_2
-        testobj.components_checked = []
-        testobj.directories = set()
-        testobj.add_dependencies('moddir')
-        assert not testobj.directories
-        assert capsys.readouterr().out == (
-                "called Conf.list_comonents_for_dir with arg moddir\n")
+                f"called Conf.get_component_data with args('xq', '{testobj.conf.DIR}')\n"
+                "called get_toplevel with arg 'xqdir'\n"
+                f"called Conf.get_component_data with args('xq', '{testobj.conf.DEPS}')\n")
 
     def test_activate(self, monkeypatch, capsys, tmp_path):
         """unittest for Manager.activate
@@ -907,6 +1004,14 @@ class TestManager:
                 "called Conf.has_moddir with arg moddir\n"
                 f"called Conf.get_diritem_data with args ('moddir', {testobj.conf.COMPS})\n"
                 "called Conf.get_component_data with arg newcomp\n")
+
+
+def test_get_toplevel():
+    """unittest for Manager.get_toplevel
+    """
+    assert testee.get_toplevel('xxx') == 'xxx'
+    assert testee.get_toplevel('xxx/yyy') == 'xxx'
+    assert testee.get_toplevel('xxx/yyy/zzz') == 'xxx'
 
 
 def test_get_archive_roots():
