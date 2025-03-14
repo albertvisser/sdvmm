@@ -3,11 +3,13 @@ unittests/
 
 [testscripts]
 main = test_manager.py
-gui = test_gui.py
+qtgui = test_qtgui.py
 dmlj = test_jsonconfig.py
+tkgui = test_tkgui.py
 
 [testees]
 main = src/manager.py
-gui = src/gui.py
+qtgui = src/qtgui.py
 dmlj = src/jsonconfig.py
+tkgui = src/tkgui.py
 

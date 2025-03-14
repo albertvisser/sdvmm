@@ -9,14 +9,12 @@ import zipfile
 import subprocess
 from src import gui
 import src.jsonconfig as dmlj
-MODBASE = os.path.expanduser('~/.steam/steam/steamapps/common/Stardew Valley/Mods')
-CONFIG = os.path.join(MODBASE, 'sdv_mods_config.json')
-DOWNLOAD = os.path.expanduser('~/Downloads/Stardew Valley Mods')
+MODBASE, CONFIG, DOWNLOAD = dmlj.read_defaults()[:3]
 
 
 def main(rebuild=False):
     "main line"
-    if rebuild or not os.path.exists(CONFIG):
+    if rebuild or (CONFIG and not os.path.exists(CONFIG)):
         messages = build_jsonconf()
         if messages:
             print('Config was (re)built with the following messages:')
@@ -31,7 +29,8 @@ class Manager:
     "Processing class (the one that contains the application logic (except the GUI stuff)"
     def __init__(self):
         self.conf = dmlj.JsonConf(CONFIG)
-        self.conf.load()
+        if CONFIG:
+            self.conf.load()
         self.modnames = []
         self.modbase = MODBASE
         self.downloads = DOWNLOAD
@@ -52,6 +51,8 @@ class Manager:
         temporarily from the config
         allows for the key not being present due to the screen never being reorganized
         """
+        if not CONFIG:
+            return
         for dirname in self.conf.list_all_mod_dirs():
             item = self.conf.get_diritem_data(dirname, self.conf.SCRNAM) or dirname
             oldinfo = self.screeninfo[item] if item in self.screeninfo else {'sel': False, 'pos': '',
@@ -219,7 +220,7 @@ class Manager:
         "add info about mod to configuration"
         # {{<uitpakdir>: {<component>: {<key>: <value>, ...}, ...}, ...}}
         if self.conf.has_moddir(moddir):
-            raise ValueError('"New" mod exists in configuration, should not be possible')
+            raise ValueError(f'New mod "{moddir}" exists in configuration, should not be possible')
         messages = []
         names = set()
         keys = set()
@@ -284,6 +285,14 @@ class Manager:
                 if conf_changed:
                     self.conf.update_componentdata(component, compdict)
         return messages, conf_changed
+
+    def manage_defaults(self):
+        """handle dialog for settings several application defaults
+        """
+        origdata = self.dialog_data = dmlj.read_defaults(bare=True)
+        gui.show_dialog(gui.SettingsDialog, self.doit)
+        if self.dialog_data != origdata:
+            dmlj.save_defaults(*self.dialog_data)
 
 
 def get_toplevel(dirname):

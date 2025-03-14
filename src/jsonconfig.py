@@ -6,16 +6,45 @@
 Main interest: "UpdateKeys" (value is a list), specifically avalue that starts with "Nexus:"
 also interesting: Author, Version, Description, Dependencies (list of dicts)
 """
+import os.path
 import pathlib
 import shutil
-import json5
 import json
+import json5    # needed because not all manifest files conform to standard (no comments etc)?
 try:
     from lxml import etree as et
 except ImportError:
     import xml.etree.ElementTree as et
+DEFAULTS = os.path.join(os.path.dirname(__file__), 'defaults.json')
 
-SAVEPATH = pathlib.Path('~/.config/StardewValley/Saves').expanduser()
+
+def read_defaults(bare=False):
+    "read default locations from file"
+    data = {}
+    if os.path.exists(DEFAULTS):
+        with open(DEFAULTS) as f:
+            data = json.load(f)
+    modbase = data.get('modbase', '')
+    config = data.get('config', '')
+    download = data.get('download', '')
+    savepath = data.get('savepath', '')
+    if not bare:
+        modbase = os.path.expanduser(modbase)
+        if config:
+            config = os.path.join(modbase, config)
+        download = os.path.expanduser(download)
+        if savepath:
+            savepath = pathlib.Path(savepath).expanduser()
+    return modbase, config, download, savepath
+
+
+def save_defaults(modbase, config, download, savepath):
+    "write new/changed default values"
+    data = {'modbase': modbase, 'config': config, 'download': download, 'savepath': savepath}
+    if os.path.exists(DEFAULTS):
+        shutil.copyfile(DEFAULTS, DEFAULTS + '~')
+    with open(DEFAULTS, 'w') as f:
+        json.dump(data, f)
 
 
 def rebuild_all(startdirs):
@@ -84,8 +113,10 @@ def read_manifest(path):
     """
     DEPS = "Deps"
     result = {}
+    # print(path)
     with path.open('rb') as f:
         data = json5.load(f)
+        # data = json.load(f)
     if "UpdateKeys" in data:
         for value in data["UpdateKeys"]:
             items = value.split(':', 1)
@@ -153,7 +184,7 @@ def merge_old_info(newdata, olddata):
 def get_savenames():
     "get a list of the names of valid save file directories"
     result = []
-    for item in SAVEPATH.iterdir():
+    for item in read_defaults()[-1].iterdir():
         if item.is_file() or item.is_symlink() or item.name.endswith('backup'):
             continue
         result.append(item.name)
@@ -163,7 +194,7 @@ def get_savenames():
 def get_save_attrs(savename):
     "return the values of specific elements in the savefile"
     result = {}
-    for item in (SAVEPATH / savename).iterdir():
+    for item in (read_defaults()[-1] / savename).iterdir():
         if item.name == savename:
             savedata = et.ElementTree(file=str(item))
             root = savedata.getroot()
@@ -329,7 +360,6 @@ class JsonConf:
     def determine_nexuskey_for_mod(self, dirname):
         "copy nexuskey in config from component to moddir"
         nexusid = ''
-        # extravalues = []
         for item in self.list_components_for_dir(dirname):
             value = self.get_component_data(item, self.NXSKEY).strip().replace('?', '').split('@')[0]
             if value and value != '-1':
@@ -337,18 +367,5 @@ class JsonConf:
                 if value != nexusid:
                     if not nexusid:
                         nexusid = value
-                    # else:
-                    #     extravalues.append(value)
         if nexusid:
             self.set_diritem_value(dirname, self.NXSKEY, int(nexusid))
-        # if extravalues:
-        #     self.set_diritem_value(dirname, self.MULTI, extravalues)
-
-    # def mergecomponents(self, title, dirnames):
-    #     "old_to_new: fix situation for multiple components in multiple unpack directories"
-    #     dirnames = dirnames.split(',')
-    #     componentlist = self.get_diritem_data(dirnames[0], self.COMPS)
-    #     for name in dirnames[1:]:
-    #         data = self._data[self.MODS].pop(name.strip())
-    #         componentlist.extend(data[self.COMPS])
-    #     self.set_diritem_value(dirnames[0], self.COMPS, componentlist)

@@ -60,6 +60,7 @@ class MockShowMods:
         print('called gui.ShowMods.refresh_widgets with args', kwargs)
 
 
+# conditie aangevuld met mhgelijkheid dat CONFIG nog geen waarde heeft
 def test_main(monkeypatch, capsys, tmp_path):
     """unittest for manager.main
     """
@@ -121,10 +122,18 @@ class TestManager:
     def test_init(self, monkeypatch, capsys):
         """unittest for Manager.__init__
         """
-        monkeypatch.setattr(testee, 'CONFIG', 'configname`')
         monkeypatch.setattr(testee.dmlj, 'JsonConf', MockConf)
+        monkeypatch.setattr(testee, 'CONFIG', '')
         testobj = testee.Manager()
-        assert capsys.readouterr().out == ("called JsonConf.__init__ with args ('configname`',) {}\n"
+        assert capsys.readouterr().out == "called JsonConf.__init__ with args ('',) {}\n"
+        assert testobj.modnames == []
+        assert testobj.modbase == testee.MODBASE
+        assert testobj.downloads == testee.DOWNLOAD
+        assert testobj.directories == set()
+        assert testobj.screeninfo == {}
+        monkeypatch.setattr(testee, 'CONFIG', 'configname')
+        testobj = testee.Manager()
+        assert capsys.readouterr().out == ("called JsonConf.__init__ with args ('configname',) {}\n"
                                            "called JsonConf.load\n")
         assert testobj.modnames == []
         assert testobj.modbase == testee.MODBASE
@@ -195,6 +204,10 @@ class TestManager:
         testobj.conf.get_component_data = mock_getc
         testobj.screeninfo = {'yyy': {'sel': 's', 'pos': 'p', 'key': 'k', 'txt': 't', 'opt': 'o'}}
 
+        monkeypatch.setattr(testee, 'CONFIG', '')
+        testobj.extract_screeninfo()
+        assert capsys.readouterr().out == ""
+        monkeypatch.setattr(testee, 'CONFIG', 'asdf')
         testobj.extract_screeninfo()
         assert testobj.screeninfo == {'yyy': {'sel': 's', 'pos': 'p', 'key': 'k', 'txt': 't',
                                               'opt': 'o'}}
@@ -409,13 +422,13 @@ class TestManager:
     def test_manage_attributes(self, monkeypatch, capsys):
         """unittest for Manager.manage_attributes
         """
-        def mock_show(*args):
+        def mock_show(self, *args):
             print('called show_dialog with args', args)
-            args[1].master.attr_changes = []
-        def mock_show_2(*args):
+            args[0].master.attr_changes = []
+        def mock_show_2(self, *args):
             print('called show_dialog with args', args)
-            args[1].master.attr_changes = [('xxx', 'yyy'), ('zzz', '')]  # , ('', 'qqq')]i kan dit?
-            args[1].master.screeninfo = {'xxx': {'dir': 'xxx-dir', 'txt': 'xxx-txt', 'sel': True,
+            args[0].master.attr_changes = [('xxx', 'yyy'), ('zzz', '')]  # , ('', 'qqq')]i kan dit?
+            args[0].master.screeninfo = {'xxx': {'dir': 'xxx-dir', 'txt': 'xxx-txt', 'sel': True,
                                                  'opt': False},
                                          'zzz': {'dir': 'zzz-dir', 'txt': 'zzz-txt', 'sel': False,
                                                  'opt': True}}
@@ -428,13 +441,11 @@ class TestManager:
         assert capsys.readouterr().out == f"called gui.ShowMods.__init__() with arg '{testobj}'\n"
         testobj.manage_attributes()
         assert capsys.readouterr().out == (
-                "called show_dialog with args (<class 'src.gui.AttributesDialog'>,"
-                f" {testobj.doit}, {testobj.conf})\n")
+                f"called show_dialog with args ({testobj.doit}, {testobj.conf})\n")
         monkeypatch.setattr(testee.gui, 'show_dialog', mock_show_2)
         testobj.manage_attributes()
         assert capsys.readouterr().out == (
-                "called show_dialog with args (<class 'src.gui.AttributesDialog'>,"
-                f" {testobj.doit}, {testobj.conf})\n"
+                f"called show_dialog with args ({testobj.doit}, {testobj.conf})\n"
                 "called Conf.set_diritem_value with args ('xxx-dir', 0, 'xxx')\n"
                 "called Conf.set_diritem_value with args ('xxx-dir', 4, 'xxx-txt')\n"
                 "called Conf.set_diritem_value with args ('xxx-dir', 1, True)\n"
@@ -447,7 +458,7 @@ class TestManager:
     def test_manage_savefiles(self, monkeypatch, capsys):
         """unittest for Manager.manage_savefiles
         """
-        def mock_show(*args):
+        def mock_show(self, *args):
             print('called show_dialog with args', args)
         monkeypatch.setattr(testee.gui, 'show_dialog', mock_show)
         testobj = self.setup_testobj(monkeypatch, capsys)
@@ -455,8 +466,7 @@ class TestManager:
         assert capsys.readouterr().out == f"called gui.ShowMods.__init__() with arg '{testobj}'\n"
         testobj.manage_savefiles()
         assert capsys.readouterr().out == (
-                "called show_dialog with args (<class 'src.gui.SaveGamesDialog'>,"
-                f" {testobj.doit}, {testobj.conf})\n")
+                f"called show_dialog with args ({testobj.doit}, {testobj.conf})\n")
 
     def test_update_config_from_screenpos(self, monkeypatch, capsys):
         """unittest for Manager.update_config_from_screenpos
@@ -815,7 +825,7 @@ class TestManager:
         monkeypatch.setattr(testee, 'determine_update_id', mock_determine)
         with pytest.raises(ValueError) as exc:
             testobj.add_mod_to_config('moddir', {'config': 'data'})
-        assert str(exc.value) == '"New" mod exists in configuration, should not be possible'
+        assert str(exc.value) == 'New mod "moddir" exists in configuration, should not be possible'
         assert capsys.readouterr().out == "called Conf.has_moddir with arg moddir\n"
 
         testobj.conf.has_moddir = mock_has_mod_2
@@ -1005,6 +1015,37 @@ class TestManager:
                 f"called Conf.get_diritem_data with args ('moddir', {testobj.conf.COMPS})\n"
                 "called Conf.get_component_data with arg newcomp\n")
 
+    def test_manage_defaults(self, monkeypatch, capsys):
+        """unittest for Manager.manage_defaults
+        """
+        def mock_read(**kwargs):
+            print('called dmlj.read_defaults with args', kwargs)
+            return 'origdata'
+        def mock_show(self, *args):
+            print('called show_dialog with args', args)
+            args[0].parent.dialog_data = 'origdata'
+        def mock_show_2(self, *args):
+            print('called show_dialog with args', args)
+            args[0].parent.dialog_data = ('new', 'data')
+        def mock_save(*args):
+            print('called dmlj.save_defaults with args', args)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.doit = MockShowMods(testobj)
+        assert capsys.readouterr().out == f"called gui.ShowMods.__init__() with arg '{testobj}'\n"
+        testobj.doit.parent = testobj
+        monkeypatch.setattr(testee.dmlj, 'read_defaults', mock_read)
+        monkeypatch.setattr(testee.gui, 'show_dialog', mock_show)
+        monkeypatch.setattr(testee.dmlj, 'save_defaults', mock_save)
+        testobj.manage_defaults()
+        assert capsys.readouterr().out == (
+                "called dmlj.read_defaults with args {'bare': True}\n"
+                f"called show_dialog with args ({testobj.doit},)\n")
+        monkeypatch.setattr(testee.gui, 'show_dialog', mock_show_2)
+        testobj.manage_defaults()
+        assert capsys.readouterr().out == (
+                "called dmlj.read_defaults with args {'bare': True}\n"
+                f"called show_dialog with args ({testobj.doit},)\n"
+                "called dmlj.save_defaults with args ('new', 'data')\n")
 
 def test_get_toplevel():
     """unittest for Manager.get_toplevel

@@ -4,6 +4,39 @@ import pytest
 from src import jsonconfig as testee
 
 
+def test_read_defaults(monkeypatch, tmp_path):
+    "unittest for jsonconfig.read_defaults"
+    monkeypatch.setattr(testee, 'DEFAULTS', str(tmp_path / 'defaults.json'))
+    assert testee.read_defaults() == ('', '', '', '')
+    (tmp_path / 'defaults.json').write_text('{"modbase": "xxx", "config": "yyy",'
+                                            '"download": "zzz",' '"savepath": "qqq"}')
+    assert testee.read_defaults() == ('xxx', 'xxx/yyy', 'zzz', testee.pathlib.Path('qqq'))
+    (tmp_path / 'defaults.json').write_text('{"modbase": "~/xxx", "config": "yyy",'
+                                            '"download": "~/zzz",' '"savepath": "~/qqq"}')
+    assert testee.read_defaults() == (testee.os.path.expanduser('~/xxx'),
+                                      testee.os.path.expanduser('~/xxx/yyy'),
+                                      testee.os.path.expanduser('~/zzz'),
+                                      testee.pathlib.Path('~/qqq').expanduser())
+    assert testee.read_defaults(bare=True) == ('~/xxx', 'yyy', '~/zzz', '~/qqq')
+
+
+def test_save_defaults(monkeypatch, tmp_path):
+    "unittest for jsonconfig.write_defaults"
+    defaultloc = tmp_path / 'defaults.json'
+    backuploc = tmp_path / 'defaults.json~'
+    monkeypatch.setattr(testee, 'DEFAULTS', str(defaultloc))
+    assert not defaultloc.exists()
+    testee.save_defaults('xxx', 'yyy', 'zzz', 'qqq')
+    assert defaultloc.exists()
+    assert defaultloc.read_text() == ('{"modbase": "xxx", "config": "yyy",'
+                                      ' "download": "zzz", "savepath": "qqq"}')
+    assert not backuploc.exists()
+    testee.save_defaults('aaa', 'bbb', 'ccc', 'ddd')
+    assert defaultloc.read_text() == ('{"modbase": "aaa", "config": "bbb", '
+                                      '"download": "ccc", "savepath": "ddd"}')
+    assert backuploc.exists()
+
+
 def test_rebuild_all(monkeypatch, capsys):
     """unittest for jsonconfig.rebuild_all
     """
@@ -168,33 +201,33 @@ def test_read_dir(monkeypatch, capsys, tmp_path):
     assert testee.read_dir(path) == [{'x': 'y'}]
     assert capsys.readouterr().out == "called read_manifest with arg manifest.json\n"
 
-# 101-107
+
 def test_read_manifest(monkeypatch, capsys, tmp_path):
     """unittest for jsonconfig.read_manifest
     """
     def mock_load(*args):
-        print('called json5.load with args', args)
+        print('called json.load with args', args)
         return {}
     def mock_load_2(*args):
-        print('called json5.load with args', args)
+        print('called json.load with args', args)
         return {'Name': 'My Mod', 'Author': 'Me', 'Version': '1.0', 'Description': 'A Mod',
                 'EntryDll': 'not used', 'UniqueID': 'Me.Mymod', 'MinimumApiVersion': '4.0.0',
                 'deps': ['x'], 'UpdateKeys': ['xxx']}
     def mock_load_3(*args):
-        print('called json5.load with args', args)
+        print('called json.load with args', args)
         return {'dependencies': [], 'ContentPackFor': {}, 'UpdateKeys': ['Other:1234']}
     def mock_load_4(*args):
-        print('called json5.load with args', args)
+        print('called json.load with args', args)
         return {'Dependencies': ['x'], 'UpdateKeys': ['Nexus:99']}
     def mock_load_5(*args):
-        print('called json5.load with args', args)
+        print('called json.load with args', args)
         return {'ContentPackFor': {'UniqueID': 'y'}, 'UpdateKeys': ['Nexus:99']}
     def mock_load_6(*args):
-        print('called json5.load with args', args)
+        print('called json.load with args', args)
         return {'Dependencies': ['x', 'y'], 'ContentPackFor': {'UniqueID': 'y'},
                 'UpdateKeys': ['Nexus:99']}
     def mock_load_7(*args):
-        print('called json5.load with args', args)
+        print('called json.load with args', args)
         return {'Dependencies': ['x', 'y'], 'ContentPackFor': {'UniqueID': 'z', 'required': True},
                 'UpdateKeys': ['Nexus:99']}
     def mock_read(arg):
@@ -207,36 +240,36 @@ def test_read_manifest(monkeypatch, capsys, tmp_path):
     monkeypatch.setattr(testee, 'read_dependencies', mock_read)
     assert testee.read_manifest(path) == {}
     assert capsys.readouterr().out == (
-            f"called json5.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n")
+            f"called json.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n")
     monkeypatch.setattr(testee.json5, 'load', mock_load_2)
     assert testee.read_manifest(path) == {'Author': 'Me', 'Description': 'A Mod',
                                           'MinimumApiVersion': '4.0.0', 'Name': 'My Mod',
                                           'UniqueID': 'Me.Mymod', 'Version': '1.0',
                                           'dirpath': path.parent}
     assert capsys.readouterr().out == (
-            f"called json5.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n")
+            f"called json.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n")
     monkeypatch.setattr(testee.json5, 'load', mock_load_3)
     assert testee.read_manifest(path) == {'Deps': [], 'dirpath': path.parent}
     assert capsys.readouterr().out == (
-            f"called json5.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n"
+            f"called json.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n"
             "called read_dependencies with arg []\n")
     # 92, 104-107, 129-140
     monkeypatch.setattr(testee.json5, 'load', mock_load_4)
     assert testee.read_manifest(path) == {'_Nexus': '99', 'Deps': ['x'], 'dirpath': path.parent}
     assert capsys.readouterr().out == (
-            f"called json5.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n"
+            f"called json.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n"
             "called read_dependencies with arg ['x']\n")
     # 104-107, 129-140
     monkeypatch.setattr(testee.json5, 'load', mock_load_5)
     result = testee.read_manifest(path)
     assert result == {'_Nexus': '99', 'Deps': ['y'], 'dirpath': path.parent}
     assert capsys.readouterr().out == (
-            f"called json5.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n")
+            f"called json.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n")
     # 104->103, 106->103, 129-140
     monkeypatch.setattr(testee.json5, 'load', mock_load_6)
     assert testee.read_manifest(path) == {'_Nexus': '99', 'Deps': ['x', 'y'], 'dirpath': path.parent}
     assert capsys.readouterr().out == (
-            f"called json5.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n"
+            f"called json.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n"
             "called read_dependencies with arg ['x', 'y']\n")
     # 106-103, 129-140  -> 104-103
     monkeypatch.setattr(testee.json5, 'load', mock_load_7)
@@ -244,7 +277,7 @@ def test_read_manifest(monkeypatch, capsys, tmp_path):
     assert testee.read_manifest(path) == {'_Nexus': '99', 'Deps': ['x', 'y', 'z'],
                                           'dirpath': path.parent}
     assert capsys.readouterr().out == (
-            f"called json5.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n"
+            f"called json.load with args (<_io.BufferedReader name='{tmp_path}/testfile'>,)\n"
             "called read_dependencies with arg ['x', 'y']\n")
 
 
@@ -285,7 +318,7 @@ def test_merge_old_info():
 
 def test_get_savenames(monkeypatch, tmp_path):
     "unittest for jsonconfig.get_savenames"
-    monkeypatch.setattr(testee, 'SAVEPATH', tmp_path)
+    monkeypatch.setattr(testee, 'read_defaults', lambda: ('', '', '', tmp_path))
     assert testee.get_savenames() == []
     (tmp_path / 'a-file').touch()
     (tmp_path / 'a-link').symlink_to(tmp_path / 'a-file')
@@ -297,7 +330,7 @@ def test_get_savenames(monkeypatch, tmp_path):
 
 def test_get_save_attrs(monkeypatch, tmp_path):
     "unittest for jsonconfig.get_save_attrs"
-    monkeypatch.setattr(testee, 'SAVEPATH', tmp_path)
+    monkeypatch.setattr(testee, 'read_defaults', lambda: ('', '', '', tmp_path))
     (tmp_path / 'xxxx').mkdir()
     assert testee.get_save_attrs('xxxx') == {}
     (tmp_path / 'xxxx' / 'yyyy').touch()
@@ -610,7 +643,6 @@ class TestJsonConf:
     def test_determine_nexuskey_for_mod(self, monkeypatch, capsys):
         """unittest for JsonConf.determine_nexuskey_for_mod
         """
-        # 211-223
         def mock_list(name):
             print(f'called JsonConf.list_components_for_dir with arg {name}')
             return []
@@ -653,28 +685,3 @@ class TestJsonConf:
                 "called JsonConf.get_component_data with args ('hasid99', '_Nexus')\n"
                 "called JsonConf.get_component_data with args ('hasid100', '_Nexus')\n"
                 "called JsonConf.set_diritem.value with args ('dirname', '_Nexus', 99)\n")
-                # "called JsonConf.set_diritem.value with args ('dirname', '_Nexus2', [100])\n")
-
-    # def test_mergecomponents(self, monkeypatch, capsys):
-    #     """unittest for JsonConf.mergecomponents
-    #     """
-    #     def mock_get(*args):
-    #         print('called JsonConf.get_diritem.data with args', args)
-    #         return ['xxx', 'yyy']
-    #     def mock_set(*args):
-    #         print('called JsonConf.set_diritem.value with args', args)
-    #     testobj = self.setup_testobj('', monkeypatch, capsys)
-    #     testobj.get_diritem_data = mock_get
-    #     testobj.set_diritem_value = mock_set
-    #     testobj.mergecomponents('title', 'dirname')
-    #     assert capsys.readouterr().out == (
-    #             "called JsonConf.get_diritem.data with args ('dirname', 'components')\n"
-    #             "called JsonConf.set_diritem.value with args"
-    #             " ('dirname', 'components', ['xxx', 'yyy'])\n")
-    #     testobj._data = {'moddirs': {'dirname2': {'components': ['aaa', 'bbb']}}}
-    #     testobj.mergecomponents('title', 'dirname1, dirname2')
-    #     assert testobj._data == {'moddirs': {}}
-    #     assert capsys.readouterr().out == (
-    #             "called JsonConf.get_diritem.data with args ('dirname1', 'components')\n"
-    #             "called JsonConf.set_diritem.value with args"
-    #             " ('dirname1', 'components', ['xxx', 'yyy', 'aaa', 'bbb'])\n")
