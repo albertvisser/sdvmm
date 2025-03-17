@@ -7,7 +7,8 @@ from tkinter import ttk
 import tkinter.messagebox as MessageBox
 import tkinter.filedialog as FileDialog
 from PIL import ImageTk, Image
-ECIMAGE = Image.open('/usr/share/icons/HighContrast/16x16/actions/edit-clear.png')
+# ECIMAGE = Image.open('/usr/share/icons/HighContrast/16x16/actions/edit-clear.png')
+ECIMAGE = Image.open(os.path.join(os.path.dirname(__file__), 'edit-clear.png'))
 
 
 def show_dialog(cls, parent, *args, **kwargs):
