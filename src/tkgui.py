@@ -49,7 +49,7 @@ class ShowMods():
             'De nummers tussen haakjes kunnen gebruikt worden om naar de'
             ' download pagina op NexusMods.com te gaan\n'
             '(de volledige link is https://www.nexusmods.com/stardewvalley/mods/<updateid>)'),
-                            padding=10)
+            padding=10)
         toptext.grid(column=0, row=1, sticky=(tk.N, tk.W))  # toptext.pack()
 
         middle_bit = ttk.Frame(self.root)
@@ -105,13 +105,13 @@ class ShowMods():
                 else:
                     self.not_selectable.append(text)
         else:
-            for key, value in self.unplotted_widgets.items():
-                box, label, check = value[:3]
+            for widgetlist in self.unplotted_widgets.values():
+                box, label, check = widgetlist[:3]
                 check.destroy()
                 label.destroy()
                 box.destroy()
-            for key, value in self.nonsel_widgets.items():
-                box, label, check = value[:3]
+            for widgetlist in self.nonsel_widgets.values():
+                box, label, check = widgetlist[:3]
                 check.destroy()
                 label.destroy()
                 box.destroy()
@@ -387,6 +387,7 @@ class AttributesDialog(tk.Toplevel):
         hfrm.grid(row=row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W), pady=2)
         self.scrname = tk.StringVar()
         self.scrname.set('')
+        self.scrname.trace_add('write', self.monitor_textvar)
         self.name = ttk.Combobox(hfrm, textvariable=self.scrname)
         self.name.state(['!readonly'])
         self.name.bind('<<ComboboxSelected>>', self.enable_change)
@@ -412,6 +413,7 @@ class AttributesDialog(tk.Toplevel):
         hfrm.columnconfigure(0, weight=1)
         self.scrtext = tk.StringVar()
         self.scrtext.set('')
+        self.scrtext.trace_add('write', self.monitor_textvar)
         self.text = ttk.Entry(hfrm, textvariable=self.scrtext)
         self.text.grid(row=0, column=0, sticky=(tk.E, tk.W))
         self.clear_text_button = ttk.Button(hfrm, image=ecimage, command=self.clear_text_text)
@@ -461,6 +463,10 @@ class AttributesDialog(tk.Toplevel):
         self.bind("<Escape>", self.close)
         self.lbox.focus_set()
 
+    def monitor_textvar(self, *args):
+        "callback for trace_add"
+        self.enable_change()
+
     def enable_select(self, event=None):
         """disable buttons after selecting another mod
         """
@@ -494,7 +500,7 @@ class AttributesDialog(tk.Toplevel):
         self.exempt.set(int(self.parent.master.screeninfo[self.choice]['opt']))
         self.comps_button.state(['!disabled'])
         self.deps_button.state(['!disabled'])
-        # self.change_button.state(['!disabled'])
+        self.change_button.state(['disabled'])
 
     def clear_name_text(self, event=None):
         "visually delete screen text"
@@ -632,16 +638,19 @@ class SaveGamesDialog(tk.Toplevel):
         ttk.Label(hfrm, text='Player name:').grid(row=0, column=0)
         self.pname_text = tk.StringVar()
         self.pname_text.set('')
+        self.pname_text.trace_add('write', self.monitor_textvar)
         self.pname = ttk.Entry(hfrm, textvariable=self.pname_text)
         self.pname.grid(row=0, column=1)
         ttk.Label(hfrm, text='Farm name:').grid(row=1, column=0)
         self.fname_text = tk.StringVar()
         self.fname_text.set('')
+        self.fname_text.trace_add('write', self.monitor_textvar)
         self.fname = ttk.Entry(hfrm, textvariable=self.fname_text)
         self.fname.grid(row=1, column=1)
         ttk.Label(hfrm, text='In-game date:').grid(row=2, column=0)
         self.gdate_text = tk.StringVar()
         self.gdate_text.set('')
+        self.gdate_text.trace_add('write', self.monitor_textvar)
         self.gdate = ttk.Entry(hfrm, textvariable=self.gdate_text)
         self.gdate.grid(row=2, column=1)
         self.widgets = []
@@ -681,6 +690,10 @@ class SaveGamesDialog(tk.Toplevel):
         hfrm.columnconfigure(2, weight=1)
 
         self.savegame_selector.focus_set()
+
+    def monitor_textvar(self, *args):
+        "callback for trace_add - enable update button"
+        self.update_button.state(['!disabled'])
 
     def add_modselector(self, name=''):
         "add a selector to make an association between a mod and the save file"

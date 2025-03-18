@@ -118,6 +118,7 @@ called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLay
 called HBox.__init__
 called ComboBox.__init__
 called ComboBox.setEditable with arg `True`
+called Signal.connect with args ({testobj.enable_change},)
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockComboBox'>
 called PushButton.__init__ with args () {{}}
 called Icon.fromTheme with args ()
@@ -133,6 +134,7 @@ called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLabel'>
 called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>
 called HBox.__init__
 called LineEdit.__init__
+called Signal.connect with args ({testobj.enable_change},)
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLineEdit'>
 called PushButton.__init__ with args () {{}}
 called Icon.fromTheme with args ()
@@ -143,8 +145,10 @@ called Signal.connect with args ({testobj.clear_text_text},)
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
 called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>
 called CheckBox.__init__ with text 'This mod can be activated by itself'
+called Signal.connect with args ({testobj.enable_change},)
 called VBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockCheckBox'>
 called CheckBox.__init__ with text 'Do not touch when (de)activating for a save'
+called Signal.connect with args ({testobj.enable_change},)
 called VBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockCheckBox'>
 called PushButton.__init__ with args ('View &Components',) {{}}
 called Signal.connect with args ({testobj.view_components},)
@@ -178,8 +182,11 @@ called ComboBox.addItem with arg `select a saved game`
 called ComboBox.addItems with arg ['qqq', 'rrr']
 called Signal.connect with args ({testobj.get_savedata},)
 called LineEdit.__init__
+called Signal.connect with args ({testobj.enable_change},)
 called LineEdit.__init__
+called Signal.connect with args ({testobj.enable_change},)
 called LineEdit.__init__
+called Signal.connect with args ({testobj.enable_change},)
 called PushButton.__init__ with args ('&Update config',) {{}}
 called PushButton.setDisabled with arg `True`
 called Signal.connect with args ({testobj.update_all},)
@@ -1113,6 +1120,15 @@ class TestAttributesDialog:
         assert isinstance(testobj.change_button, testee.qtw.QPushButton)
         assert capsys.readouterr().out == expected_output['attrs'].format(testobj=testobj)
 
+    def test_enable_change(self, monkeypatch, capsys):
+        """unittest for AttributesDialog.enable_change
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.change_button = mockqtw.MockPushButton()
+        assert capsys.readouterr().out == "called PushButton.__init__ with args () {}\n"
+        testobj.enable_change()
+        assert capsys.readouterr().out == "called PushButton.setEnabled with arg `True`\n"
+
     def test_enable_select(self, monkeypatch, capsys):
         """unittest for AttributesDialog.enable_select
         """
@@ -1184,7 +1200,7 @@ class TestAttributesDialog:
                 "called CheckBox.setChecked with arg False\n"
                 "called PushButton.setDisabled with arg `False`\n"
                 "called PushButton.setDisabled with arg `False`\n"
-                "called PushButton.setDisabled with arg `False`\n")
+                "called PushButton.setDisabled with arg `True`\n")
         monkeypatch.setattr(MockConf, 'list_components_for_dir', mock_list)
         testobj.process()
         assert testobj.choice == 'current text'
@@ -1202,7 +1218,7 @@ class TestAttributesDialog:
                 "called CheckBox.setChecked with arg False\n"
                 "called PushButton.setDisabled with arg `False`\n"
                 "called PushButton.setDisabled with arg `False`\n"
-                "called PushButton.setDisabled with arg `False`\n")
+                "called PushButton.setDisabled with arg `True`\n")
 
     def test_clear_name_text(self, monkeypatch, capsys):
         """unittest for AttributesDialog.clear_text
@@ -1513,6 +1529,15 @@ class TestSaveGamesDialog:
         assert testobj.widgets == []
         assert isinstance(testobj.vbox2, testee.qtw.QVBoxLayout)
         assert capsys.readouterr().out == expected_output['saves'].format(testobj=testobj)
+
+    def test_enable_change(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialog.enable_change
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.update_button = mockqtw.MockPushButton()
+        assert capsys.readouterr().out == "called PushButton.__init__ with args () {}\n"
+        testobj.enable_change()
+        assert capsys.readouterr().out == "called PushButton.setEnabled with arg `True`\n"
 
     def test_add_modselector(self, monkeypatch, capsys):
         """unittest for SaveGamesDialog.add_modselector

@@ -401,6 +401,7 @@ class AttributesDialog(qtw.QDialog):
         hbox = qtw.QHBoxLayout()
         self.name = qtw.QComboBox(self)
         self.name.setEditable(True)
+        self.name.editTextChanged.connect(self.enable_change)
         hbox.addWidget(self.name)
         self.clear_name_button = qtw.QPushButton()
         self.clear_name_button.setIcon(qgui.QIcon.fromTheme(qgui.QIcon.ThemeIcon.EditClear))
@@ -416,6 +417,7 @@ class AttributesDialog(qtw.QDialog):
         vbox.addLayout(hbox)
         hbox = qtw.QHBoxLayout()
         self.text = qtw.QLineEdit(self)
+        self.text.textEdited.connect(self.enable_change)
         hbox.addWidget(self.text)
         self.clear_text_button = qtw.QPushButton()
         self.clear_text_button.setIcon(qgui.QIcon.fromTheme(qgui.QIcon.ThemeIcon.EditClear))
@@ -427,10 +429,12 @@ class AttributesDialog(qtw.QDialog):
         vbox.addLayout(hbox)
         # hbox = qtw.QHBoxLayout()
         self.activate_button = qtw.QCheckBox('This mod can be activated by itself', self)
+        self.activate_button.checkStateChanged.connect(self.enable_change)
         # hbox.addWidget(self.activate_button)
         vbox.addWidget(self.activate_button)
         # vbox.addLayout(hbox)
         self.exempt_button = qtw.QCheckBox('Do not touch when (de)activating for a save', self)
+        self.exempt_button.checkStateChanged.connect(self.enable_change)
         # hbox.addWidget(self.exempt_button)
         vbox.addWidget(self.exempt_button)
         # vbox.addLayout(hbox)
@@ -453,6 +457,10 @@ class AttributesDialog(qtw.QDialog):
         vbox.addLayout(hbox)
         self.setLayout(vbox)
         self.lbox.setFocus()
+
+    def enable_change(self):
+        "enable change button"
+        self.change_button.setEnabled(True)
 
     def enable_select(self):
         """disable buttons after selecting another mod
@@ -479,7 +487,7 @@ class AttributesDialog(qtw.QDialog):
         self.exempt_button.setChecked(self.parent.master.screeninfo[self.choice]['opt'])
         self.comps_button.setDisabled(False)
         self.deps_button.setDisabled(False)
-        self.change_button.setDisabled(False)
+        self.change_button.setDisabled(True)
 
     def clear_name_text(self):
         "visually delete screen text"
@@ -597,8 +605,11 @@ class SaveGamesDialog(qtw.QDialog):
         self.savegame_selector.currentTextChanged.connect(self.get_savedata)
         self.oldsavename = ''
         self.pname = qtw.QLineEdit(self)
+        self.pname.textEdited.connect(self.enable_change)
         self.fname = qtw.QLineEdit(self)
+        self.fname.textEdited.connect(self.enable_change)
         self.gdate = qtw.QLineEdit(self)
+        self.gdate.textEdited.connect(self.enable_change)
         self.widgets = []
         self.update_button = qtw.QPushButton('&Update config')
         self.update_button.setDisabled(True)
@@ -631,6 +642,10 @@ class SaveGamesDialog(qtw.QDialog):
         vbox.addLayout(hbox)
         self.setLayout(vbox)
         self.savegame_selector.setFocus()
+
+    def enable_change(self):
+        "enable change button"
+        self.update_button.setEnabled(True)
 
     def add_modselector(self, name=''):
         "add a selector to make an association between a mod and the save file"
