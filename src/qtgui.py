@@ -372,6 +372,8 @@ class SettingsDialog(qtw.QDialog):
 class AttributesDialog(qtw.QDialog):
     """Dialog for viewing and optionally changing a mod's properties
     """
+    seltext = 'select a mod to change the screen text'
+
     def __init__(self, parent, conf):
         self.parent = parent
         self.conf = conf
@@ -384,15 +386,15 @@ class AttributesDialog(qtw.QDialog):
         vbox = qtw.QVBoxLayout()
         self.lbox = qtw.QComboBox(self)
         self.lbox.setEditable(False)
-        self.lbox.addItem('select a mod to change the screen text')
+        self.lbox.addItem(self.seltext)
         self.lbox.addItems(sorted(self.modnames))
-        self.lbox.currentTextChanged.connect(self.enable_select)
-        # self.lbox.activated.connect(self.enable_select)
+        # self.lbox.currentTextChanged.connect(self.enable_select)
+        self.lbox.currentTextChanged.connect(self.process)
         vbox.addWidget(self.lbox)
-        self.select_button = qtw.QPushButton('View &Attributes')
-        self.select_button.clicked.connect(self.process)
-        self.select_button.setEnabled(False)
-        vbox.addWidget(self.select_button)
+        # self.select_button = qtw.QPushButton('View &Attributes')
+        # self.select_button.clicked.connect(self.process)
+        # self.select_button.setEnabled(False)
+        # vbox.addWidget(self.select_button)
         hbox = qtw.QHBoxLayout()
         hbox.addWidget(qtw.QLabel('Screen Name:\n'
                                   '(the suggestions in the box below are taken from\n'
@@ -402,10 +404,10 @@ class AttributesDialog(qtw.QDialog):
         self.name = qtw.QComboBox(self)
         self.name.setEditable(True)
         self.name.editTextChanged.connect(self.enable_change)
+        self.name.setEnabled(False)
         hbox.addWidget(self.name)
         self.clear_name_button = qtw.QPushButton()
         self.clear_name_button.setIcon(qgui.QIcon.fromTheme(qgui.QIcon.ThemeIcon.EditClear))
-        # self.clear_button.resize(20, 20)
         self.clear_name_button.setFixedSize(24, 24)
         self.clear_name_button.setDisabled(True)
         self.clear_name_button.clicked.connect(self.clear_name_text)
@@ -418,10 +420,10 @@ class AttributesDialog(qtw.QDialog):
         hbox = qtw.QHBoxLayout()
         self.text = qtw.QLineEdit(self)
         self.text.textEdited.connect(self.enable_change)
+        self.text.setEnabled(False)
         hbox.addWidget(self.text)
         self.clear_text_button = qtw.QPushButton()
         self.clear_text_button.setIcon(qgui.QIcon.fromTheme(qgui.QIcon.ThemeIcon.EditClear))
-        # self.clear_button.resize(20, 20)
         self.clear_text_button.setFixedSize(24, 24)
         self.clear_text_button.setDisabled(True)
         self.clear_text_button.clicked.connect(self.clear_text_text)
@@ -430,11 +432,13 @@ class AttributesDialog(qtw.QDialog):
         # hbox = qtw.QHBoxLayout()
         self.activate_button = qtw.QCheckBox('This mod can be activated by itself', self)
         self.activate_button.checkStateChanged.connect(self.enable_change)
+        self.activate_button.setDisabled(True)
         # hbox.addWidget(self.activate_button)
         vbox.addWidget(self.activate_button)
         # vbox.addLayout(hbox)
         self.exempt_button = qtw.QCheckBox('Do not touch when (de)activating for a save', self)
         self.exempt_button.checkStateChanged.connect(self.enable_change)
+        self.exempt_button.setDisabled(True)
         # hbox.addWidget(self.exempt_button)
         vbox.addWidget(self.exempt_button)
         # vbox.addLayout(hbox)
@@ -472,22 +476,34 @@ class AttributesDialog(qtw.QDialog):
 
     def process(self):
         "get description if any"
-        self.select_button.setDisabled(True)
+        # self.select_button.setDisabled(True)
+        self.change_button.setDisabled(True)
         self.choice = self.lbox.currentText()
+        if self.choice == self.seltext:
+            self.name.setEnabled(False)
+            self.text.setEnabled(False)
+            self.activate_button.setDisabled(True)
+            self.exempt_button.setDisabled(True)
+            self.comps_button.setDisabled(True)
+            self.deps_button.setDisabled(True)
+            return
         self.name.clear()
         self.name.addItem(self.choice)
         items = set()
         for x in self.conf.list_components_for_dir(self.modnames[self.choice]):
             items.add(self.conf.get_component_data(x, self.conf.NAME))
         self.name.addItems(sorted(list(items)))
+        self.name.setEnabled(True)
         self.clear_name_button.setDisabled(False)
         self.text.setText(self.parent.master.screeninfo[self.choice]['txt'])
+        self.text.setEnabled(True)
         self.clear_text_button.setDisabled(False)
         self.activate_button.setChecked(self.parent.master.screeninfo[self.choice]['sel'])
+        self.activate_button.setEnabled(True)
         self.exempt_button.setChecked(self.parent.master.screeninfo[self.choice]['opt'])
+        self.exempt_button.setEnabled(True)
         self.comps_button.setDisabled(False)
         self.deps_button.setDisabled(False)
-        self.change_button.setDisabled(True)
 
     def clear_name_text(self):
         "visually delete screen text"

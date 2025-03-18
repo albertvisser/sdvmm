@@ -105,12 +105,8 @@ called ComboBox.__init__
 called ComboBox.setEditable with arg `False`
 called ComboBox.addItem with arg `select a mod to change the screen text`
 called ComboBox.addItems with arg ['xxx_name', 'yyy_name']
-called Signal.connect with args ({testobj.enable_select},)
-called VBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockComboBox'>
-called PushButton.__init__ with args ('View &Attributes',) {{}}
 called Signal.connect with args ({testobj.process},)
-called PushButton.setEnabled with arg `False`
-called VBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
+called VBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockComboBox'>
 called HBox.__init__
 called Label.__init__ with args ('Screen Name:\\n(the suggestions in the box below are taken from\\nthe mod components', {testobj})
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLabel'>
@@ -119,6 +115,7 @@ called HBox.__init__
 called ComboBox.__init__
 called ComboBox.setEditable with arg `True`
 called Signal.connect with args ({testobj.enable_change},)
+called ComboBox.setEnabled with arg False
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockComboBox'>
 called PushButton.__init__ with args () {{}}
 called Icon.fromTheme with args ()
@@ -135,6 +132,7 @@ called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLay
 called HBox.__init__
 called LineEdit.__init__
 called Signal.connect with args ({testobj.enable_change},)
+called LineEdit.setEnabled with arg False
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockLineEdit'>
 called PushButton.__init__ with args () {{}}
 called Icon.fromTheme with args ()
@@ -146,9 +144,11 @@ called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushBut
 called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>
 called CheckBox.__init__ with text 'This mod can be activated by itself'
 called Signal.connect with args ({testobj.enable_change},)
+called CheckBox.setDisabled with arg True
 called VBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockCheckBox'>
 called CheckBox.__init__ with text 'Do not touch when (de)activating for a save'
 called Signal.connect with args ({testobj.enable_change},)
+called CheckBox.setDisabled with arg True
 called VBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockCheckBox'>
 called PushButton.__init__ with args ('View &Components',) {{}}
 called Signal.connect with args ({testobj.view_components},)
@@ -1109,7 +1109,7 @@ class TestAttributesDialog:
         assert testobj.conf == conf
         assert testobj.modnames == {'xxx_name': 'xxx', 'yyy_name': 'yyy'}
         assert isinstance(testobj.lbox, testee.qtw.QComboBox)
-        assert isinstance(testobj.select_button, testee.qtw.QPushButton)
+        # assert isinstance(testobj.select_button, testee.qtw.QPushButton)
         assert isinstance(testobj.name, testee.qtw.QComboBox)
         assert isinstance(testobj.clear_name_button, testee.qtw.QPushButton)
         assert isinstance(testobj.text, testee.qtw.QLineEdit)
@@ -1154,6 +1154,9 @@ class TestAttributesDialog:
             "stub"
             print(f"called Conf.list_components_for_dir with arg '{name}'")
             return []
+        def mock_text(self):
+            print('called ComboBox.currentText')
+            return 'qqq'
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.conf = MockConf()
         testobj.parent = types.SimpleNamespace(
@@ -1193,14 +1196,17 @@ class TestAttributesDialog:
                 "called Conf.get_component_data with args ('xxx', 'Name')\n"
                 "called Conf.get_component_data with args ('yyy', 'Name')\n"
                 "called ComboBox.addItems with arg ['xxx_compname', 'yyy_compname']\n"
+                "called ComboBox.setEnabled with arg True\n"
                 "called PushButton.setDisabled with arg `False`\n"
                 "called LineEdit.setText with arg `xxx`\n"
+                "called LineEdit.setEnabled with arg True\n"
                 "called PushButton.setDisabled with arg `False`\n"
                 "called CheckBox.setChecked with arg True\n"
+                "called CheckBox.setEnabled with arg True\n"
                 "called CheckBox.setChecked with arg False\n"
+                "called CheckBox.setEnabled with arg True\n"
                 "called PushButton.setDisabled with arg `False`\n"
-                "called PushButton.setDisabled with arg `False`\n"
-                "called PushButton.setDisabled with arg `True`\n")
+                "called PushButton.setDisabled with arg `False`\n")
         monkeypatch.setattr(MockConf, 'list_components_for_dir', mock_list)
         testobj.process()
         assert testobj.choice == 'current text'
@@ -1211,13 +1217,29 @@ class TestAttributesDialog:
                 "called ComboBox.addItem with arg `current text`\n"
                 "called Conf.list_components_for_dir with arg '{'aaa'}'\n"
                 "called ComboBox.addItems with arg []\n"
+                "called ComboBox.setEnabled with arg True\n"
                 "called PushButton.setDisabled with arg `False`\n"
                 "called LineEdit.setText with arg `xxx`\n"
+                "called LineEdit.setEnabled with arg True\n"
                 "called PushButton.setDisabled with arg `False`\n"
                 "called CheckBox.setChecked with arg True\n"
+                "called CheckBox.setEnabled with arg True\n"
                 "called CheckBox.setChecked with arg False\n"
+                "called CheckBox.setEnabled with arg True\n"
                 "called PushButton.setDisabled with arg `False`\n"
-                "called PushButton.setDisabled with arg `False`\n"
+                "called PushButton.setDisabled with arg `False`\n")
+        testobj.seltext = 'qqq'
+        monkeypatch.setattr(mockqtw.MockComboBox, 'currentText', mock_text)
+        testobj.process()
+        assert testobj.choice == 'qqq'
+        assert capsys.readouterr().out == (
+                "called PushButton.setDisabled with arg `True`\n"
+                "called ComboBox.currentText\n"
+                "called ComboBox.setEnabled with arg False\n"
+                "called LineEdit.setEnabled with arg False\n"
+                "called CheckBox.setDisabled with arg True\n"
+                "called CheckBox.setDisabled with arg True\n"
+                "called PushButton.setDisabled with arg `True`\n"
                 "called PushButton.setDisabled with arg `True`\n")
 
     def test_clear_name_text(self, monkeypatch, capsys):

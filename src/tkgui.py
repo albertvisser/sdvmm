@@ -369,14 +369,14 @@ class AttributesDialog(tk.Toplevel):
         self.lbox = ttk.Combobox(frm, values=sorted(self.modnames), textvariable=self.modname)
         self.modname.set('Select a mod to change the screen text etc.')
         self.lbox.state(['readonly'])
-        self.lbox.bind('<<ComboboxSelected>>', self.enable_select)
+        # self.lbox.bind('<<ComboboxSelected>>', self.enable_select)
+        self.lbox.bind('<<ComboboxSelected>>', self.process)
         self.lbox.grid(row=row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W))
-        # self.lbox.activated.connect(self.enable_select)
-        row += 1
-        self.select_button = ttk.Button(frm, text='View Attributes', underline=5,
-                                        command=self.process)
-        self.select_button.state(['disabled'])
-        self.select_button.grid(row=row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W), pady=2)
+        # row += 1
+        # self.select_button = ttk.Button(frm, text='View Attributes', underline=5,
+        #                                 command=self.process)
+        # self.select_button.state(['disabled'])
+        # self.select_button.grid(row=row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W), pady=2)
         row += 1
         lbl = ttk.Label(frm, text=('Screen Name:\n'
                                    '(the suggestions in the box below are taken from\n'
@@ -389,18 +389,12 @@ class AttributesDialog(tk.Toplevel):
         self.scrname.set('')
         self.scrname.trace_add('write', self.monitor_textvar)
         self.name = ttk.Combobox(hfrm, textvariable=self.scrname)
-        self.name.state(['!readonly'])
+        self.name.state(['!readonly', 'disabled'])
         self.name.bind('<<ComboboxSelected>>', self.enable_change)
         self.name.grid(row=0, column=0, sticky=(tk.N, tk.E, tk.S, tk.W))
         hfrm.columnconfigure(0, weight=1)
-        # breakpoint()
-        # ecimage = ImageTk.PhotoImage(Image.open(
-        #     '/usr/share/icons/HighContrast/16x16/actions/edit-clear.png'))
         self.clear_name_button = ttk.Button(hfrm, image=ecimage, command=self.clear_name_text)
         self.clear_name_button.image = ecimage
-        # self.clear_name_button['image'] = ecimage
-        # self.clear_button.resize(20, 20)
-        # self.clear_name_button.setFixedSize(24, 24)
         self.clear_name_button.state(['disabled'])
         self.clear_name_button.grid(row=0, column=1, sticky=tk.W)
         row += 1
@@ -416,6 +410,7 @@ class AttributesDialog(tk.Toplevel):
         self.scrtext.trace_add('write', self.monitor_textvar)
         self.text = ttk.Entry(hfrm, textvariable=self.scrtext)
         self.text.grid(row=0, column=0, sticky=(tk.E, tk.W))
+        self.text.state(['disabled'])
         self.clear_text_button = ttk.Button(hfrm, image=ecimage, command=self.clear_text_text)
         # self.clear_text_button['image'] = ecimage
         # self.clear_button.resize(20, 20)
@@ -428,12 +423,14 @@ class AttributesDialog(tk.Toplevel):
         self.activate_button = ttk.Checkbutton(frm, text='This mod can be activated by itself',
                                                variable=self.activate, command=self.enable_change)
         self.activate_button.grid(row=row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W), pady=2)
+        self.activate_button.state(['disabled'])
         row += 1
         self.exempt = tk.IntVar()
         self.exempt.set(0)
         self.exempt_button = ttk.Checkbutton(frm, text='Do not touch when (de)activating for a save',
                                              variable=self.exempt, command=self.enable_change)
         self.exempt_button.grid(row=row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W), pady=2)
+        self.exempt_button.state(['disabled'])
         row += 1
         self.comps_button = ttk.Button(frm, text='View Components', underline=5,
                                        command=self.view_components)
@@ -481,7 +478,7 @@ class AttributesDialog(tk.Toplevel):
 
     def process(self, event=None):
         "get description if any"
-        self.select_button.state(['disabled'])
+        # self.select_button.state(['disabled'])
         self.choice = self.modname.get()  # lbox.currentText()
         self.scrname.set(self.choice)
         items = set()
@@ -489,15 +486,19 @@ class AttributesDialog(tk.Toplevel):
             items.add(self.conf.get_component_data(x, self.conf.NAME))
         # self.name['values'] = [self.choice] + sorted(list(items))
         self.name['values'] = sorted(list(items))
+        self.name.state(['!disabled'])
         self.clear_name_button.state(['!disabled'])
         self.scrtext.set(self.parent.master.screeninfo[self.choice]['txt'])
+        self.text.state(['!disabled'])
         self.clear_text_button.state(['!disabled'])
         # onoff = "" if self.parent.master.screeninfo[self.choice]['sel'] else "!"
         # self.activate_button.state([f'{onoff}selected'])
         self.activate.set(int(self.parent.master.screeninfo[self.choice]['sel']))
+        self.activate_button.state(['!disabled'])
         # onoff = "" if self.parent.master.screeninfo[self.choice]['opt'] else "!"
         # self.exempt_button.state([f'{onoff}selected'])
         self.exempt.set(int(self.parent.master.screeninfo[self.choice]['opt']))
+        self.exempt_button.state(['!disabled'])
         self.comps_button.state(['!disabled'])
         self.deps_button.state(['!disabled'])
         self.change_button.state(['disabled'])
