@@ -6,7 +6,6 @@ import functools
 import PyQt6.QtWidgets as qtw
 import PyQt6.QtGui as qgui
 download_dir = ''
-maxpercol = 10
 
 
 def show_dialog(cls, parent, *args, **kwargs):
@@ -100,25 +99,6 @@ class ShowMods(qtw.QWidget):
         self.show()
         return self.app.exec()  # kan evt. ook weer via sys.exit()
 
-    def confirm(self):
-        "build a list from the checked entries and pass it back to the caller"
-        modnames = []
-        all_widgets = self.plotted_widgets | self.unplotted_widgets
-        for hbox, label, check in all_widgets.values():
-            if check.isChecked():
-                labeltext = label.text()
-                if ">" in labeltext:
-                    linktext = labeltext.split(">", 1)[1].split("<", 1)[0]
-                else:
-                    linktext = labeltext
-                modnames.append(linktext)
-        self.master.select_activations(modnames)
-        if self.master.directories:   # alleen leeg als er niks aangevinkt is
-            self.master.activate()
-        self.refresh_widget_data()
-        qtw.QMessageBox.information(self, 'Change Config', 'wijzigingen zijn doorgevoerd')
-        self.activate_button.setEnabled(False)
-
     def refresh_widgets(self, first_time=False):  # , reorder_widgets=True):
         "set the checkboxes to the right values (first time: also create them)"
         # on first-time we build all the checkbox containers
@@ -187,22 +167,6 @@ class ShowMods(qtw.QWidget):
             self.master.screeninfo[text]['pos'] = f'{rownum}x{colnum}'
         return positions, widgets
 
-    def set_texts_for_grid(self, positions, widgets):
-        """add texts to the widgets
-        """
-        for pos, info in positions.items():
-            text, data = info
-            label = widgets[pos][1]
-            self.build_screen_text(label, text, data['txt'], data['key'])
-
-    def set_checks_for_grid(self, positions, widgets):
-        "determine what value to set the checkboxes to"
-        for pos, info in positions.items():
-            data = info[1]
-            check = widgets[pos][2]
-            loc = os.path.join(self.master.modbase, data['dir'])
-            check.setChecked(os.path.exists(loc))
-
     def add_checkbox(self, selectable):
         "add a checkbox with the given text"
         hbox = qtw.QHBoxLayout()
@@ -221,6 +185,33 @@ class ShowMods(qtw.QWidget):
         hbox.addSpacing(50)
         return hbox, label, check
 
+    def set_texts_for_grid(self, positions, widgets):
+        """add texts to the widgets
+        """
+        for pos, info in positions.items():
+            text, data = info
+            label = widgets[pos][1]
+            self.build_screen_text(label, text, data['txt'], data['key'])
+
+    def build_screen_text(self, label, name, text, updateid):
+        """optionally turn screen text into a link and add remark
+        """
+        if updateid:
+            nexustext = '<a href="https://www.nexusmods.com/stardewvalley/mods/{}">{}</a>'
+            name = nexustext.format(updateid, name)
+            label.setOpenExternalLinks(True)
+        if text:
+            name += ' ' + text
+        label.setText(name)
+
+    def set_checks_for_grid(self, positions, widgets):
+        "determine what value to set the checkboxes to"
+        for pos, info in positions.items():
+            data = info[1]
+            check = widgets[pos][2]
+            loc = os.path.join(self.master.modbase, data['dir'])
+            check.setChecked(os.path.exists(loc))
+
     def enable_button(self):
         "make activating mods possible"
         self.activate_button.setEnabled(True)
@@ -233,6 +224,25 @@ class ShowMods(qtw.QWidget):
         if ok:
             report = self.master.update_mods(filenames)
             qtw.QMessageBox.information(self, 'Change Config', '\n'.join(report))
+
+    def confirm(self):
+        "build a list from the checked entries and pass it back to the caller"
+        modnames = []
+        all_widgets = self.plotted_widgets | self.unplotted_widgets
+        for hbox, label, check in all_widgets.values():
+            if check.isChecked():
+                labeltext = label.text()
+                if ">" in labeltext:
+                    linktext = labeltext.split(">", 1)[1].split("<", 1)[0]
+                else:
+                    linktext = labeltext
+                modnames.append(linktext)
+        self.master.select_activations(modnames)
+        if self.master.directories:   # alleen leeg als er niks aangevinkt is
+            self.master.activate()
+        self.refresh_widget_data()
+        qtw.QMessageBox.information(self, 'Change Config', 'wijzigingen zijn doorgevoerd')
+        self.activate_button.setEnabled(False)
 
     # def add_entries_for_name(self, name):
     #     "add entries for managing the new mod in the gui"
@@ -264,17 +274,6 @@ class ShowMods(qtw.QWidget):
                 else:
                     ok = True
         return item
-
-    def build_screen_text(self, label, name, text, updateid):
-        """optionally turn screen text into a link and add remark
-        """
-        if updateid:
-            nexustext = '<a href="https://www.nexusmods.com/stardewvalley/mods/{}">{}</a>'
-            name = nexustext.format(updateid, name)
-            label.setOpenExternalLinks(True)
-        if text:
-            name += ' ' + text
-        label.setText(name)
 
 
 class SettingsDialog(qtw.QDialog):
@@ -469,7 +468,7 @@ class AttributesDialog(qtw.QDialog):
     def enable_select(self):
         """disable buttons after selecting another mod
         """
-        self.select_button.setEnabled(True)
+        # self.select_button.setEnabled(True)
         self.comps_button.setDisabled(True)
         self.deps_button.setDisabled(True)
         self.change_button.setDisabled(True)
@@ -477,7 +476,6 @@ class AttributesDialog(qtw.QDialog):
     def process(self):
         "get description if any"
         # self.select_button.setDisabled(True)
-        self.change_button.setDisabled(True)
         self.choice = self.lbox.currentText()
         if self.choice == self.seltext:
             self.name.setEnabled(False)
@@ -504,6 +502,7 @@ class AttributesDialog(qtw.QDialog):
         self.exempt_button.setEnabled(True)
         self.comps_button.setDisabled(False)
         self.deps_button.setDisabled(False)
+        self.change_button.setDisabled(True)
 
     def clear_name_text(self):
         "visually delete screen text"
@@ -533,7 +532,6 @@ class AttributesDialog(qtw.QDialog):
             for dep in self.conf.get_component_data(comp, self.conf.DEPS):
                 deplist.add(dep)
         depnames = []
-        # maxlen = 0
         for dep in sorted(deplist):
             try:
                 depname = self.conf.get_component_data(dep, self.conf.NAME)
@@ -542,7 +540,6 @@ class AttributesDialog(qtw.QDialog):
                 depnames.append((depname, dep))
             else:
                 depnames.append((depname, f'({dep})'))
-            # maxlen = max(maxlen, len(depname) + len(dep) + 4)
         if not depnames:
             depnames = [('None', '')]
         message = f'Dependencies for {self.choice}:\n' + "\n".join(f' {x} {y}'
@@ -556,7 +553,18 @@ class AttributesDialog(qtw.QDialog):
         self.clear_text_button.setDisabled(True)
         self.change_button.setDisabled(True)
         selectable = self.activate_button.isChecked()
-        oldselect = self.parent.master.screeninfo[self.choice]['sel']
+        try:
+            oldselect = self.parent.master.screeninfo[self.choice]['sel']
+        except KeyError:
+            message = ("Tweemaal schermnaam wijzigen van een mod zonder de dialoog"
+                       " af te breken en opnieuw te starten is helaas nog niet mogelijk")
+            # dat wil zeggen het lukt wel, maar niet zonder dump
+            # als ik aan het eind van deze dialoog self.choice de waarde van name geef
+            # dan krijg ik geen dump als ik het meteen doe maar als ik tussendoor
+            # een andere mod kies en dan naarr deze terugga gaat het alsnog mis
+            # bij het ophalen van de modgegevens uit de json configuratie
+            qtw.QMessageBox.information(self, 'SDVMM', message)
+            return
         self.parent.master.screeninfo[self.choice]['sel'] = selectable
         text = self.text.text()
         oldtext = self.parent.master.screeninfo[self.choice]['txt']
@@ -572,32 +580,48 @@ class AttributesDialog(qtw.QDialog):
             self.parent.master.attr_changes.append((self.choice, ''))
 
         rownum, colnum = [int(y) for y in self.parent.master.screeninfo[name]['pos'].split('x', 1)]
-        if oldselect:
-            try:
-                label = self.parent.plotted_widgets[(rownum, colnum)][1]
-            except KeyError:
-                label = self.parent.unplotted_widgets[(rownum, colnum)][1]
-        else:
-            label = self.parent.nonsel_widgets[(rownum, colnum)][1]
         if selectable != oldselect:
-            if selectable:
-                self.parent.not_selectable.remove(name)
-                self.parent.unplotted.append(name)
-            else:
-                if name in self.parent.unplotted:
-                    self.parent.unplotted.remove(name)
-                    self.parent.not_selectable.append(name)
-                else:
-                    message = ("Onselecteerbaar maken van mods met coordinaten in de config"
-                               " is helaas nog niet mogelijk")
-                    qtw.QMessageBox.information(self, 'SDVMM', message)
-                    return
+            if not self.switch_selectability(selectable, name, self.choice):
+                message = ("Onselecteerbaar maken van mods met coordinaten in de config"
+                           " is helaas nog niet mogelijk")
+                qtw.QMessageBox.information(self, 'SDVMM', message)
+                return
             self.parent.refresh_widgets()  # not first_time
         elif text != oldtext or name != self.choice:
             # alleen schermtekst wijzigen
-            label.setOpenExternalLinks(False)
-            self.parent.build_screen_text(label, name, text,
+            widgetlist = self.get_widget_list(rownum, colnum, oldselect)
+            widgetlist[1].setOpenExternalLinks(False)
+            self.parent.build_screen_text(widgetlist[1], name, text,
                                           self.parent.master.screeninfo[name]['key'])
+
+    def switch_selectability(self, selectable, name, oldname):
+        "move screeninfo keys to from unplotted to not_selectable or vice versa"
+        if selectable:
+            if name != oldname:
+                self.parent.not_selectable.remove(oldname)
+            else:
+                self.parent.not_selectable.remove(name)
+            self.parent.unplotted.append(name)
+        else:
+            if name in self.parent.unplotted or oldname in self.parent.unplotted:
+                if name != oldname:
+                    self.parent.unplotted.remove(oldname)
+                else:
+                    self.parent.unplotted.remove(name)
+                self.parent.not_selectable.append(name)
+            else:
+                return False
+        return True
+
+    def get_widget_list(self, rownum, colnum, selectable):
+        "retrieve list of windows depending on screen location and selectability"
+        if selectable:
+            try:
+                return self.parent.plotted_widgets[(rownum, colnum)]
+            except KeyError:
+                return self.parent.unplotted_widgets[(rownum, colnum)]
+        else:
+            return self.parent.nonsel_widgets[(rownum, colnum)]
 
 
 class SaveGamesDialog(qtw.QDialog):

@@ -1142,8 +1142,7 @@ class TestAttributesDialog:
                                            "called PushButton.__init__ with args () {}\n"
                                            "called PushButton.__init__ with args () {}\n")
         testobj.enable_select()
-        assert capsys.readouterr().out == ("called PushButton.setEnabled with arg `True`\n"
-                                           "called PushButton.setDisabled with arg `True`\n"
+        assert capsys.readouterr().out == ("called PushButton.setDisabled with arg `True`\n"
                                            "called PushButton.setDisabled with arg `True`\n"
                                            "called PushButton.setDisabled with arg `True`\n")
 
@@ -1188,7 +1187,6 @@ class TestAttributesDialog:
         testobj.process()
         assert testobj.choice == 'current text'
         assert capsys.readouterr().out == (
-                "called PushButton.setDisabled with arg `True`\n"
                 "called ComboBox.currentText\n"
                 "called ComboBox.clear\n"
                 "called ComboBox.addItem with arg `current text`\n"
@@ -1206,12 +1204,12 @@ class TestAttributesDialog:
                 "called CheckBox.setChecked with arg False\n"
                 "called CheckBox.setEnabled with arg True\n"
                 "called PushButton.setDisabled with arg `False`\n"
-                "called PushButton.setDisabled with arg `False`\n")
+                "called PushButton.setDisabled with arg `False`\n"
+                "called PushButton.setDisabled with arg `True`\n")
         monkeypatch.setattr(MockConf, 'list_components_for_dir', mock_list)
         testobj.process()
         assert testobj.choice == 'current text'
         assert capsys.readouterr().out == (
-                "called PushButton.setDisabled with arg `True`\n"
                 "called ComboBox.currentText\n"
                 "called ComboBox.clear\n"
                 "called ComboBox.addItem with arg `current text`\n"
@@ -1227,13 +1225,13 @@ class TestAttributesDialog:
                 "called CheckBox.setChecked with arg False\n"
                 "called CheckBox.setEnabled with arg True\n"
                 "called PushButton.setDisabled with arg `False`\n"
-                "called PushButton.setDisabled with arg `False`\n")
+                "called PushButton.setDisabled with arg `False`\n"
+                "called PushButton.setDisabled with arg `True`\n")
         testobj.seltext = 'qqq'
         monkeypatch.setattr(mockqtw.MockComboBox, 'currentText', mock_text)
         testobj.process()
         assert testobj.choice == 'qqq'
         assert capsys.readouterr().out == (
-                "called PushButton.setDisabled with arg `True`\n"
                 "called ComboBox.currentText\n"
                 "called ComboBox.setEnabled with arg False\n"
                 "called LineEdit.setEnabled with arg False\n"
@@ -1338,23 +1336,31 @@ class TestAttributesDialog:
                 " `Dependencies for xxx:\n None `\n")
 
     def test_update(self, monkeypatch, capsys):
-        """unittest for AttributesDialog.change_text
+        """unittest for AttributesDialog.update
         """
         def mock_refresh(*args):
             print('called ShowMods.refresh_widgets with args', args)
         def mock_build(*args):
             print('called ShowMods.build_screen_text with args', args)
+        def mock_switch(*args):
+            print('called AttributeDialog.switch_selectability with args', args)
+            return False
+        def mock_switch_2(*args):
+            print('called AttributeDialog.switch_selectability with args', args)
+            return True
+        def mock_get(*args):
+            print('called AttributeDialog.get_widget_list with args', args)
+            return ['widget', label]
         monkeypatch.setattr(testee.qtw, 'QMessageBox', mockqtw.MockMessageBox)
         testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.switch_selectability = mock_switch
+        testobj.get_widget_list = mock_get
         label = mockqtw.MockLabel()
         check = mockqtw.MockCheckBox()
         testobj.parent = types.SimpleNamespace(
                 master=types.SimpleNamespace(
                     screeninfo={'current text': {'txt': 'xxx', 'sel': True, 'pos': '2x2'}},
                     attr_changes=[]),
-                plotted_widgets={},
-                unplotted=['current text'], unplotted_widgets={(2, 2): ('', label, check)},
-                not_selectable=[], nonsel_widgets={},
                 refresh_widgets=mock_refresh,
                 build_screen_text=mock_build)
         testobj.name = mockqtw.MockComboBox()
@@ -1375,8 +1381,25 @@ class TestAttributesDialog:
                                            "called PushButton.__init__ with args () {}\n")
         testobj.choice = 'current text'
         testobj.update()
-        assert testobj.parent.unplotted == []
-        assert testobj.parent.not_selectable == ['current text']
+        assert testobj.parent.master.screeninfo == {'current text': {'txt': '', 'sel': False,
+                                                                     'opt': False, 'pos': '2x2'}}
+        assert testobj.parent.master.attr_changes == [('current text', '')]
+        assert capsys.readouterr().out == (
+                "called PushButton.setDisabled with arg `True`\n"
+                "called PushButton.setDisabled with arg `True`\n"
+                "called PushButton.setDisabled with arg `True`\n"
+                "called CheckBox.isChecked\n"
+                "called LineEdit.text\n"
+                "called CheckBox.isChecked\n"
+                "called ComboBox.currentText\n"
+                "called AttributeDialog.switch_selectability with args"
+                " (False, 'current text', 'current text')\n"
+                f"called MessageBox.information with args `{testobj}` `SDVMM`"
+                " `Onselecteerbaar maken van mods met coordinaten in de config"
+                " is helaas nog niet mogelijk`\n")
+        testobj.switch_selectability = mock_switch_2
+        testobj.parent.master.attr_changes = []
+        testobj.update()
         assert testobj.parent.master.screeninfo == {'current text': {'txt': '', 'sel': False,
                                                                      'opt': False, 'pos': '2x2'}}
         assert testobj.parent.master.attr_changes == [('current text', '')]
@@ -1386,16 +1409,13 @@ class TestAttributesDialog:
                                            "called CheckBox.isChecked\n"
                                            "called LineEdit.text\n"
                                            "called CheckBox.isChecked\n"
-                                           "called ComboBox.currentText\n"
-                                           "called ShowMods.refresh_widgets with args ()\n")
+                                           "called ComboBox.currentText\n")
         testobj.activate_button.setChecked(True)
         assert capsys.readouterr().out == "called CheckBox.setChecked with arg True\n"
         testobj.parent.master.attr_changes = []
         testobj.parent.nonsel_widgets = {(2, 2): ('', label, check)}
         testobj.parent.unplotted_widgets = {}
         testobj.update()
-        assert testobj.parent.unplotted == ['current text']
-        assert testobj.parent.not_selectable == []
         assert testobj.parent.master.screeninfo == {'current text': {'txt': '', 'sel': True,
                                                                      'opt': False, 'pos': '2x2'}}
         assert testobj.parent.master.attr_changes == [('current text', '')]
@@ -1406,30 +1426,32 @@ class TestAttributesDialog:
                                            "called LineEdit.text\n"
                                            "called CheckBox.isChecked\n"
                                            "called ComboBox.currentText\n"
+                                           "called AttributeDialog.switch_selectability with args"
+                                           " (True, 'current text', 'current text')\n"
                                            "called ShowMods.refresh_widgets with args ()\n")
-
         testobj.text.setText('qqq')
         assert capsys.readouterr().out == "called LineEdit.setText with arg `qqq`\n"
+        testobj.parent.master.attr_changes = []
         testobj.parent.master.screeninfo = {'current text': {'txt': 'yyy', 'sel': True,
                                                              'pos': '2x2', 'key': 'qq'}}
         testobj.parent.unplotted_widgets = {(2, 2): ('', label, check)}
-        testobj.parent.nonsel_widgets = {}
-        testobj.parent.master.attr_changes = []
         testobj.update()
         assert testobj.parent.master.screeninfo == {'current text': {'txt': 'qqq', 'sel': True,
                                                                      'opt': False, 'pos': '2x2',
                                                                      'key': 'qq'}}
         assert testobj.parent.master.attr_changes == [('current text', '')]
-        assert capsys.readouterr().out == ("called PushButton.setDisabled with arg `True`\n"
-                                           "called PushButton.setDisabled with arg `True`\n"
-                                           "called PushButton.setDisabled with arg `True`\n"
-                                           "called CheckBox.isChecked\n"
-                                           "called LineEdit.text\n"
-                                           "called CheckBox.isChecked\n"
-                                           "called ComboBox.currentText\n"
-                                           "called Label.setOpenExternalLinks with arg 'False'\n"
-                                           "called ShowMods.build_screen_text with args "
-                                           f"({label}, 'current text', 'qqq', 'qq')\n")
+        assert capsys.readouterr().out == (
+                "called PushButton.setDisabled with arg `True`\n"
+                "called PushButton.setDisabled with arg `True`\n"
+                "called PushButton.setDisabled with arg `True`\n"
+                "called CheckBox.isChecked\n"
+                "called LineEdit.text\n"
+                "called CheckBox.isChecked\n"
+                "called ComboBox.currentText\n"
+                "called AttributeDialog.get_widget_list with args (2, 2, True)\n"
+                "called Label.setOpenExternalLinks with arg 'False'\n"
+                "called ShowMods.build_screen_text with args "
+                f"({label}, 'current text', 'qqq', 'qq')\n")
         testobj.choice = 'xxx'
         testobj.parent.master.screeninfo = {'xxx': {'txt': 'yyy', 'sel': True, 'pos': '2x2',
                                                     'key': 'qq'}}
@@ -1439,28 +1461,6 @@ class TestAttributesDialog:
                                                                      'opt': False, 'pos': '2x2',
                                                                      'key': 'qq'}}
         assert testobj.parent.master.attr_changes == [('current text', 'xxx')]
-        assert capsys.readouterr().out == ("called PushButton.setDisabled with arg `True`\n"
-                                           "called PushButton.setDisabled with arg `True`\n"
-                                           "called PushButton.setDisabled with arg `True`\n"
-                                           "called CheckBox.isChecked\n"
-                                           "called LineEdit.text\n"
-                                           "called CheckBox.isChecked\n"
-                                           "called ComboBox.currentText\n"
-                                           "called Label.setOpenExternalLinks with arg 'False'\n"
-                                           "called ShowMods.build_screen_text with args "
-                                           f"({label}, 'current text', 'qqq', 'qq')\n")
-
-        testobj.parent.master.screeninfo = {'xxx': {'txt': 'yyy', 'sel': True, 'pos': '2x2',
-                                                    'key': 'qq'}}
-        testobj.parent.master.attr_changes = []
-        testobj.activate_button.setChecked(False)
-        assert capsys.readouterr().out == "called CheckBox.setChecked with arg False\n"
-        testobj.parent.unplotted = []
-        testobj.update()
-        assert testobj.parent.master.screeninfo == {'current text': {'txt': 'qqq', 'sel': False,
-                                                                     'pos': '2x2', 'key': 'qq',
-                                                                     'opt': False}}
-        assert testobj.parent.master.attr_changes == [('current text', 'xxx')]
         assert capsys.readouterr().out == (
                 "called PushButton.setDisabled with arg `True`\n"
                 "called PushButton.setDisabled with arg `True`\n"
@@ -1469,28 +1469,113 @@ class TestAttributesDialog:
                 "called LineEdit.text\n"
                 "called CheckBox.isChecked\n"
                 "called ComboBox.currentText\n"
-                f"called MessageBox.information with args `{testobj}` `SDVMM` `Onselecteerbaar"
-                " maken van mods met coordinaten in de config is helaas nog niet mogelijk`\n")
-        testobj.choice = 'current text'
-        testobj.parent.master.screeninfo = {'current text': {'txt': 'yyy', 'sel': False,
-                                                             'pos': '2x2', 'key': 'qq'}}
+                "called AttributeDialog.get_widget_list with args (2, 2, True)\n"
+                "called Label.setOpenExternalLinks with arg 'False'\n"
+                "called ShowMods.build_screen_text with args "
+                f"({label}, 'current text', 'qqq', 'qq')\n")
+        testobj.parent.master.screeninfo = {'asdf': {'txt': 'yyy', 'sel': True, 'pos': '2x2',
+                                                     'key': 'qq'}}
         testobj.parent.master.attr_changes = []
-        testobj.parent.nonsel_widgets = {(2, 2): ('', label, check)}
-        testobj.text.setText('yyy')
-        assert capsys.readouterr().out == "called LineEdit.setText with arg `yyy`\n"
         testobj.update()
-        assert testobj.parent.master.screeninfo == {'current text': {'txt': 'yyy', 'sel': False,
-                                                                     'pos': '2x2', 'key': 'qq',
-                                                                     'opt': False}}
-        assert testobj.parent.master.attr_changes == [('current text', '')]
         assert capsys.readouterr().out == (
                 "called PushButton.setDisabled with arg `True`\n"
                 "called PushButton.setDisabled with arg `True`\n"
                 "called PushButton.setDisabled with arg `True`\n"
                 "called CheckBox.isChecked\n"
-                "called LineEdit.text\n"
-                "called CheckBox.isChecked\n"
-                "called ComboBox.currentText\n")
+                f"called MessageBox.information with args `{testobj}` `SDVMM`"
+                " `Tweemaal schermnaam wijzigen van een mod zonder de dialoog af te breken"
+                " en opnieuw te starten is helaas nog niet mogelijk`\n")
+        # testobj.parent.master.screeninfo = {'xxx': {'txt': 'yyy', 'sel': True, 'pos': '2x2',
+        #                                             'key': 'qq'}}
+        # testobj.parent.master.attr_changes = []
+        # testobj.activate_button.setChecked(False)
+        # assert capsys.readouterr().out == "called CheckBox.setChecked with arg False\n"
+        # testobj.parent.unplotted = []
+        # testobj.update()
+        # assert testobj.parent.master.screeninfo == {'current text': {'txt': 'qqq', 'sel': False,
+        #                                                              'pos': '2x2', 'key': 'qq',
+        #                                                              'opt': False}}
+        # assert testobj.parent.master.attr_changes == [('current text', 'xxx')]
+        # assert capsys.readouterr().out == (
+        #         "called PushButton.setDisabled with arg `True`\n"
+        #         "called PushButton.setDisabled with arg `True`\n"
+        #         "called PushButton.setDisabled with arg `True`\n"
+        #         "called CheckBox.isChecked\n"
+        #         "called LineEdit.text\n"
+        #         "called CheckBox.isChecked\n"
+        #         "called ComboBox.currentText\n"
+        #         f"called MessageBox.information with args `{testobj}` `SDVMM` `Onselecteerbaar"
+        #         " maken van mods met coordinaten in de config is helaas nog niet mogelijk`\n")
+        # testobj.choice = 'current text'
+        # testobj.parent.master.screeninfo = {'current text': {'txt': 'yyy', 'sel': False,
+        #                                                      'pos': '2x2', 'key': 'qq'}}
+        # testobj.parent.master.attr_changes = []
+        # testobj.parent.nonsel_widgets = {(2, 2): ('', label, check)}
+        # testobj.text.setText('yyy')
+        # assert capsys.readouterr().out == "called LineEdit.setText with arg `yyy`\n"
+        # testobj.update()
+        # assert testobj.parent.master.screeninfo == {'current text': {'txt': 'yyy', 'sel': False,
+        #                                                              'pos': '2x2', 'key': 'qq',
+        #                                                              'opt': False}}
+        # assert testobj.parent.master.attr_changes == [('current text', '')]
+        # assert capsys.readouterr().out == (
+        #         "called PushButton.setDisabled with arg `True`\n"
+        #         "called PushButton.setDisabled with arg `True`\n"
+        #         "called PushButton.setDisabled with arg `True`\n"
+        #         "called CheckBox.isChecked\n"
+        #         "called LineEdit.text\n"
+        #         "called CheckBox.isChecked\n"
+        #         "called ComboBox.currentText\n")
+
+    def test_switch_selectability(self, monkeypatch, capsys):
+        """unittest for AttributesDialog.switch_selectability
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.parent = types.SimpleNamespace(unplotted=[], not_selectable=[])
+        with pytest.raises(ValueError):
+            testobj.switch_selectability(True, 'xxx', 'xxx')
+        # testobj.parent.unplotted = []
+        testobj.parent.not_selectable = ['xxx', 'yyy']
+        assert testobj.switch_selectability(True, 'xxx', 'xxx')
+        assert testobj.parent.unplotted == ['xxx']
+        assert testobj.parent.not_selectable == ['yyy']
+        testobj.parent.unplotted = []
+        testobj.parent.not_selectable = ['xxx', 'yyy']
+        assert testobj.switch_selectability(True, 'xxx', 'yyy')
+        assert testobj.parent.unplotted == ['xxx']
+        assert testobj.parent.not_selectable == ['xxx']
+        testobj.parent.unplotted = []
+        testobj.parent.not_selectable = []
+        assert not testobj.switch_selectability(False, 'xxx', 'xxx')
+        assert testobj.parent.unplotted == []
+        assert testobj.parent.not_selectable == []
+        testobj.parent.unplotted = ['xxx', 'yyy']
+        testobj.parent.not_selectable = []
+        assert testobj.switch_selectability(False, 'xxx', 'xxx')
+        assert testobj.parent.unplotted == ['yyy']
+        assert testobj.parent.not_selectable == ['xxx']
+        testobj.parent.unplotted = ['xxx', 'yyy']
+        testobj.parent.not_selectable = []
+        assert testobj.switch_selectability(False, 'xxx', 'yyy')
+        assert testobj.parent.unplotted == ['xxx']
+        assert testobj.parent.not_selectable == ['xxx']
+
+    def test_get_widget_list(self, monkeypatch, capsys):
+        """unittest for AttributesDialog.get_widget_list
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.parent = types.SimpleNamespace(plotted_widgets={(1, 2): ['x']},
+                                               unplotted_widgets={(1, 2): ['y']},
+                                               nonsel_widgets={(1, 2): ['z']})
+        assert testobj.get_widget_list(1, 2, True) == ['x']
+        testobj.parent = types.SimpleNamespace(plotted_widgets={(1, 3): ['x']},
+                                               unplotted_widgets={(1, 2): ['y']},
+                                               nonsel_widgets={(1, 2): ['z']})
+        assert testobj.get_widget_list(1, 2, True) == ['y']
+        testobj.parent = types.SimpleNamespace(plotted_widgets={(1, 2): ['x']},
+                                               unplotted_widgets={(1, 2): ['y']},
+                                               nonsel_widgets={(1, 2): ['z']})
+        assert testobj.get_widget_list(1, 2, False) == ['z']
 
 
 class TestSaveGamesDialog:

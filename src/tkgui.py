@@ -94,6 +94,10 @@ class ShowMods():
         self.root.bind('<Alt-x>', self.stop)
         self.root.bind('<Control-q>', self.stop)
 
+    def show_screen(self):
+        "show the screen and start the event loop"
+        self.root.mainloop()
+
     def refresh_widgets(self, first_time=False):
         "set the checkboxes to the right values (first time: also create them)"
         self.attr_button.state([f'{"!" if self.master.screeninfo else ""}disabled'])
@@ -121,6 +125,14 @@ class ShowMods():
         self.nonsel_positions, self.nonsel_widgets = self.add_items_to_grid(
             self.dependencies, self.not_selectable)
         self.refresh_widget_data(texts_also=True)
+
+    def refresh_widget_data(self, texts_also=False):
+        "actually set the extra texts and checks"
+        if texts_also:
+            self.set_texts_for_grid(self.unplotted_positions, self.unplotted_widgets)
+            self.set_texts_for_grid(self.nonsel_positions, self.nonsel_widgets)
+        self.set_checks_for_grid(self.unplotted_positions, self.unplotted_widgets)
+        self.set_checks_for_grid(self.nonsel_positions, self.nonsel_widgets)
 
     def add_items_to_grid(self, root, items):
         "create the screen widgets and and remember their positions"
@@ -153,14 +165,6 @@ class ShowMods():
         label.grid(column=2, row=0)  # .pack(side=LEFT)
         return frm, label, check, labeltext, checkstate
 
-    def refresh_widget_data(self, texts_also=False):
-        "actually set the extra texts and checks"
-        if texts_also:
-            self.set_texts_for_grid(self.unplotted_positions, self.unplotted_widgets)
-            self.set_texts_for_grid(self.nonsel_positions, self.nonsel_widgets)
-        self.set_checks_for_grid(self.unplotted_positions, self.unplotted_widgets)
-        self.set_checks_for_grid(self.nonsel_positions, self.nonsel_widgets)
-
     def set_texts_for_grid(self, positions, widgets):
         "add texts to the widgets"
         for pos, info in positions.items():
@@ -189,10 +193,6 @@ class ShowMods():
             widgets[pos][4].set(int(os.path.exists(loc)))
             widgets[pos] = (widgets[pos][0], widgets[pos][1], widgets[pos][2], widgets[pos][3],
                             widgets[pos][4])
-
-    def show_screen(self):
-        "show the screen and start the event loop"
-        self.root.mainloop()
 
     def stop(self, event):
         "button callback to close the application"
@@ -467,7 +467,7 @@ class AttributesDialog(tk.Toplevel):
     def enable_select(self, event=None):
         """disable buttons after selecting another mod
         """
-        self.select_button.state(['!disabled'])
+        # self.select_button.state(['!disabled'])
         self.comps_button.state(['disabled'])
         self.deps_button.state(['disabled'])
         self.change_button.state(['disabled'])
@@ -507,13 +507,11 @@ class AttributesDialog(tk.Toplevel):
         "visually delete screen text"
         self.scrname.set('')
         # self.name.delete(0, 'end')
-        self.enable_change()
 
     def clear_text_text(self, event=None):
         "visually delete additional text if any"
         self.scrtext.set('')
         # self.text.delete(0, 'end')
-        self.enable_change()
 
     def view_components(self, event=None):
         "list components for mod"
@@ -559,9 +557,7 @@ class AttributesDialog(tk.Toplevel):
         text = self.scrtext.get()
         oldtext = self.parent.master.screeninfo[self.choice]['txt']
         self.parent.master.screeninfo[self.choice]['txt'] = text
-        # old_exempt = self.parent.master.screeninfo[self.choice]['opt']
         self.parent.master.screeninfo[self.choice]['opt'] = self.exempt_button.instate(['selected'])
-        # is_exempt = self.exempt_button.isChecked()
         name = self.scrname.get()
         if name != self.choice:
             self.parent.master.screeninfo[name] = self.parent.master.screeninfo.pop(self.choice)
@@ -570,33 +566,50 @@ class AttributesDialog(tk.Toplevel):
             self.parent.master.attr_changes.append((self.choice, ''))
 
         rownum, colnum = [int(y) for y in self.parent.master.screeninfo[name]['pos'].split('x', 1)]
-        if oldselect:
-            try:
-                label = self.parent.plotted_widgets[(rownum, colnum)][1]
-            except KeyError:
-                label = self.parent.unplotted_widgets[(rownum, colnum)][1]
-        else:
-            label = self.parent.nonsel_widgets[(rownum, colnum)][1]
         if selectable != oldselect:
-            if selectable:
-                self.parent.not_selectable.remove(name)
-                self.parent.unplotted.append(name)
-            else:
-                if name in self.parent.unplotted:
-                    self.parent.unplotted.remove(name)
-                    self.parent.not_selectable.append(name)
-                else:
-                    message = ("Onselecteerbaar maken van mods met coordinaten in de config"
-                               " is helaas nog niet mogelijk")
-                    MessageBox.showinfo(parent=self, message=message)
-                    return
+            if not self.switch_selectability(selectable, name, self.choice):
+                message = ("Onselecteerbaar maken van mods met coordinaten in de config"
+                           " is helaas nog niet mogelijk")
+                MessageBox.showinfo(parent=self, message=message)
+                return
             self.parent.refresh_widgets()  # not first_time
         elif text != oldtext or name != self.choice:
+            widgetlist = self.get_widget_list(rownum, colnum, oldselect)
             # alleen schermtekst wijzigen
-            # label.setOpenExternalLinks(False)
-            self.parent.build_screen_text(label, name, text,
+            # widgetlist[1].setOpenExternalLinks(False)
+            self.parent.build_screen_text(widgetlist, name, text,
                                           self.parent.master.screeninfo[name]['key'])
         self.change_button.state(['disabled'])
+
+    def switch_selectability(self, selectable, name, oldname):
+        "move screeninfo keys to from unplotted to not_selectable or vice versa"
+        if selectable:
+            if name != self.choice:
+                self.parent.not_selectable.remove(oldname)
+            else:
+                self.parent.not_selectable.remove(name)
+            self.parent.unplotted.append(name)
+        else:
+            # breakpoint()
+            if name in self.parent.unplotted or oldname in self.parent.unplotted:
+                if name != oldname:
+                    self.parent.unplotted.remove(self.choice)
+                else:
+                    self.parent.unplotted.remove(name)
+                self.parent.not_selectable.append(name)
+            else:
+                return False
+        return True
+
+    def get_widget_list(self, rownum, colnum, oldselect):
+        "retrieve list of windows depending on screen location and selectability"
+        if oldselect:
+            try:
+                return self.parent.plotted_widgets[(rownum, colnum)]  # [1]
+            except KeyError:
+                return self.parent.unplotted_widgets[(rownum, colnum)]  # [1]
+        else:
+            return self.parent.nonsel_widgets[(rownum, colnum)]  # [1]
 
     def close(self, event=None):
         "close the dialog"
