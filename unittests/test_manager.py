@@ -1,5 +1,6 @@
 """unittests for ./src/manager.py
 """
+import types
 import pytest
 from src import manager as testee
 
@@ -21,7 +22,7 @@ class MockManager:
 class MockConf:
     """testdouble object mimicking configparser.ConfigParser class
     """
-    SCRNAM, SEL, SCRPOS, NXSKEY, SCRTXT, DIR, DEPS, COMPS, NAME, VER = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+    SCRNAM, SEL, SCRPOS, NXSKEY, SCRTXT, DIR, DEPS, COMPS, NAME, VRS = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
     OPTOUT = 10
     def __init__(self, *args, **kwargs):
         print('called JsonConf.__init__ with args', args, kwargs)
@@ -33,6 +34,24 @@ class MockConf:
         """stub
         """
         print("called JsonConf.save")
+    def list_components_for_dir(self, name):
+        "stub"
+        print(f"called Conf.list_components_for_dir with arg '{name}'")
+        return ['xxx', 'yyy']
+    def get_diritem_data(self, *args):
+        "stub"
+        print("called Conf.get_diritem_data with args", args)
+        return f'{args[0]}_name'
+    def get_component_data(self, *args):
+        "stub"
+        print("called Conf.get_component_data with args", args)
+        if args[1] == self.NAME:
+            return f'{args[0]}_compname'
+        if args[1] == self.DEPS:
+            return [f'{args[0]}_depname']
+        if args[1] == self.VRS:
+            return f'{args[0]}_version'
+        return f'{args[0]}_name'
 
 
 class MockShowMods:
@@ -60,7 +79,6 @@ class MockShowMods:
         print('called gui.ShowMods.refresh_widgets with args', kwargs)
 
 
-# conditie aangevuld met mhgelijkheid dat CONFIG nog geen waarde heeft
 def test_main(monkeypatch, capsys, tmp_path):
     """unittest for manager.main
     """
@@ -297,6 +315,222 @@ class TestManager:
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.NXSKEY}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRTXT}')\n")
 
+    def test_order_widgets(self, monkeypatch, capsys):
+        """unittest for ShowMods.order_widgets
+        """
+        def mock_remove(*args):
+            print('called ShowMods.remove_widgets with args', args)
+        def mock_add(*args):
+            print('called ShowMods.add_items_to_grid with args', args)
+            if args[0] == ['selectables']:
+                return {('p', 'q'): 'rrr'}, {('s', 't'): 'uvw'}
+            return {('x', 'y'): 'zzz'}, {('a', 'b'): 'ccc'}
+        def mock_refresh(**kwargs):
+            print('called Manager.refresh_widget_data with args', kwargs)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.doit = types.SimpleNamespace(remove_widgets=mock_remove)
+        testobj.add_items_to_grid = mock_add
+        testobj.refresh_widget_data = mock_refresh
+        testobj.unplotted = []
+        testobj.unplotted_widgets = {}
+        testobj.unplotted_positions = {}
+        testobj.not_selectable = []
+        testobj.nonsel_widgets = {}
+        testobj.nonsel_positions = {}
+        testobj.screeninfo = {'abc': {'sel': True}, 'def': {'sel': False}}
+        testobj.order_widgets(True, ['selectables'], ['dependencies'])
+        assert testobj.unplotted == ['abc']
+        assert testobj.unplotted_widgets == {('s', 't'): 'uvw'}
+        assert testobj.unplotted_positions == {('p', 'q'): 'rrr'}
+        assert testobj.not_selectable == ['def']
+        assert testobj.nonsel_widgets == {('a', 'b'): 'ccc'}
+        assert testobj.nonsel_positions == {('x', 'y'): 'zzz'}
+        assert capsys.readouterr().out == (
+                "called ShowMods.add_items_to_grid with args (['selectables'], ['abc'])\n"
+                "called ShowMods.add_items_to_grid with args (['dependencies'], ['def'])\n"
+                "called Manager.refresh_widget_data with args {'texts_also': True}\n")
+        testobj.order_widgets(False, ['selectables'], ['dependencies'])
+        assert testobj.unplotted == ['abc']
+        assert testobj.unplotted_widgets == {('s', 't'): 'uvw'}
+        assert testobj.unplotted_positions == {('p', 'q'): 'rrr'}
+        assert testobj.not_selectable == ['def']
+        assert testobj.nonsel_widgets == {('a', 'b'): 'ccc'}
+        assert testobj.nonsel_positions == {('x', 'y'): 'zzz'}
+        assert capsys.readouterr().out == (
+                "called ShowMods.remove_widgets with args ('uvw', ['selectables'], 's', 't')\n"
+                "called ShowMods.remove_widgets with args ('ccc', ['dependencies'], 'a', 'b')\n"
+                "called ShowMods.add_items_to_grid with args (['selectables'], ['abc'])\n"
+                "called ShowMods.add_items_to_grid with args (['dependencies'], ['def'])\n"
+                "called Manager.refresh_widget_data with args {'texts_also': True}\n")
+
+    def test_add_items_to_grid(self, monkeypatch, capsys):
+        """unittest for ShowMods.add_items_to_grid
+        """
+        def mock_add(*args):
+            print("called ShowMods.add_checkbox")
+            return 'hbox', 'btn', 'cbox'
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.doit = types.SimpleNamespace(add_checkbox=mock_add)
+        testobj.screeninfo = {'x': {'sel': True}, 'y': {'sel': True}, 'z': {'sel': False},
+                                     'q': {'sel': False}}
+        assert testobj.add_items_to_grid('grid', []) == ({}, {})
+        assert capsys.readouterr().out == ""
+        assert testobj.add_items_to_grid('grid', ['x', 'y', 'z', 'q']) == (
+                {(0, 0): ('q', {'sel': False, 'pos': '0x0'}),
+                 (0, 1): ('x', {'sel': True, 'pos': '0x1'}),
+                 (0, 2): ('y', {'sel': True, 'pos': '0x2'}),
+                 (1, 0): ('z', {'sel': False, 'pos': '1x0'})},
+                {(0, 0): ('hbox', 'btn', 'cbox'),
+                 (0, 1): ('hbox', 'btn', 'cbox'),
+                 (0, 2): ('hbox', 'btn', 'cbox'),
+                 (1, 0): ('hbox', 'btn', 'cbox')})
+        assert capsys.readouterr().out == ("called ShowMods.add_checkbox\n"
+                                           "called ShowMods.add_checkbox\n"
+                                           "called ShowMods.add_checkbox\n"
+                                           "called ShowMods.add_checkbox\n")
+
+    def test_refresh_widget_data(self, monkeypatch, capsys):
+        """unittest for ShowMods.refresh_widgets
+        """
+        def mock_set1(*args):
+            print("called Showmods.set_texts_for_grid with args", args)
+        def mock_set2(*args):
+            print("called Showmods.set_checks_for_grid with args", args)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.doit = types.SimpleNamespace()
+        testobj.set_texts_for_grid = mock_set1
+        testobj.set_checks_for_grid = mock_set2
+        # testobj.plotted_widgets = {'x': '1', 'y': '2'}
+        # testobj.plotted_positions = {'a': 1, 'b': 2}
+        testobj.unplotted_widgets = {'x': '3', 'z': '4'}
+        testobj.unplotted_positions = {'a': 3, 'c': 4}
+        testobj.nonsel_widgets = {'q': 'r'}
+        testobj.nonsel_positions = {'p': 's'}
+        testobj.refresh_widget_data()
+        assert capsys.readouterr().out == (
+                "called Showmods.set_checks_for_grid with args"
+                " ({'a': 3, 'c': 4}, {'x': '3', 'z': '4'})\n"
+                "called Showmods.set_checks_for_grid with args ({'p': 's'}, {'q': 'r'})\n")
+        testobj.refresh_widget_data(texts_also=True)
+        assert capsys.readouterr().out == (
+                "called Showmods.set_texts_for_grid with args"
+                " ({'a': 3, 'c': 4}, {'x': '3', 'z': '4'})\n"
+                "called Showmods.set_texts_for_grid with args ({'p': 's'}, {'q': 'r'})\n"
+                "called Showmods.set_checks_for_grid with args"
+                " ({'a': 3, 'c': 4}, {'x': '3', 'z': '4'})\n"
+                "called Showmods.set_checks_for_grid with args ({'p': 's'}, {'q': 'r'})\n")
+
+    def test_set_texts_for_grid(self, monkeypatch, capsys):
+        """unittest for ShowMods.set_texts_for_grid
+        """
+        def mock_set(*args):
+            print('called ShowMods.set_label_text with args', args)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.doit = types.SimpleNamespace(set_label_text=mock_set)
+        widgets = {}
+        positions = {}
+        testobj.set_texts_for_grid(positions, widgets)
+        assert capsys.readouterr().out == ""
+        widgets = {(0, 1): ('', 'label1', ''), (1, 1): ('', 'label2', '')}
+        positions = {(0, 1): ('aaa', {'txt': '', 'key': ''}),
+                     (1, 1): ('bbb', {'txt': 'xxx', 'key': 'yyy'})}
+        testobj.set_texts_for_grid(positions, widgets)
+        assert capsys.readouterr().out == (
+                "called ShowMods.set_label_text with args (('', 'label1', ''),"
+                " 'aaa', '', '')\n"
+                "called ShowMods.set_label_text with args (('', 'label2', ''),"
+                " 'bbb', 'yyy', 'xxx')\n")
+
+    def test_build_link_text(self, monkeypatch, capsys):
+        """unittest for ShowMods.build_link_text
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        assert testobj.build_link_text('xxx', 'zz') == (
+                '<a href=\"https://www.nexusmods.com/stardewvalley/mods/zz\">xxx</a>')
+
+    def test_set_checks_for_grid(self, monkeypatch, capsys, tmp_path):
+        """unittest for ShowMods.set_checks_for_grid
+        """
+        def mock_set(*args):
+            print('called ShowMods.set_checkbox_state with args', args)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.doit = types.SimpleNamespace(set_checkbox_state=mock_set)
+        monkeypatch.setattr(testobj, 'modbase', tmp_path)
+        (tmp_path / 'xxx').mkdir()
+        testobj.enable_button = lambda x: 'dummy'
+        widgets = {}
+        positions = {}
+        testobj.set_checks_for_grid(positions, widgets)
+        assert capsys.readouterr().out == ""
+        widgets = {(0, 1): ('', '', 'check1'), (1, 1): ('', '', 'check2'), (1, 2): ('', '', 'check3')}
+        positions = {(0, 1): ('aaa', {'dir': 'qqq', 'sel': True}),
+                     (1, 1): ('bbb', {'dir': 'xxx', 'sel': True}),
+                     (1, 2): ('ccc', {'dir': 'rrr', 'sel': False})}
+        testobj.set_checks_for_grid(positions, widgets)
+        assert capsys.readouterr().out == (
+                "called ShowMods.set_checkbox_state with args (('', '', 'check1'), False)\n"
+                "called ShowMods.set_checkbox_state with args (('', '', 'check2'), True)\n"
+                "called ShowMods.set_checkbox_state with args (('', '', 'check3'), False)\n")
+
+    def test_process_activations(self, monkeypatch, capsys):
+        """unittest for Manager.process_activations
+        """
+        def mock_get(arg):
+            """stub
+            """
+            print('called ShowMods.get_labeltext_if_checked with arg', arg)
+            return ''
+        def mock_get_2(arg):
+            """stub
+            """
+            print('called ShowMods.get_labeltext_if_checked with arg', arg)
+            return 'labeltext'
+        def mock_select(self, arg):
+            """stub
+            """
+            print('called Manager.select_activations with arg', arg)
+            self.directories = []
+        def mock_select_2(self, names):
+            """stub
+            """
+            print(f'called Manager.select_activations with arg {names}')
+            self.directories = ['x']
+        def mock_activate():
+            """stub
+            """
+            print('called Manager.activate')
+        def mock_refresh(**kwargs):
+            """stub
+            """
+            print('called Manager.refresh_widget_data')
+        monkeypatch.setattr(testee.Manager, 'select_activations', mock_select)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.doit = types.SimpleNamespace(get_labeltext_if_checked=mock_get)
+        testobj.activate = mock_activate
+        testobj.refresh_widget_data = mock_refresh
+        testobj.unplotted_widgets = {'x': ['widget', 'list']}
+        testobj.process_activations()
+        assert testobj.directories == []
+        assert capsys.readouterr().out == (
+                "called ShowMods.get_labeltext_if_checked with arg ['widget', 'list']\n"
+                "called Manager.select_activations with arg []\n"
+                "called Manager.refresh_widget_data\n")
+        testobj.doit.get_labeltext_if_checked = mock_get_2
+        testobj.process_activations()
+        assert testobj.directories == []
+        assert capsys.readouterr().out == (
+                "called ShowMods.get_labeltext_if_checked with arg ['widget', 'list']\n"
+                "called Manager.select_activations with arg ['labeltext']\n"
+                "called Manager.refresh_widget_data\n")
+        monkeypatch.setattr(testee.Manager, 'select_activations', mock_select_2)
+        testobj.process_activations()
+        assert testobj.directories == ['x']
+        assert capsys.readouterr().out == (
+                "called ShowMods.get_labeltext_if_checked with arg ['widget', 'list']\n"
+                "called Manager.select_activations with arg ['labeltext']\n"
+                "called Manager.activate\n"
+                "called Manager.refresh_widget_data\n")
+
     def test_select_activations(self, monkeypatch, capsys):
         """unittest for Manager.select_activations
         """
@@ -455,6 +689,179 @@ class TestManager:
                 "called Conf.set_diritem_value with args ('zzz-dir', 10, True)\n"
                 "called JsonConf.save\n")
 
+    def test_get_mod_components(self, monkeypatch, capsys):
+        """unittest for Manager.get_mod_components
+        """
+        def mock_list(self, name):
+            "stub"
+            print(f"called Conf.list_components_for_dir with arg '{name}'")
+            return []
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        assert testobj.get_mod_components('aaa') == ("Components for aaa:\n"
+                                                     "  xxx_compname   xxx_version\n"
+                                                     "    (xxx)\n"
+                                                     "  yyy_compname   yyy_version\n"
+                                                     "    (yyy)")
+        assert capsys.readouterr().out == (
+                "called Conf.list_components_for_dir with arg 'aaa'\n"
+                "called Conf.get_component_data with args ('xxx', 8)\n"
+                "called Conf.get_component_data with args ('xxx', 9)\n"
+                "called Conf.get_component_data with args ('yyy', 8)\n"
+                "called Conf.get_component_data with args ('yyy', 9)\n")
+        monkeypatch.setattr(MockConf, 'list_components_for_dir', mock_list)
+        assert testobj.get_mod_components('aaa') == "Components for aaa:\n"
+        assert capsys.readouterr().out == "called Conf.list_components_for_dir with arg 'aaa'\n"
+
+    def test_get_mod_dependencies(self, monkeypatch, capsys):
+        """unittest for Manager.get_mod_dependencies
+        """
+        def mock_list(self, name):
+            "stub"
+            print(f"called Conf.list_components_for_dir with arg '{name}'")
+            return []
+        def mock_get(self, *args):
+            "stub"
+            print("called Conf.get_component_data with args", args)
+            if args[1] == self.DEPS:
+                return [f'{args[0]}_compname']
+            raise ValueError
+        def mock_get_2(self, *args):
+            "stub"
+            print("called Conf.get_component_data with args", args)
+            if args[1] == self.DEPS:
+                return [f'{args[0]}_depname']
+            if args[1] == self.NAME:
+                return f'{args[0]}_compname'
+            raise ValueError
+        monkeypatch.setattr(MockConf, 'get_component_data', mock_get)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        assert testobj.get_mod_dependencies('aaa') == ("Dependencies for aaa:\n"
+                                                       " unknown component: xxx_compname\n"
+                                                       " unknown component: yyy_compname")
+        assert capsys.readouterr().out == (
+                "called Conf.list_components_for_dir with arg 'aaa'\n"
+                "called Conf.get_component_data with args ('xxx', 6)\n"
+                "called Conf.get_component_data with args ('yyy', 6)\n"
+                "called Conf.get_component_data with args ('xxx_compname', 8)\n"
+                "called Conf.get_component_data with args ('yyy_compname', 8)\n")
+        monkeypatch.setattr(MockConf, 'get_component_data', mock_get_2)
+        assert testobj.get_mod_dependencies('aaa') == ("Dependencies for aaa:\n"
+                                                       " xxx_depname_compname (xxx_depname)\n"
+                                                       " yyy_depname_compname (yyy_depname)")
+        assert capsys.readouterr().out == (
+                "called Conf.list_components_for_dir with arg 'aaa'\n"
+                "called Conf.get_component_data with args ('xxx', 6)\n"
+                "called Conf.get_component_data with args ('yyy', 6)\n"
+                "called Conf.get_component_data with args ('xxx_depname', 8)\n"
+                "called Conf.get_component_data with args ('yyy_depname', 8)\n")
+        monkeypatch.setattr(MockConf, 'list_components_for_dir', mock_list)
+        assert testobj.get_mod_dependencies('aaa') == ("Dependencies for aaa:\n"
+                                                       " None ")
+        assert capsys.readouterr().out == "called Conf.list_components_for_dir with arg 'aaa'\n"
+
+    def test_update_attributes(self, monkeypatch, capsys):
+        """unittest for Manager.update_attributes
+        """
+        def mock_switch(*args):
+            print('called Manager.switch_selectability with args', args)
+            return False
+        def mock_switch_2(*args):
+            print('called Manager.switch_selectability with args', args)
+            return True
+        def mock_refresh(*args):
+            print('called ShowMods.refresh_widgets with args', args)
+        def mock_get(*args):
+            print('called Manager.get_widget_list with args', args)
+            return ['widget', 'label']
+        def mock_build(*args):
+            print('called ShowMods.build_screen_text with args', args)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.doit = types.SimpleNamespace(refresh_widgets=mock_refresh)
+        testobj.build_screen_text = mock_build
+        testobj.switch_by_selectability = mock_switch
+        testobj.get_widget_list = mock_get
+        testobj.screeninfo = {}
+        testobj.attr_changes = []
+        assert testobj.update_attributes(True, 'xxx', 'xxx', 'yyy', True) == (
+                False, 'Tweemaal schermnaam wijzigen van een mod zonder de dialoog af te breken'
+                ' en opnieuw te starten is helaas nog niet mogelijk')
+        assert capsys.readouterr().out == ""
+        testobj.screeninfo = {'xxx': {'sel': False, 'txt': '', 'opt': False, 'pos': '1x2'}}
+        assert testobj.update_attributes(True, 'xxx', 'xxx', 'yyy', True) == (True, '')
+        assert testobj.screeninfo == {'xxx': {'sel': True, 'txt': 'yyy', 'opt': True, 'pos': '1x2'}}
+        assert testobj.attr_changes == [('xxx', '')]
+        assert capsys.readouterr().out == (
+                "called Manager.switch_selectability with args (True, 'xxx', 'xxx')\n"
+                "called ShowMods.refresh_widgets with args ()\n")
+        testobj.screeninfo = {'xxx': {'sel': False, 'txt': '', 'opt': False, 'pos': '1x2', 'key': 1}}
+        testobj.attr_changes = []
+        assert testobj.update_attributes(False, 'yyy', 'xxx', '', False) == (True, '')
+        assert testobj.screeninfo == {'yyy': {'sel': False, 'txt': '', 'opt': False, 'pos': '1x2',
+                                              'key': 1}}
+        assert testobj.attr_changes == [('yyy', 'xxx')]
+        assert capsys.readouterr().out == (
+                "called Manager.get_widget_list with args (1, 2, False)\n"
+                "called ShowMods.build_screen_text with args (['widget', 'label'], 'yyy', '', 1)\n")
+        testobj.screeninfo = {'xxx': {'sel': False, 'txt': '', 'opt': False, 'pos': '1x2', 'key': 1}}
+        testobj.attr_changes = []
+        assert testobj.update_attributes(False, 'xxx', 'xxx', '', False) == (True, '')
+        assert testobj.screeninfo == {'xxx': {'sel': False, 'txt': '', 'opt': False, 'pos': '1x2',
+                                              'key': 1}}
+        assert testobj.attr_changes == [('xxx', '')]
+        assert capsys.readouterr().out == ''
+
+    def test_switch_by_selectability(self, monkeypatch, capsys):
+        """unittest for Manager.switch_selectability
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.unplotted = []
+        testobj.not_selectable = []
+        with pytest.raises(ValueError):
+            testobj.switch_by_selectability(True, 'xxx', 'xxx')
+        # testobj.parent.unplotted = []
+        testobj.not_selectable = ['xxx', 'yyy']
+        testobj.switch_by_selectability(True, 'xxx', 'xxx')
+        assert testobj.unplotted == ['xxx']
+        assert testobj.not_selectable == ['yyy']
+        testobj.unplotted = []
+        testobj.not_selectable = ['xxx', 'yyy']
+        testobj.switch_by_selectability(True, 'xxx', 'yyy')
+        assert testobj.unplotted == ['xxx']
+        assert testobj.not_selectable == ['xxx']
+        testobj.unplotted = []
+        testobj.not_selectable = []
+        with pytest.raises(ValueError):
+            testobj.switch_by_selectability(False, 'xxx', 'xxx')
+        assert testobj.unplotted == []
+        assert testobj.not_selectable == []
+        testobj.unplotted = ['xxx', 'yyy']
+        testobj.not_selectable = []
+        testobj.switch_by_selectability(False, 'xxx', 'xxx')
+        assert testobj.unplotted == ['yyy']
+        assert testobj.not_selectable == ['xxx']
+        testobj.unplotted = ['xxx', 'yyy']
+        testobj.not_selectable = []
+        testobj.switch_by_selectability(False, 'xxx', 'yyy')
+        assert testobj.unplotted == ['xxx']
+        assert testobj.not_selectable == ['xxx']
+
+    def test_get_widget_list(self, monkeypatch, capsys):
+        """unittest for Manager.get_widget_list
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.plotted_widgets = {(1, 2): ['x']}
+        testobj.unplotted_widgets = {(1, 2): ['y']}
+        testobj.nonsel_widgets = {(1, 2): ['z']}
+        assert testobj.get_widget_list(1, 2, True) == ['x']
+        testobj.plotted_widgets = {(1, 3): ['x']}
+        testobj.unplotted_widgets = {(1, 2): ['y']}
+        testobj.nonsel_widgets = {(1, 2): ['z']}
+        assert testobj.get_widget_list(1, 2, True) == ['y']
+        testobj.plotted_widgets = {(1, 2): ['x']}
+        testobj.unplotted_widgets = {(1, 2): ['y']}
+        testobj.nonsel_widgets = {(1, 2): ['z']}
+        assert testobj.get_widget_list(1, 2, False) == ['z']
+
     def test_manage_savefiles(self, monkeypatch, capsys):
         """unittest for Manager.manage_savefiles
         """
@@ -507,6 +914,8 @@ class TestManager:
             print(f"called Manager.install_zipfile with arg '{name}'")
             self.conf_changed = True
             return ['yyy'], True, True, ['ok']
+        def mock_move(name):
+            print('called move_zip_after_installing with arg', name)
         def mock_rename(*args):
             print('called os.rename with args', args)
         def mock_extract():
@@ -531,6 +940,7 @@ class TestManager:
             return ['done']
         # monkeypatch.setattr(testee, 'check_if_active', mock_check)
         monkeypatch.setattr(testee.os, 'rename', mock_rename)
+        monkeypatch.setattr(testee, 'move_zip_after_installing', mock_move)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.extract_screeninfo = mock_extract
         testobj.install_zipfile = mock_install
@@ -558,7 +968,7 @@ class TestManager:
             f"called Manager.get_data_for_config with args (['yyy'], False)\n"
             f"called Manager.determine_moddir with args (['yyy'],)\n"
             f"called Manager.add_mod_to_config with args ('root', (['done'], False))\n"
-            f"called os.rename with args ('{tmp_path}/xxx', '{tmp_path}/installed/xxx')\n"
+            f"called move_zip_after_installing with arg {tmp_path}/xxx\n"
             "called JsonConf.save\n"
             "called Manager.extract_screeninfo\n"
             "called gui.ShowMods.refresh_widgets with args {}\n")
@@ -570,7 +980,7 @@ class TestManager:
             f"called Manager.get_data_for_config with args (['yyy'], False)\n"
             f"called Manager.determine_moddir with args (['yyy'],)\n"
             f"called Manager.add_mod_to_config with args ('root', (['done'], True))\n"
-            f"called os.rename with args ('{tmp_path}/yyy', '{tmp_path}/installed/yyy')\n"
+            f"called move_zip_after_installing with arg {tmp_path}/yyy\n"
             "called JsonConf.save\n"
             "called Manager.extract_screeninfo\n"
             "called gui.ShowMods.refresh_widgets with args {}\n")
@@ -584,7 +994,7 @@ class TestManager:
             f"called Manager.get_data_for_config with args (['yyy'], False)\n"
             f"called Manager.determine_moddir with args (['yyy'],)\n"
             f"called Manager.update_mod_settings with args ('root', (['done'], False))\n"
-            f"called os.rename with args ('{tmp_path}/yyy', '{tmp_path}/installed/yyy')\n")
+            f"called move_zip_after_installing with arg {tmp_path}/yyy\n")
 
         testobj.update_mod_settings = mock_upd_2
         assert testobj.update_mods([str(tmp_path / 'yyy')]) == ['ok', 'done']
@@ -593,7 +1003,7 @@ class TestManager:
             f"called Manager.get_data_for_config with args (['yyy'], False)\n"
             f"called Manager.determine_moddir with args (['yyy'],)\n"
             f"called Manager.update_mod_settings with args ('root', (['done'], False))\n"
-            f"called os.rename with args ('{tmp_path}/yyy', '{tmp_path}/installed/yyy')\n"
+            f"called move_zip_after_installing with arg {tmp_path}/yyy\n"
             "called JsonConf.save\n")
 
         testobj.get_data_for_config = mock_get_2
@@ -603,7 +1013,7 @@ class TestManager:
             f"called Manager.get_data_for_config with args (['yyy'], False)\n"
             f"called Manager.determine_moddir with args (['yyy'],)\n"
             f"called Manager.update_mod_settings with args ('root', (['done'], True))\n"
-            f"called os.rename with args ('{tmp_path}/yyy', '{tmp_path}/installed/yyy')\n"
+            f"called move_zip_after_installing with arg {tmp_path}/yyy\n"
             "called JsonConf.save\n")
 
         testobj.install_zipfile = mock_install_5
@@ -614,7 +1024,7 @@ class TestManager:
             f"called Manager.get_data_for_config with args (['yyy'], True)\n"
             f"called Manager.determine_moddir with args (['yyy'],)\n"
             f"called Manager.update_mod_settings with args ('root', (['done'], False))\n"
-            f"called os.rename with args ('{tmp_path}/yyy', '{tmp_path}/installed/yyy')\n"
+            f"called move_zip_after_installing with arg {tmp_path}/yyy\n"
             "called JsonConf.save\n")
 
         testobj.get_data_for_config = mock_get_2
@@ -624,10 +1034,10 @@ class TestManager:
             f"called Manager.get_data_for_config with args (['yyy'], True)\n"
             f"called Manager.determine_moddir with args (['yyy'],)\n"
             f"called Manager.update_mod_settings with args ('root', (['done'], True))\n"
-            f"called os.rename with args ('{tmp_path}/yyy', '{tmp_path}/installed/yyy')\n"
+            f"called move_zip_after_installing with arg {tmp_path}/yyy\n"
             "called JsonConf.save\n")
 
-    def test_install_zipfile(self, monkeypatch, capsys):  # , tmp_path):
+    def test_install_zipfile(self, monkeypatch, capsys, tmp_path):
         """unittest for Manager.install_zipfile
         """
         class MockZipFile:
@@ -680,6 +1090,12 @@ class TestManager:
         def mock_add(*args):
             print('called Manager.add_mod_to_config with args', args)
             return ['xxx']
+        def mock_rename(*args):
+            print('called os.rename with args', args)
+        def mock_move(name):
+            print('called move_zip_after_installing with arg', name)
+        monkeypatch.setattr(testee, 'move_zip_after_installing', mock_move)
+        monkeypatch.setattr(testee.os, 'rename', mock_rename)
         testobj = self.setup_testobj(monkeypatch, capsys)
         monkeypatch.setattr(testee.subprocess, 'run', mock_run)
         monkeypatch.setattr(testee.zipfile, 'ZipFile', MockZipFile)
@@ -690,10 +1106,11 @@ class TestManager:
         monkeypatch.setattr(testee.shutil, 'rmtree', mock_rm)
         testobj.get_data_for_config = mock_get_data
         testobj.add_mod_to_config = mock_add
-        assert testobj.install_zipfile(testee.pathlib.Path('zipfile')) == (
-                [], None, None, ['zipfile: zipfile appears to be empty'])
+        zipfilepath = tmp_path / 'zipfile'
+        assert testobj.install_zipfile(zipfilepath) == (
+                [], None, None, [f'{zipfilepath}: zipfile appears to be empty'])
         assert capsys.readouterr().out == (
-                "called ZipFile.__init__ with args (PosixPath('zipfile'),)\n"
+                f"called ZipFile.__init__ with args ({zipfilepath!r},)\n"
                 "called ZipFile.__enter__\n"
                 "called ZipFile.namelist\n"
                 "called get_archive_roots with arg ['name', 'list']\n"
@@ -701,28 +1118,44 @@ class TestManager:
                 "called check_if_smapi with arg set()\n"
                 "called ZipFile.__exit__\n")
 
-        monkeypatch.setattr(testee, 'get_archive_roots', mock_get_2)
-        assert testobj.install_zipfile(testee.pathlib.Path('zipfile')) == (
+        monkeypatch.setattr(testee, 'get_archive_roots', mock_get_3)
+        zipfileinstalled = zipfilepath.parent / 'installed' / zipfilepath.name
+        assert testobj.install_zipfile(zipfilepath) == (
                 [], None, None, ["SMAPI-install is waiting in a terminal window to be finished"
                                  " by executing './install on Linux.sh'"])
         assert capsys.readouterr().out == (
-                "called ZipFile.__init__ with args (PosixPath('zipfile'),)\n"
+                f"called ZipFile.__init__ with args ({zipfilepath!r},)\n"
+                "called ZipFile.__enter__\n"
+                "called ZipFile.namelist\n"
+                "called get_archive_roots with arg ['name', 'list']\n"
+                "called check_if_active with arg {'root'}\n"
+                "called check_if_smapi with arg {'root'}\n"
+                "called ZipFile.__exit__\n"
+                "called subprocess.run with args"
+                f" (['unzip', {zipfilepath!r}, '-d', '/tmp'],) {{'check': True}}\n"
+                "called subprocess.run with args (['gnome-terminal'],) {'cwd': '/tmp/root'}\n"
+                f"called move_zip_after_installing with arg {zipfilepath}\n")
+
+        monkeypatch.setattr(testee, 'get_archive_roots', mock_get_2)
+        monkeypatch.setattr(testee, 'check_if_smapi', mock_check_smapi_2)
+        assert testobj.install_zipfile(zipfilepath) == (
+                {''}, False, False, [f'{zipfilepath} is successfully installed'])
+        assert capsys.readouterr().out == (
+                f"called ZipFile.__init__ with args ({zipfilepath!r},)\n"
                 "called ZipFile.__enter__\n"
                 "called ZipFile.namelist\n"
                 "called get_archive_roots with arg ['name', 'list']\n"
                 "called check_if_active with arg {''}\n"
                 "called check_if_smapi with arg {''}\n"
+                "called ZipFile.extractall with args ('modbase',)\n"
                 "called ZipFile.__exit__\n"
-                "called subprocess.run with args"
-                " (['unzip', PosixPath('zipfile'), '-d', '/tmp'],) {'check': True}\n"
-                "called subprocess.run with args (['gnome-terminal'],) {'cwd': '/tmp/'}\n")
+                "called shutil.rmtree with args ('modbase/__MACOSX',)\n")
 
         monkeypatch.setattr(testee, 'get_archive_roots', mock_get_3)
-        monkeypatch.setattr(testee, 'check_if_smapi', mock_check_smapi_2)
-        assert testobj.install_zipfile(testee.pathlib.Path('zipfile')) == (
-                {'root'}, False, False, ['zipfile is successfully installed'])
+        assert testobj.install_zipfile(zipfilepath) == (
+                {'root'}, False, False, [f'{zipfilepath} is successfully installed'])
         assert capsys.readouterr().out == (
-                "called ZipFile.__init__ with args (PosixPath('zipfile'),)\n"
+                f"called ZipFile.__init__ with args ({zipfilepath!r},)\n"
                 "called ZipFile.__enter__\n"
                 "called ZipFile.namelist\n"
                 "called get_archive_roots with arg ['name', 'list']\n"
@@ -733,10 +1166,10 @@ class TestManager:
                 "called shutil.rmtree with args ('modbase/__MACOSX',)\n")
 
         monkeypatch.setattr(testee.os.path, 'exists', lambda *x: False)
-        assert testobj.install_zipfile(testee.pathlib.Path('zipfile')) == (
-                {'root'}, False, False, ['zipfile is successfully installed'])
+        assert testobj.install_zipfile(zipfilepath) == (
+                {'root'}, False, False, [f'{zipfilepath} is successfully installed'])
         assert capsys.readouterr().out == (
-                "called ZipFile.__init__ with args (PosixPath('zipfile'),)\n"
+                f"called ZipFile.__init__ with args ({zipfilepath!r},)\n"
                 "called ZipFile.__enter__\n"
                 "called ZipFile.namelist\n"
                 "called get_archive_roots with arg ['name', 'list']\n"
@@ -958,7 +1391,7 @@ class TestManager:
             return {}
         def mock_get_comp_2(arg):
             print(f'called Conf.get_component_data with arg {arg}')
-            return {testobj.conf.NAME: 'xxx', testobj.conf.VER: '1.0', 'aaa': 'bbb'}
+            return {testobj.conf.NAME: 'xxx', testobj.conf.VRS: '1.0', 'aaa': 'bbb'}
         def mock_update(*args):
             print('called Conf.update_componentdata with args', args)
         testobj = self.setup_testobj(monkeypatch, capsys)
@@ -997,8 +1430,8 @@ class TestManager:
         testobj.conf.get_diritem_data = mock_get_dir_2
         testobj.conf.get_component_data = mock_get_comp_2
         assert testobj.update_mod_settings('moddir', {'config': {'newcomp': {
-            testobj.conf.NAME: 'xxx', testobj.conf.VER: '2.0', 'ppp': 'qqq'}}}) == (
-                    [f"  newcomp: {testobj.conf.VER} changed from '1.0' to '2.0'",
+            testobj.conf.NAME: 'xxx', testobj.conf.VRS: '2.0', 'ppp': 'qqq'}}}) == (
+                    [f"  newcomp: {testobj.conf.VRS} changed from '1.0' to '2.0'",
                      "  newcomp: new key ppp added with value 'qqq'",
                      "  newcomp: key aaa with value 'bbb' removed"], True)
         assert capsys.readouterr().out == (
@@ -1006,10 +1439,10 @@ class TestManager:
                 f"called Conf.get_diritem_data with args ('moddir', {testobj.conf.COMPS})\n"
                 "called Conf.get_component_data with arg newcomp\n"
                 "called Conf.update_componentdata with args ('newcomp', {"
-                f"{testobj.conf.NAME}: 'xxx', {testobj.conf.VER}: '2.0', 'ppp': 'qqq'}})\n")
+                f"{testobj.conf.NAME}: 'xxx', {testobj.conf.VRS}: '2.0', 'ppp': 'qqq'}})\n")
 
         assert testobj.update_mod_settings('moddir', {'config': {'newcomp': {
-            testobj.conf.NAME: 'xxx', testobj.conf.VER: '1.0', 'aaa': 'bbb'}}}) == ([], False)
+            testobj.conf.NAME: 'xxx', testobj.conf.VRS: '1.0', 'aaa': 'bbb'}}}) == ([], False)
         assert capsys.readouterr().out == (
                 "called Conf.has_moddir with arg moddir\n"
                 f"called Conf.get_diritem_data with args ('moddir', {testobj.conf.COMPS})\n"
@@ -1047,6 +1480,7 @@ class TestManager:
                 f"called show_dialog with args ({testobj.doit},)\n"
                 "called dmlj.save_defaults with args ('new', 'data')\n")
 
+
 def test_get_toplevel():
     """unittest for Manager.get_toplevel
     """
@@ -1070,6 +1504,18 @@ def test_check_if_smapi():
     assert not testee.check_if_smapi(['xxx', 'yyy'])
     assert testee.check_if_smapi(['SMAPI-root', 'yyy'])
     assert testee.check_if_smapi(['xxx', 'SMAPI-root'])
+
+
+def test_move_zip_after_installing(monkeypatch, capsys):
+    """unittest for Manager.move_zip_after_installing
+    """
+    def mock_rename(*args):
+        print('called os.rename with args', args)
+    monkeypatch.setattr(testee.os, 'rename', mock_rename)
+    testee.move_zip_after_installing('xxx/yyy.zip')
+    dirname = testee.os.path.abspath('xxx')
+    assert capsys.readouterr().out == (
+            f"called os.rename with args ('{dirname}/yyy.zip', '{dirname}/installed/yyy.zip')\n")
 
 
 def test_check_if_active(monkeypatch, capsys, tmp_path):

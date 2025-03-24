@@ -22,19 +22,11 @@ def show_dialog(cls, parent, *args, **kwargs):
 
 class ShowMods():
     "Hoofdscherm van de applicatie"
-    maxcol = 3
 
     def __init__(self, master):
         self.master = master
         self.root = tk.Tk()
-        self.unplotted = []
-        self.not_selectable = []
-        self.plotted_widgets = {}
-        self.plotted_positions = {}
-        self.unplotted_widgets = {}
-        self.unplotted_positions = {}
-        self.nonsel_widgets = {}
-        self.nonsel_positions = {}
+        self.ecimage = ImageTk.PhotoImage(ECIMAGE)
 
     def setup_screen(self):
         "define the screen elements"
@@ -102,60 +94,21 @@ class ShowMods():
         "set the checkboxes to the right values (first time: also create them)"
         self.attr_button.state([f'{"!" if self.master.screeninfo else ""}disabled'])
         self.select_button.state([f'{"!" if self.master.screeninfo else ""}disabled'])
-        if first_time:
-            for text, data in self.master.screeninfo.items():
-                if data['sel']:
-                    self.unplotted.append(text)
-                else:
-                    self.not_selectable.append(text)
-        else:
-            for widgetlist in self.unplotted_widgets.values():
-                box, label, check = widgetlist[:3]
-                check.destroy()
-                label.destroy()
-                box.destroy()
-            for widgetlist in self.nonsel_widgets.values():
-                box, label, check = widgetlist[:3]
-                check.destroy()
-                label.destroy()
-                box.destroy()
-        # breakpoint()
-        self.unplotted_positions, self.unplotted_widgets = self.add_items_to_grid(
-            self.activatables, self.unplotted)
-        self.nonsel_positions, self.nonsel_widgets = self.add_items_to_grid(
-            self.dependencies, self.not_selectable)
-        self.refresh_widget_data(texts_also=True)
+        self.master.order_widgets(first_time, self.activatables, self.dependencies)
 
-    def refresh_widget_data(self, texts_also=False):
-        "actually set the extra texts and checks"
-        if texts_also:
-            self.set_texts_for_grid(self.unplotted_positions, self.unplotted_widgets)
-            self.set_texts_for_grid(self.nonsel_positions, self.nonsel_widgets)
-        self.set_checks_for_grid(self.unplotted_positions, self.unplotted_widgets)
-        self.set_checks_for_grid(self.nonsel_positions, self.nonsel_widgets)
+    def remove_widgets(self, *args):  # widgetlist, container, row, col):
+        """remove the widgets from the screen before replacing them
+        tk version doesn't need
+        """
+        widgetlist = args[0]
+        label, check = widgetlist[1:3]
+        check.destroy()
+        label.destroy()
 
-    def add_items_to_grid(self, root, items):
-        "create the screen widgets and and remember their positions"
-        widgets = {}
-        positions = {}
-        rownum = 0
-        colnum = -1
-        for text in sorted(items):
-            colnum += 1
-            if colnum == self.maxcol:
-                rownum += 1
-                colnum = 0
-            widgets[(rownum, colnum)] = self.add_checkbox(root, rownum, colnum,
-                                                          self.master.screeninfo[text]['sel'])
-            positions[(rownum, colnum)] = text, self.master.screeninfo.get(text, '')
-            widgets[(rownum, colnum)][0].grid(row=rownum, column=colnum)
-            self.master.screeninfo[text]['pos'] = f'{rownum}x{colnum}'
-        return positions, widgets
-
-    def add_checkbox(self, root, colnum, rownum, selectable):
+    def add_checkbox(self, root, rownum, colnum, selectable):
         "add a checkbox and keep a reference to it"
         frm = ttk.Frame(root, padding=(5, 0, 5, 0))
-        frm.grid(column=colnum, row=rownum, sticky=tk.W)
+        # frm.grid(column=colnum, row=rownum, sticky=tk.W)
         checkstate = tk.IntVar()
         check = ttk.Checkbutton(frm, variable=checkstate, command=self.enable_button)
         check.state([f'{"!" if selectable else ""}disabled', '!selected'])
@@ -163,36 +116,24 @@ class ShowMods():
         labeltext = tk.StringVar()
         label = ttk.Label(frm, textvariable=labeltext)
         label.grid(column=2, row=0)  # .pack(side=LEFT)
+        frm.grid(row=rownum, column=colnum, sticky=tk.W)
         return frm, label, check, labeltext, checkstate
 
-    def set_texts_for_grid(self, positions, widgets):
-        "add texts to the widgets"
-        for pos, info in positions.items():
-            text, data = info
-            self.build_screen_text(widgets[pos], text, data.get('txt', ''), data.get('key', ''))
-
-    def build_screen_text(self, widgets, name, text, updateid):
-        """optionally turn screen text into a link and add remark
+    def set_label_text(self, widgetlist, name, updateid, text):
+        """change the text on a label
         """
-        # label = widgets[1]
         if updateid:
-            # name = f'<a href="https://www.nexusmods.com/stardewvalley/mods/{updateid}">{name}</a>'
-            # label.setOpenExternalLinks(True)
-            name += f' ({updateid})'
+            name = f'{name} ({updateid})'
         if text:
             name += ' ' + text
-        labeltext = widgets[3]
+        labeltext = widgetlist[3]
         labeltext.set(name)
-        widgets = (widgets[0], widgets[1], widgets[2], labeltext, widgets[4])
+        widgetlist = (widgetlist[0], widgetlist[1], widgetlist[2], labeltext, widgetlist[4])
 
-    def set_checks_for_grid(self, positions, widgets):
-        "determine what value to set the checkboxes to"
-        for pos, info in positions.items():
-            data = info[1]
-            loc = os.path.join(self.master.modbase, data['dir'])
-            widgets[pos][4].set(int(os.path.exists(loc)))
-            widgets[pos] = (widgets[pos][0], widgets[pos][1], widgets[pos][2], widgets[pos][3],
-                            widgets[pos][4])
+    def set_checkbox_state(self, widgetlist, state):
+        "check or uncheck a checkbox"
+        widgetlist[4].set(int(state))
+        widgetlist = (widgetlist[0], widgetlist[1], widgetlist[2], widgetlist[3], widgetlist[4])
 
     def stop(self, event):
         "button callback to close the application"
@@ -217,24 +158,29 @@ class ShowMods():
 
     def confirm(self):
         "build a list from the checked entries and pass it back to the caller"
-        modnames = []
-        all_widgets = self.plotted_widgets | self.unplotted_widgets
-        for item in all_widgets.values():
-            checked = item[-1].get()
-            labeltext = item[-2].get()
-            if checked:
-                # if ">" in labeltext:
-                #     linktext = labeltext.split(">", 1)[1].split("<", 1)[0]
-                # else:
-                #     linktext = labeltext
-                # modnames.append(linktext)
-                modnames.append(labeltext.split('(', 1)[0]).strip()
-        self.master.select_activations(modnames)
-        if self.master.directories:   # alleen leeg als er niks aangevinkt is
-            self.master.activate()
-        self.refresh_widget_data()
+        self.master.process_activations()
         MessageBox.showinfo(parent=self.root, message='wijzigingen zijn doorgevoerd')
         self.activate_button.state(['disabled'])
+
+    def get_labeltext_if_checked(self, widgetlist):
+        """return the name of the mod associated with a checkbox
+        """
+        checked = widgetlist[-1].get()
+        labeltext = widgetlist[-2].get()
+        return labeltext.split('(', 1)[0].strip() if checked else ''
+
+    def select_value(self, caption, options, editable=True, mandatory=False):
+        "Select or enter a value in a dialog"
+        self.dialog_data = ''
+        while True:
+            ChoiceDialog(self, caption, options, editable=editable)
+            if not self.dialog_data:
+                if not mandatory:
+                    break
+                MessageBox.showinfo(parent=self.root, message='You *must* select or enter a value')
+            else:
+                break
+        return self.dialog_data
 
     def manage_attributes(self, event=None):
         "relay to master, swallowing the event argument"
@@ -250,12 +196,7 @@ class SettingsDialog(tk.Toplevel):
     """
     def __init__(self, parent):  # , conf):
         self.parent = parent
-        # self.conf = conf
         self.choice = ''
-        # self.modnames = {}
-        # for x in conf.list_all_mod_dirs():
-        #     name = conf.get_diritem_data(x, conf.SCRNAM) or x
-        #     self.modnames[name] = x
         super().__init__(parent.root)
 
         origmodbase, origconfig, origdownload, origsavepath = self.parent.master.dialog_data
@@ -316,7 +257,7 @@ class SettingsDialog(tk.Toplevel):
     def select_download_path(self, event=None):
         "define download location"
         olddownload = self.download_text.get() or '~'
-        filename = FileDialog.askdirectory(title="Where to downloaded mods to?",
+        filename = FileDialog.askdirectory(title="Where to download mods to?",
                                            initialdir=os.path.expanduser(olddownload),
                                            mustexist=True)
         if filename:
@@ -345,6 +286,60 @@ class SettingsDialog(tk.Toplevel):
         self.destroy()
 
 
+class ChoiceDialog(tk.Toplevel):
+    """Dialog for selecting a value from a list
+    """
+    def __init__(self, parent, caption, options, editable):  # , conf):
+        self.parent = parent
+        super().__init__(self.parent.root)
+        frm = ttk.Frame(self, padding=10)
+        frm.grid(row=0, column=0, sticky=(tk.N, tk.E, tk.S, tk.W))
+        frm.columnconfigure(0, weight=1)
+        row = 0
+        ttk.Label(frm, text=caption).grid(row=row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W))
+        self.dirname = tk.StringVar()
+        row += 1
+        self.lbox = ttk.Combobox(frm, values=sorted(options), textvariable=self.dirname)
+        self.dirname.set('')
+        self.lbox.state([f'{"!" if editable else ""}readonly'])
+        self.lbox.bind('<<ComboboxSelected>>', self.enable_accept)
+        self.lbox.grid(row=row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W))
+        row += 1
+        hfrm = ttk.Frame(frm)
+        hfrm.grid(row=row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W), pady=2)
+        self.ok_button = ttk.Button(hfrm, text="Ok", underline=0, command=self.accept)
+        self.ok_button.state(['disabled'])
+        self.ok_button.grid(row=0, column=0, sticky=(tk.E, tk.W))
+        hfrm.columnconfigure(0, weight=1)
+        ttk.Button(hfrm, text="Cancel", underline=0, command=self.close).grid(row=0, column=1,
+                                                                              sticky=(tk.E, tk.W))
+        hfrm.columnconfigure(1, weight=1)
+        self.bind("<Alt-o>", self.accept)
+        self.bind("<Alt-c>", self.close)
+        self.bind("<Escape>", self.close)
+        self.lbox.focus_set()
+        self.focus_set()
+        self.grab_set()
+        self.wait_window()
+
+    def enable_accept(self, event):
+        """make ok button usable
+        """
+        self.ok_button.state(['!disabled'])
+
+    def accept(self, event=None):
+        "close the dialog, returning the choice"
+        self.parent.dialog_data = self.dirname.get()
+        self.close()
+
+    def close(self, event=None):
+        "close the dialog"
+        # put focus back to the parent window
+        if self.parent is not None:
+            self.parent.root.focus_set()
+        self.destroy()
+
+
 class AttributesDialog(tk.Toplevel):
     """Dialog for viewing and optionally changing a mod's properties
     """
@@ -358,7 +353,7 @@ class AttributesDialog(tk.Toplevel):
             self.modnames[name] = x
         super().__init__(parent.root)
 
-        ecimage = ImageTk.PhotoImage(ECIMAGE)
+        # ecimage = ImageTk.PhotoImage(ECIMAGE)
         frm = ttk.Frame(self, padding=10)
         frm.grid(row=0, column=0, sticky=(tk.N, tk.E, tk.S, tk.W))
         row = 0
@@ -393,8 +388,9 @@ class AttributesDialog(tk.Toplevel):
         self.name.bind('<<ComboboxSelected>>', self.enable_change)
         self.name.grid(row=0, column=0, sticky=(tk.N, tk.E, tk.S, tk.W))
         hfrm.columnconfigure(0, weight=1)
-        self.clear_name_button = ttk.Button(hfrm, image=ecimage, command=self.clear_name_text)
-        self.clear_name_button.image = ecimage
+        self.clear_name_button = ttk.Button(hfrm, image=self.parent.ecimage,
+                                            command=self.clear_name_text)
+        self.clear_name_button.image = self.parent.ecimage
         self.clear_name_button.state(['disabled'])
         self.clear_name_button.grid(row=0, column=1, sticky=tk.W)
         row += 1
@@ -411,7 +407,8 @@ class AttributesDialog(tk.Toplevel):
         self.text = ttk.Entry(hfrm, textvariable=self.scrtext)
         self.text.grid(row=0, column=0, sticky=(tk.E, tk.W))
         self.text.state(['disabled'])
-        self.clear_text_button = ttk.Button(hfrm, image=ecimage, command=self.clear_text_text)
+        self.clear_text_button = ttk.Button(hfrm, image=self.parent.ecimage,
+                                            command=self.clear_text_text)
         # self.clear_text_button['image'] = ecimage
         # self.clear_button.resize(20, 20)
         # self.clear_text_button.setFixedSize(24, 24)
@@ -464,17 +461,17 @@ class AttributesDialog(tk.Toplevel):
         "callback for trace_add"
         self.enable_change()
 
-    def enable_select(self, event=None):
-        """disable buttons after selecting another mod
-        """
-        # self.select_button.state(['!disabled'])
-        self.comps_button.state(['disabled'])
-        self.deps_button.state(['disabled'])
-        self.change_button.state(['disabled'])
-
     def enable_change(self, event=None):
         "enable change button"
         self.change_button.state(['!disabled'])
+
+    # def enable_select(self, event=None):
+    #     """disable buttons after selecting another mod
+    #     """
+    #     # self.select_button.state(['!disabled'])
+    #     self.comps_button.state(['disabled'])
+    #     self.deps_button.state(['disabled'])
+    #     self.change_button.state(['disabled'])
 
     def process(self, event=None):
         "get description if any"
@@ -485,7 +482,8 @@ class AttributesDialog(tk.Toplevel):
         for x in self.conf.list_components_for_dir(self.modnames[self.choice]):
             items.add(self.conf.get_component_data(x, self.conf.NAME))
         # self.name['values'] = [self.choice] + sorted(list(items))
-        self.name['values'] = sorted(list(items))
+        # self.name['values'] = sorted(list(items))
+        self.name.configure(values=sorted(list(items)))
         self.name.state(['!disabled'])
         self.clear_name_button.state(['!disabled'])
         self.scrtext.set(self.parent.master.screeninfo[self.choice]['txt'])
@@ -515,34 +513,12 @@ class AttributesDialog(tk.Toplevel):
 
     def view_components(self, event=None):
         "list components for mod"
-        complist = []
-        for comp in self.conf.list_components_for_dir(self.modnames[self.choice]):
-            text = (f'  {self.conf.get_component_data(comp, self.conf.NAME)} '
-                    f'  {self.conf.get_component_data(comp, self.conf.VRS)}\n'
-                    f'    ({comp})')
-            complist.append(text)
-        message = f'Components for {self.choice}:\n' + '\n'.join(complist)
+        message = self.parent.master.get_mod_components(self.modnames[self.choice])
         MessageBox.showinfo(parent=self, message=message)
 
     def view_dependencies(self, event=None):
         "list dependencies for mod"
-        deplist = set()
-        for comp in self.conf.list_components_for_dir(self.modnames[self.choice]):
-            for dep in self.conf.get_component_data(comp, self.conf.DEPS):
-                deplist.add(dep)
-        depnames = []
-        for dep in sorted(deplist):
-            try:
-                depname = self.conf.get_component_data(dep, self.conf.NAME)
-            except ValueError:
-                depname = 'unknown component:'
-                depnames.append((depname, dep))
-            else:
-                depnames.append((depname, f'({dep})'))
-        if not depnames:
-            depnames = [('None', '')]
-        message = f'Dependencies for {self.choice}:\n' + "\n".join(f' {x} {y}'
-                                                                   for (x, y) in sorted(depnames))
+        message = self.parent.master.get_mod_dependencies(self.modnames[self.choice])
         MessageBox.showinfo(parent=self, message=message)
 
     def update(self, event=None):
@@ -550,66 +526,16 @@ class AttributesDialog(tk.Toplevel):
         # self.text.setReadOnly(True)
         self.clear_name_button.state(['disabled'])
         self.clear_text_button.state(['disabled'])
-        self.change_button.state(['disabled'])
         selectable = self.activate_button.instate(['selected'])
-        oldselect = self.parent.master.screeninfo[self.choice]['sel']
-        self.parent.master.screeninfo[self.choice]['sel'] = selectable
         text = self.scrtext.get()
-        oldtext = self.parent.master.screeninfo[self.choice]['txt']
-        self.parent.master.screeninfo[self.choice]['txt'] = text
-        self.parent.master.screeninfo[self.choice]['opt'] = self.exempt_button.instate(['selected'])
         name = self.scrname.get()
-        if name != self.choice:
-            self.parent.master.screeninfo[name] = self.parent.master.screeninfo.pop(self.choice)
-            self.parent.master.attr_changes.append((name, self.choice))
+        is_exempt = self.exempt_button.instate(['selected'])
+        ok, message = self.parent.master.update_attributes(selectable, name, self.choice,
+                                                           text, is_exempt)
+        if not ok:
+            MessageBox.showinfo(parent=self, message=message)
         else:
-            self.parent.master.attr_changes.append((self.choice, ''))
-
-        rownum, colnum = [int(y) for y in self.parent.master.screeninfo[name]['pos'].split('x', 1)]
-        if selectable != oldselect:
-            if not self.switch_selectability(selectable, name, self.choice):
-                message = ("Onselecteerbaar maken van mods met coordinaten in de config"
-                           " is helaas nog niet mogelijk")
-                MessageBox.showinfo(parent=self, message=message)
-                return
-            self.parent.refresh_widgets()  # not first_time
-        elif text != oldtext or name != self.choice:
-            widgetlist = self.get_widget_list(rownum, colnum, oldselect)
-            # alleen schermtekst wijzigen
-            # widgetlist[1].setOpenExternalLinks(False)
-            self.parent.build_screen_text(widgetlist, name, text,
-                                          self.parent.master.screeninfo[name]['key'])
-        self.change_button.state(['disabled'])
-
-    def switch_selectability(self, selectable, name, oldname):
-        "move screeninfo keys to from unplotted to not_selectable or vice versa"
-        if selectable:
-            if name != self.choice:
-                self.parent.not_selectable.remove(oldname)
-            else:
-                self.parent.not_selectable.remove(name)
-            self.parent.unplotted.append(name)
-        else:
-            # breakpoint()
-            if name in self.parent.unplotted or oldname in self.parent.unplotted:
-                if name != oldname:
-                    self.parent.unplotted.remove(self.choice)
-                else:
-                    self.parent.unplotted.remove(name)
-                self.parent.not_selectable.append(name)
-            else:
-                return False
-        return True
-
-    def get_widget_list(self, rownum, colnum, oldselect):
-        "retrieve list of windows depending on screen location and selectability"
-        if oldselect:
-            try:
-                return self.parent.plotted_widgets[(rownum, colnum)]  # [1]
-            except KeyError:
-                return self.parent.unplotted_widgets[(rownum, colnum)]  # [1]
-        else:
-            return self.parent.nonsel_widgets[(rownum, colnum)]  # [1]
+            self.change_button.state(['disabled'])
 
     def close(self, event=None):
         "close the dialog"
@@ -626,7 +552,6 @@ class SaveGamesDialog(tk.Toplevel):
     def __init__(self, parent, conf):
         self.parent = parent
         self.conf = conf
-        self.choice = ''
         self.savenames = conf.list_all_saveitems()
         # for x in os.path.expanduser('~/.config/StardewValley/Saves').
         self.modnames = {}
@@ -678,16 +603,16 @@ class SaveGamesDialog(tk.Toplevel):
         self.hfrm.grid(row=row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W), pady=2)
         self.hfrm.columnconfigure(0, weight=1)
         self.hfrmlen = 0
-        self.ecimage = ImageTk.PhotoImage(ECIMAGE)
+        # self.ecimage = ImageTk.PhotoImage(ECIMAGE)
         self.add_modselector()
         row += 1
         hfrm = ttk.Frame(frm)
         hfrm.grid(row=row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W), pady=2)
         self.update_button = ttk.Button(hfrm, text='Update config', underline=0,
-                                        command=self.update_all)
+                                        command=self.update)
         self.update_button.state(['disabled'])
         self.update_button.grid(row=0, column=0)
-        self.bind('<Alt-u>', self.update_all)
+        self.bind('<Alt-u>', self.update)
         hfrm.columnconfigure(0, weight=1)
 
         self.confirm_button = ttk.Button(hfrm, text='Activate Mods', underline=0,
@@ -721,8 +646,8 @@ class SaveGamesDialog(tk.Toplevel):
         lbox.bind('<<ComboboxSelected>>', functools.partial(self.process_mod, lbox))
         lbox.grid(row=0, column=0, sticky=(tk.N, tk.E, tk.S, tk.W))
         frm.columnconfigure(0, weight=1)
-        btn = ttk.Button(frm, image=self.ecimage)
-        btn['command'] = functools.partial(self.remove_mod, btn)
+        btn = ttk.Button(frm, image=self.parent.ecimage)
+        btn.configure(command=functools.partial(self.remove_mod, btn))
         btn.state([f'{"!" if name else ""}disabled'])
         btn.grid(row=0, column=1)
         self.widgets.append([btn, lbox, frm, lboxvar])
@@ -731,15 +656,17 @@ class SaveGamesDialog(tk.Toplevel):
         "add an association between a mod and the save file"
         for item in self.widgets:
             if item[1] == lbox:
+                to_enable = item[0]
                 newvalue = item[3].get()
                 break
         else:
             newvalue = ''
         if not newvalue or newvalue == 'select a mod':
             return
-        for item in self.widgets:
-            if item[1] == lbox:
-                item[0].state(['!disabled'])
+        # for item in self.widgets:
+        #     if item[1] == lbox:
+        #         item[0].state(['!disabled'])
+        to_enable.state(['!disabled'])
         self.update_button.state(['!disabled'])
         # er moet alleen een nieuwe selector komen als dit de laatste combobox is en deze nog geen
         # waarde had
@@ -772,14 +699,12 @@ class SaveGamesDialog(tk.Toplevel):
         self.parent.refresh_widget_data()
         MessageBox.showinfo(parent=self, message='wijzigingen zijn doorgevoerd')
 
-    def update_all(self):
-        "save the mod associations in the config"
-        # breakpoint()
-        self.update_conf(self.savegame_selector_text.get())   # _selector.currentText())
-        self.conf.save()
+    def update(self):
+        "callback for update button"
+        self.update_conf(self.savegame_selector_text.get())
 
     def update_conf(self, savename):
-        "save the changes for this savefile in memory"
+        "save the mod associations in the config"
         new_pname = self.pname_text.get()
         if new_pname != self.old_pname:
             self.conf.update_saveitem_data(savename, self.conf.PNAME, new_pname)
@@ -792,6 +717,7 @@ class SaveGamesDialog(tk.Toplevel):
         newmods = [item[-1].get() for item in self.widgets[:-1]]
         if newmods != self.oldmods:
             self.conf.update_saveitem_data(savename, self.conf.MODS, newmods)
+        self.conf.save()
         self.update_button.state(['disabled'])
 
     def get_savedata(self, event=None):

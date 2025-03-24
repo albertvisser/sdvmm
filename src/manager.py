@@ -27,6 +27,8 @@ def main(rebuild=False):
 
 class Manager:
     "Processing class (the one that contains the application logic (except the GUI stuff)"
+    maxcol = 3
+
     def __init__(self):
         self.conf = dmlj.JsonConf(CONFIG)
         if CONFIG:
@@ -36,6 +38,14 @@ class Manager:
         self.downloads = DOWNLOAD
         self.directories = set()
         self.screeninfo = {}
+        self.unplotted = []
+        self.not_selectable = []
+        self.plotted_widgets = {}
+        self.plotted_positions = {}
+        self.unplotted_widgets = {}
+        self.unplotted_positions = {}
+        self.nonsel_widgets = {}
+        self.nonsel_positions = {}
 
     def build_and_start_gui(self):
         """build screen: make the user select from a list which expansions they want to have active
@@ -47,10 +57,14 @@ class Manager:
         self.doit.show_screen()
 
     def extract_screeninfo(self):
-        """read the 'position' key from the config entries that will be presented and remove them
+        """map the config info for a mod to its screen name
+
+        read the 'position' key from the config entries that will be presented and remove them
         temporarily from the config
         allows for the key not being present due to the screen never being reorganized
         """
+        # dit is waar ik de modname bij in wilthouden zodat ik ondanks schermmnaam wijzigen
+        # toch bij de correcte mod kan uitkomen (issue #1106)
         if not CONFIG:
             return
         for dirname in self.conf.list_all_mod_dirs():
@@ -67,6 +81,102 @@ class Manager:
                 'pos': self.conf.get_diritem_data(dirname, self.conf.SCRPOS) or oldinfo['pos'],
                 'key': self.conf.get_diritem_data(dirname, self.conf.NXSKEY) or oldinfo['key'],
                 'txt': self.conf.get_diritem_data(dirname, self.conf.SCRTXT) or oldinfo['txt']}
+
+    def order_widgets(self, first_time, selectable_container, dependencies_container):
+        """reshuffle the lists and dicts containing the widget info:
+        """
+        if first_time:
+            # rownum, colnum = 0, 0
+            for text, data in self.screeninfo.items():
+                # if data['pos']:
+                #     rownum, colnum = [int(y) for y in data['pos'].split('x', 1)]
+                #     self.plotted_widgets[(rownum, colnum)] = self.add_checkbox(data['sel'])
+                #     self.plotted_positions[(rownum, colnum)] = text, data
+                #     selectable_container.addLayout(self.plotted_widgets[(rownum, colnum)][0],
+                #                                    rownum, colnum)
+                #     self.lastrow, self.lastcol = max((self.lastrow, self.lastcol), (rownum, colnum))
+                # elif data['sel']:
+                # if data['sel']:
+                if data.get('sel', ''):
+                    self.unplotted.append(text)
+                else:
+                    self.not_selectable.append(text)
+        else:  # if reorder_widgets:
+            for coords, widgetlist in self.unplotted_widgets.items():
+                self.doit.remove_widgets(widgetlist, selectable_container, coords[0], coords[1])
+            for coords, widgetlist in self.nonsel_widgets.items():
+                self.doit.remove_widgets(widgetlist, dependencies_container, coords[0], coords[1])
+        self.unplotted_positions, self.unplotted_widgets = self.add_items_to_grid(
+            selectable_container, self.unplotted)
+        self.nonsel_positions, self.nonsel_widgets = self.add_items_to_grid(
+            dependencies_container, self.not_selectable)
+        self.refresh_widget_data(texts_also=True)
+
+    def add_items_to_grid(self, grid, items):
+        """create the screen widgets and and remember their positions
+        """
+        rownum, colnum = 0, -1
+        widgets = {}
+        positions = {}
+        for text in sorted(items):
+            colnum += 1
+            if colnum == self.maxcol:
+                rownum += 1
+                colnum = 0
+            widgets[(rownum, colnum)] = self.doit.add_checkbox(grid, rownum, colnum,
+                                                               self.screeninfo[text]['sel'])
+            positions[(rownum, colnum)] = text, self.screeninfo[text]
+            self.screeninfo[text]['pos'] = f'{rownum}x{colnum}'
+        return positions, widgets
+
+    def refresh_widget_data(self, texts_also=False):
+        """actually set the extra texts and checks
+        """
+        # sel_positions = self.plotted_positions | self.unplotted_positions
+        # sel_widgets = self.plotted_widgets | self.unplotted_widgets
+        if texts_also:
+            # self.doit.set_texts_for_grid(sel_positions, sel_widgets)
+            self.set_texts_for_grid(self.unplotted_positions, self.unplotted_widgets)
+            self.set_texts_for_grid(self.nonsel_positions, self.nonsel_widgets)
+        # self.doit.set_checks_for_grid(sel_positions, sel_widgets)
+        self.set_checks_for_grid(self.unplotted_positions, self.unplotted_widgets)
+        self.set_checks_for_grid(self.nonsel_positions, self.nonsel_widgets)
+
+    def set_texts_for_grid(self, positions, widgets):
+        """add texts to the widgets
+        """
+        for pos, info in positions.items():
+            text, data = info
+            self.doit.set_label_text(widgets[pos], text, data['key'], data['txt'])
+
+    def build_link_text(self, name, updateid):
+        """use updateid and name to create text for a clickable link
+
+        (kept here in case we find out how to use this in the tk version as well)
+        """
+        return f'<a href="https://www.nexusmods.com/stardewvalley/mods/{updateid}">{name}</a>'
+
+    def set_checks_for_grid(self, positions, widgets):
+        "determine what value to set the checkboxes to"
+        for pos, info in positions.items():
+            data = info[1]
+            loc = os.path.join(self.modbase, data['dir'])
+            self.doit.set_checkbox_state(widgets[pos], os.path.exists(loc))
+
+    def process_activations(self):
+        """process changes in mods to activate
+        """
+        modnames = []
+        # all_widgets = self.plotted_widgets | self.unplotted_widgets
+        # for widgetlist in all_widgets.values():
+        for widgetlist in self.unplotted_widgets.values():
+            name = self.doit.get_labeltext_if_checked(widgetlist)
+            if name:
+                modnames.append(name)
+        self.select_activations(modnames)
+        if self.directories:   # alleen leeg als er niks aangevinkt is
+            self.activate()
+        self.refresh_widget_data()
 
     def select_activations(self, modnames):
         "expand the selection to a list of directories"
@@ -113,6 +223,7 @@ class Manager:
         self.attr_changes = []  # list of changed mods
         gui.show_dialog(gui.AttributesDialog, self.doit, self.conf)
         # screeninfo is updated in the dialog, here we update the configuration
+        # attr_changes is also changed in the dialog
         changes = False
         for newname, oldname in self.attr_changes:
             dirname = self.screeninfo[newname]['dir']
@@ -124,6 +235,104 @@ class Manager:
             changes = True
         if changes:
             self.conf.save()
+
+    def get_mod_components(self, modname):
+        "build a message containing a list of mod components"
+        complist = []
+        for comp in self.conf.list_components_for_dir(modname):
+            text = (f'  {self.conf.get_component_data(comp, self.conf.NAME)} '
+                    f'  {self.conf.get_component_data(comp, self.conf.VRS)}\n'
+                    f'    ({comp})')
+            complist.append(text)
+        return f'Components for {modname}:\n' + '\n'.join(complist)
+
+    def get_mod_dependencies(self, modname):
+        "build a imessage containing a list of mod dependencies"
+        deplist = set()
+        for comp in self.conf.list_components_for_dir(modname):
+            for dep in self.conf.get_component_data(comp, self.conf.DEPS):
+                deplist.add(dep)
+        depnames = []
+        for dep in sorted(deplist):
+            try:
+                depname = self.conf.get_component_data(dep, self.conf.NAME)
+            except ValueError:
+                depname = 'unknown component:'
+                depnames.append((depname, dep))
+            else:
+                depnames.append((depname, f'({dep})'))
+        if not depnames:
+            depnames = [('None', '')]
+        return f'Dependencies for {modname}:\n' + "\n".join(f' {x} {y}'
+                                                            for (x, y) in sorted(depnames))
+
+    def update_attributes(self, selectable, name, oldname, text, is_exempt):
+        "do the updating (called from the dialog each time a mod is modified)"
+        # we kunnen er van uitgaan dat de screeninfo values altijd alle waarden bevatten
+        # zie methode extract_screeninfo
+        try:
+            oldselect = self.screeninfo[oldname]['sel']
+        except KeyError:    # oldname niet gevonden
+            message = ("Tweemaal schermnaam wijzigen van een mod zonder de dialoog"
+                       " af te breken en opnieuw te starten is helaas nog niet mogelijk")
+            # dat wil zeggen het lukt wel, maar niet zonder dump
+            # als ik aan het eind van deze dialoog self.choice de waarde van name geef
+            # dan krijg ik geen dump als ik het meteen doe maar als ik tussendoor
+            # een andere mod kies en dan naarr deze terugga gaat het alsnog mis
+            # bij het ophalen van de modgegevens uit de json configuratie
+            return False, message
+        self.screeninfo[oldname]['sel'] = selectable
+        oldtext = self.screeninfo[oldname]['txt']
+        self.screeninfo[oldname]['txt'] = text
+        self.screeninfo[oldname]['opt'] = is_exempt
+        if name != oldname:
+            self.screeninfo[name] = self.screeninfo.pop(oldname)
+            self.attr_changes.append((name, oldname))
+        else:
+            self.attr_changes.append((oldname, ''))
+
+        rownum, colnum = [int(y) for y in self.screeninfo[name]['pos'].split('x', 1)]
+        if selectable != oldselect:
+            # if not self.switch_selectability(selectable, name, oldname):
+            #     message = ("Onselecteerbaar maken van mods met coordinaten in de config"
+            #                " is helaas nog niet mogelijk")
+            #     return False, message
+            self.switch_by_selectability(selectable, name, oldname)
+            self.doit.refresh_widgets()  # not first_time
+        elif text != oldtext or name != oldname:
+            # alleen schermtekst wijzigen
+            widgetlist = self.get_widget_list(rownum, colnum, oldselect)
+            self.build_screen_text(widgetlist, name, text, self.screeninfo[name]['key'])
+        return True, ''
+
+    def switch_by_selectability(self, selectable, name, oldname):
+        "move screeninfo keys to from unplotted to not_selectable or vice versa"
+        if selectable:
+            if name != oldname:
+                self.not_selectable.remove(oldname)
+            else:
+                self.not_selectable.remove(name)
+            self.unplotted.append(name)
+        else:
+            # if name in self.unplotted or oldname in self.unplotted:
+            if name != oldname:
+                self.unplotted.remove(oldname)
+            else:
+                self.unplotted.remove(name)
+            self.not_selectable.append(name)
+            # else:
+            #     return False
+        # return True
+
+    def get_widget_list(self, rownum, colnum, selectable):
+        "retrieve list of windows depending on screen location and selectability"
+        if selectable:
+            try:
+                return self.plotted_widgets[(rownum, colnum)]
+            except KeyError:
+                return self.unplotted_widgets[(rownum, colnum)]
+        else:
+            return self.nonsel_widgets[(rownum, colnum)]
 
     def manage_savefiles(self):
         "handle dialog for selecting a savefile to perform actions on"
@@ -157,9 +366,7 @@ class Manager:
                 messages = self.add_mod_to_config(moddir, configdata)
                 save_needed = got_new_mod = True
             report.extend(messages)
-            zipfilepath = os.path.abspath(zipfilename)
-            os.rename(zipfilepath, os.path.join(os.path.dirname(zipfilepath), 'installed',
-                                                os.path.basename(zipfilepath)))
+            move_zip_after_installing(zipfilename)
         if save_needed:
             self.conf.save()
         if got_new_mod:
@@ -184,6 +391,7 @@ class Manager:
             installdir = os.path.join('/tmp', roots.pop())
             subprocess.run(['unzip', zipfilename, '-d', '/tmp'], check=True)
             subprocess.run(['gnome-terminal'], cwd=installdir)  # , capture_output=True)
+            move_zip_after_installing(zipfilename)
             return [], None, None, ["SMAPI-install is waiting in a terminal window to be finished"
                                     " by executing './install on Linux.sh'"]
         if os.path.exists(os.path.join(self.modbase, '__MACOSX')):  # remove junk
@@ -323,6 +531,13 @@ def check_if_smapi(roots):
         if rootitem.startswith('SMAPI'):
             return True
     return False
+
+
+def move_zip_after_installing(zipfilename):
+    """make sure zipfile can't be installed again (from here) by accident"""
+    zipfilepath = os.path.abspath(zipfilename)
+    os.rename(zipfilepath, os.path.join(os.path.dirname(zipfilepath), 'installed',
+                                        os.path.basename(zipfilepath)))
 
 
 def check_if_active(roots):
