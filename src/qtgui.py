@@ -625,7 +625,7 @@ class SaveGamesDialog(qtw.QDialog):
             self.add_modselector()
         self.oldsavename = newvalue
         self.oldmods = []
-        save_attrs = self.conf.get_saveitem_attrs(newvalue)
+        save_attrs, new_in_conf = self.conf.get_saveitem_attrs(newvalue)
         if save_attrs:
             self.old_pname, self.old_fname, self.old_gdate = save_attrs
             self.pname.setText(self.old_pname)
@@ -634,5 +634,5 @@ class SaveGamesDialog(qtw.QDialog):
             self.oldmods = self.conf.get_mods_for_saveitem(newvalue)
         for modname in self.oldmods:
             self.widgets[-1][1].setCurrentText(modname)
-        self.update_button.setDisabled(True)
+        self.update_button.setEnabled(new_in_conf)
         self.confirm_button.setEnabled(True)

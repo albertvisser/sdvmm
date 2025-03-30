@@ -339,7 +339,7 @@ class MockConf:
     def get_saveitem_attrs(self, value):
         "stub"
         print(f"called Conf.get_saveitem_attrs with arg {value}")
-        return []
+        return [], False
     def get_mods_for_saveitem(self, name):
         "stub"
         print(f"called Conf.get_mods_for_saveitem with arg {name}")
@@ -349,7 +349,7 @@ class MockConf:
         print('called Conf.update_saveitem_data with args', args)
 
 
-def test_show_dialog(monkeypatch, capsys):
+def test_show_dialog(capsys):
     """unittests for tkgui.show_dialog
     """
     parent = types.SimpleNamespace()
@@ -748,8 +748,8 @@ class TestSettingsDialog:
         """
         def mock_init(self, *args):
             print('called SettingsDialog.__init__ with args', args)
-        def mock_accept(self):
-            print('called SettingsDialog.accept')
+        # def mock_accept(self):
+        #     print('called SettingsDialog.accept')
         monkeypatch.setattr(testee.SettingsDialog, '__init__', mock_init)
         # monkeypatch.setattr(testee.SettingsDialog, 'accept', mock_accept)
         testobj = testee.SettingsDialog()
@@ -1074,8 +1074,6 @@ class TestAttributesDialog:
         def mock_init(self, *args, **kwargs):
             print('called Toplevel.__init__ with args', args, kwargs)
             old_init(self, *kwargs, **kwargs)
-        def mock_bind(self, *args, **kwargs):
-            print('called Toplevel.bind_all with args', args, kwargs)
         monkeypatch.setattr(testee.tk.Toplevel, '__init__', mock_init)
         monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
         monkeypatch.setattr(testee.ttk, 'Label', mockttk.MockLabel)
@@ -1156,9 +1154,6 @@ class TestAttributesDialog:
             "stub"
             print(f"called Conf.list_components_for_dir with arg '{name}'")
             return []
-        def mock_text(self):
-            print('called ComboBox.currentText')
-            return 'qqq'
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.conf = MockConf()
         testobj.parent = types.SimpleNamespace(
@@ -1410,8 +1405,6 @@ class TestSaveGamesDialog:
         def mock_init(self, *args, **kwargs):
             print('called Toplevel.__init__ with args', args, kwargs)
             old_init(self, *kwargs, **kwargs)
-        def mock_bind(self, *args, **kwargs):
-            print('called Toplevel.bind_all with args', args, kwargs)
         def mock_add(self):
             print('called SaveGamesDialog.add_modselector')
         monkeypatch.setattr(testee.tk.Toplevel, '__init__', mock_init)
@@ -1449,8 +1442,6 @@ class TestSaveGamesDialog:
     def test_monitor_textvar(self, monkeypatch, capsys):
         """unittest for sDialog.monitor_textvar
         """
-        def mock_enable(*args):
-            print('called SaveGamesDialog.enable_change')
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.update_button = mockttk.MockButton()
         assert capsys.readouterr().out == (
@@ -1461,7 +1452,7 @@ class TestSaveGamesDialog:
     def test_add_modselector(self, monkeypatch, capsys):
         """unittest for SaveGamesDialog.add_modselector
         """
-        def mock_init(self, master=None, *args, **kwargs):
+        def mock_init(self, master, *args, **kwargs):
             kwargs['textvariable'] = f"item of type {type(kwargs['textvariable'])}"
             print('called ComboBox.__init__ with args', type(master), args, kwargs)
         def mock_bind(self, *args):
@@ -1773,7 +1764,11 @@ class TestSaveGamesDialog:
         def mock_get_attrs(value):
             "stub"
             print(f"called Conf.get_saveitem_attrs with arg {value}")
-            return 'oldpname', 'oldfname', 'oldgdate'
+            return ('oldpname', 'oldfname', 'oldgdate'), True
+        def mock_get_attrs_2(value):
+            "stub"
+            print(f"called Conf.get_saveitem_attrs with arg {value}")
+            return ('oldpname', 'oldfname', 'oldgdate'), False
         def mock_get_mods(name):
             "stub"
             print(f"called Conf.get_mods_for_saveitem with arg {name}")
@@ -1830,6 +1825,23 @@ class TestSaveGamesDialog:
         testobj.widgets = [[btn, lbox, hbox]]
         testobj.conf.get_saveitem_attrs = mock_get_attrs
         testobj.conf.get_mods_for_saveitem = mock_get_mods
+        testobj.get_savedata('xxx')
+        assert capsys.readouterr().out == ("called StringVar.get\n"
+                                           "called SaveGamesDialog with arg xxx\n"
+                                           "called Button.destroy\n"
+                                           "called ComboBox.destroy\n"
+                                           "called Frame.destroy\n"
+                                           "called SaveGamesDialog.add_modselector\n"
+                                           "called Conf.get_saveitem_attrs with arg xxx\n"
+                                           "called StringVar.set with arg 'oldpname'\n"
+                                           "called StringVar.set with arg 'oldfname'\n"
+                                           "called StringVar.set with arg 'oldgdate'\n"
+                                           "called Conf.get_mods_for_saveitem with arg xxx\n"
+                                           "called StringVar.set with arg 'newmodname'\n"
+                                           "called SaveGamesDialog.add_modselector\n"
+                                           "called Button.state with args (['!disabled'],)\n"
+                                           "called Button.state with args (['!disabled'],)\n")
+        testobj.conf.get_saveitem_attrs = mock_get_attrs_2
         testobj.get_savedata('xxx')
         assert capsys.readouterr().out == ("called StringVar.get\n"
                                            "called SaveGamesDialog with arg xxx\n"

@@ -738,7 +738,7 @@ class SaveGamesDialog(tk.Toplevel):
             self.add_modselector()
         self.oldsavename = newvalue
         self.oldmods = []
-        save_attrs = self.conf.get_saveitem_attrs(newvalue)
+        save_attrs, new_in_conf = self.conf.get_saveitem_attrs(newvalue)
         if save_attrs:
             self.old_pname, self.old_fname, self.old_gdate = save_attrs
             self.pname_text.set(self.old_pname)
@@ -748,7 +748,7 @@ class SaveGamesDialog(tk.Toplevel):
         for modname in self.oldmods:
             self.widgets[-1][3].set(modname)
             self.add_modselector()
-        self.update_button.state(['disabled'])
+        self.update_button.state([f'{"!" if new_in_conf else ""}disabled'])
         self.confirm_button.state(['!disabled'])
 
     def close(self, event=None):

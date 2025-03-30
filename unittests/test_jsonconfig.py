@@ -523,19 +523,19 @@ class TestJsonConf:
         monkeypatch.setattr(testee, 'get_save_attrs', mock_get)
         testobj = self.setup_testobj('', monkeypatch, capsys)
         testobj._data = {}
-        assert testobj.get_saveitem_attrs('xxx') == ('xxx', 'yyy Farm', '01 02 year 03')
+        assert testobj.get_saveitem_attrs('xxx') == (('xxx', 'yyy Farm', '01 02 year 03'), True)
         assert testobj._data == {'savedgames': {'xxx': {'player': 'xxx', 'farmName': 'yyy Farm',
                                                         'ingameDate': '01 02 year 03'}}}
         assert capsys.readouterr().out == "called get_saveitem_attrs with arg 'xxx'\n"
         testobj._data = {testobj.SAVES: {'yyy': 'zzz'}}
-        assert testobj.get_saveitem_attrs('xxx') == ('xxx', 'yyy Farm', '01 02 year 03')
+        assert testobj.get_saveitem_attrs('xxx') == (('xxx', 'yyy Farm', '01 02 year 03'), False)
         assert testobj._data == {'savedgames': {'yyy': 'zzz',
                                                 'xxx': {'player': 'xxx', 'farmName': 'yyy Farm',
                                                         'ingameDate': '01 02 year 03'}}}
         assert capsys.readouterr().out == "called get_saveitem_attrs with arg 'xxx'\n"
         testobj._data = {testobj.SAVES: {'xxx': {testobj.PNAME: 'qqq', testobj.FNAME: 'rrr',
                                                  testobj.GDATE: 'ss tt year uu'}}}
-        assert testobj.get_saveitem_attrs('xxx') == ('qqq', 'rrr', '01 02 year 03')
+        assert testobj.get_saveitem_attrs('xxx') == (('qqq', 'rrr', '01 02 year 03'), False)
         assert testobj._data == {'savedgames': {'xxx': {'player': 'qqq', 'farmName': 'rrr',
                                                         'ingameDate': '01 02 year 03'}}}
         assert capsys.readouterr().out == "called get_saveitem_attrs with arg 'xxx'\n"

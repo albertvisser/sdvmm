@@ -833,7 +833,7 @@ class MockConf:
     def get_saveitem_attrs(self, value):
         "stub"
         print(f"called Conf.get_saveitem_attrs with arg {value}")
-        return []
+        return [], False
     def get_mods_for_saveitem(self, name):
         "stub"
         print(f"called Conf.get_mods_for_saveitem with arg {name}")
@@ -1679,7 +1679,11 @@ class TestSaveGamesDialog:
         def mock_get_attrs(value):
             "stub"
             print(f"called Conf.get_saveitem_attrs with arg {value}")
-            return 'oldpname', 'oldfname', 'oldgdate'
+            return ('oldpname', 'oldfname', 'oldgdate'), True
+        def mock_get_attrs_2(value):
+            "stub"
+            print(f"called Conf.get_saveitem_attrs with arg {value}")
+            return ('oldpname', 'oldfname', 'oldgdate'), False
         def mock_get_mods(name):
             "stub"
             print(f"called Conf.get_mods_for_saveitem with arg {name}")
@@ -1714,14 +1718,14 @@ class TestSaveGamesDialog:
         testobj.oldsavename = ''
         testobj.get_savedata('xxx')
         assert capsys.readouterr().out == ("called Conf.get_saveitem_attrs with arg xxx\n"
-                                           "called PushButton.setDisabled with arg `True`\n"
+                                           "called PushButton.setEnabled with arg `False`\n"
                                            "called PushButton.setEnabled with arg `True`\n")
         testobj.oldsavename = 'yyy'
         testobj.get_savedata('xxx')
         assert capsys.readouterr().out == ("called SaveGamesDialog with arg yyy\n"
                                            "called SaveGamesDialog.add_modselector\n"
                                            "called Conf.get_saveitem_attrs with arg xxx\n"
-                                           "called PushButton.setDisabled with arg `True`\n"
+                                           "called PushButton.setEnabled with arg `False`\n"
                                            "called PushButton.setEnabled with arg `True`\n")
         testobj.widgets = [[btn, lbox, hbox]]
         testobj.conf.get_saveitem_attrs = mock_get_attrs
@@ -1738,5 +1742,22 @@ class TestSaveGamesDialog:
                                            "called LineEdit.setText with arg `oldgdate`\n"
                                            "called Conf.get_mods_for_saveitem with arg xxx\n"
                                            "called ComboBox.setCurrentText with arg `newmodname`\n"
-                                           "called PushButton.setDisabled with arg `True`\n"
+                                           "called PushButton.setEnabled with arg `True`\n"
+                                           "called PushButton.setEnabled with arg `True`\n")
+        testobj.widgets = [[btn, lbox, hbox]]
+        testobj.conf.get_saveitem_attrs = mock_get_attrs_2
+        testobj.conf.get_mods_for_saveitem = mock_get_mods
+        testobj.get_savedata('xxx')
+        assert capsys.readouterr().out == ("called SaveGamesDialog with arg xxx\n"
+                                           "called PushButton.close\n"
+                                           "called ComboBox.close\n"
+                                           "called VBox.removeItem\n"
+                                           "called SaveGamesDialog.add_modselector\n"
+                                           "called Conf.get_saveitem_attrs with arg xxx\n"
+                                           "called LineEdit.setText with arg `oldpname`\n"
+                                           "called LineEdit.setText with arg `oldfname`\n"
+                                           "called LineEdit.setText with arg `oldgdate`\n"
+                                           "called Conf.get_mods_for_saveitem with arg xxx\n"
+                                           "called ComboBox.setCurrentText with arg `newmodname`\n"
+                                           "called PushButton.setEnabled with arg `False`\n"
                                            "called PushButton.setEnabled with arg `True`\n")
