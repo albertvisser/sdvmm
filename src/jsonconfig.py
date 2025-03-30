@@ -291,13 +291,13 @@ class JsonConf:
         """
         if self.SAVES not in self._data:
             self._data[self.SAVES] = {}
+        attrs = get_save_attrs(savename)
         if savename not in self._data[self.SAVES]:
-            attrs = get_save_attrs(savename)
             self._data[self.SAVES][savename] = {}
             self._data[self.SAVES][savename][self.PNAME] = attrs['player/name']
             self._data[self.SAVES][savename][self.FNAME] = f"{attrs['player/farmName']} Farm"
-            ingame_date = f"{attrs['dayOfMonth']} {attrs['currentSeason']} year {attrs['year']}"
-            self._data[self.SAVES][savename][self.GDATE] = ingame_date
+        ingame_date = f"{attrs['dayOfMonth']} {attrs['currentSeason']} year {attrs['year']}"
+        self._data[self.SAVES][savename][self.GDATE] = ingame_date
         return (self._data[self.SAVES][savename][self.PNAME],
                 self._data[self.SAVES][savename][self.FNAME],
                 self._data[self.SAVES][savename][self.GDATE])

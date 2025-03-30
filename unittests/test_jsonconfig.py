@@ -535,10 +535,10 @@ class TestJsonConf:
         assert capsys.readouterr().out == "called get_saveitem_attrs with arg 'xxx'\n"
         testobj._data = {testobj.SAVES: {'xxx': {testobj.PNAME: 'qqq', testobj.FNAME: 'rrr',
                                                  testobj.GDATE: 'ss tt year uu'}}}
-        assert testobj.get_saveitem_attrs('xxx') == ('qqq', 'rrr', 'ss tt year uu')
+        assert testobj.get_saveitem_attrs('xxx') == ('qqq', 'rrr', '01 02 year 03')
         assert testobj._data == {'savedgames': {'xxx': {'player': 'qqq', 'farmName': 'rrr',
-                                                        'ingameDate': 'ss tt year uu'}}}
-        assert capsys.readouterr().out == ""
+                                                        'ingameDate': '01 02 year 03'}}}
+        assert capsys.readouterr().out == "called get_saveitem_attrs with arg 'xxx'\n"
 
     def test_get_mods_for_saveitem(self, monkeypatch, capsys):
         """unittest for JsonConf.get_mods_for_saveitem
