@@ -5,37 +5,6 @@ import pytest
 from src import tkgui as testee
 from mockgui import mockttkwidgets as mockttk
 
-showmods = """\
-called root.title with arg 'SDV Mod Manager'
-called Frame.__init__ with args <class 'types.SimpleNamespace'> () {{}}
-called Frame.grid with args () {{'column': 0, 'row': 0, 'sticky': ('n', 'e', 's', 'w')}}
-called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Dit overzicht toont de namen van mods die je kunt activeren (inclusief die al geactiveerd zijn).\\nIn de achterliggende configuratie is geregeld welke mods hiervoor eventueel nog meer aangezet moeten worden\\nDe nummers tussen haakjes kunnen gebruikt worden om naar de download pagina op NexusMods.com te gaan\\n(de volledige link is https://www.nexusmods.com/stardewvalley/mods/<updateid>)', 'padding': 10}}
-called Label.grid with args () {{'column': 0, 'row': 1, 'sticky': ('n', 'w')}}
-called Frame.__init__ with args <class 'types.SimpleNamespace'> () {{}}
-called Frame.grid with args () {{'column': 0, 'row': 2, 'sticky': ('n', 'w')}}
-called Frame.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'padding': (10, 0)}}
-called Frame.grid with args () {{'column': 0, 'row': 0}}
-called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Hieronder volgen afhankelijkheden; deze zijn niet apart te activeren maar je kunt wel zien of ze actief zijn', 'padding': 10}}
-called Label.grid with args () {{'column': 0, 'row': 1, 'sticky': ('n', 'w')}}
-called Frame.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'padding': (10, 0)}}
-called Frame.grid with args () {{'column': 0, 'row': 2}}
-called Frame.__init__ with args <class 'types.SimpleNamespace'> () {{'padding': 10}}
-called Frame.grid with args () {{'column': 0, 'row': 3, 'sticky': 's'}}
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Set defaults', 'command': {testobj.manage_defaults}, 'underline': 4}}
-called Button.grid with args () {{'column': 0, 'row': 0}}
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Install / Update', 'command': {testobj.update}, 'underline': 0}}
-called Button.grid with args () {{'column': 1, 'row': 0}}
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Mod Attributes', 'command': {testobj.manage_attributes}, 'underline': 0}}
-called Button.grid with args () {{'column': 2, 'row': 0}}
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Activate Changes', 'command': {testobj.confirm}, 'underline': 0}}
-called Button.state with args (['disabled'],)
-called Button.grid with args () {{'column': 3, 'row': 0}}
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Select Savefile', 'command': {testobj.manage_savefiles}, 'underline': 0}}
-called Button.grid with args () {{'column': 4, 'row': 0}}
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Exit', 'command': {testobj.root.quit}, 'underline': 1}}
-called Button.grid with args () {{'column': 5, 'row': 0}}
-called ShowMods.refresh_widgets with args () {{'first_time': True}}
-"""
 sett = """\
 called Toplevel.__init__ with args ('root',) {{}}
 called Frame.__init__ with args <class 'src.tkgui.SettingsDialog'> () {{'padding': 10}}
@@ -63,14 +32,20 @@ called Entry.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{
 called Entry.grid with args () {{'row': 2, 'column': 1}}
 called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Browse', 'command': {testobj.select_download_path}}}
 called Button.grid with args () {{'row': 2, 'column': 2, 'sticky': 'w'}}
-called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Location for save files:'}}
+called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Number of columns on screen:'}}
 called Label.grid with args () {{'row': 3, 'column': 0, 'sticky': 'w'}}
+called IntVar.__init__ with args ()
+called IntVar.set with arg 1
+called SpinBox.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'width': 5, 'from_': 0, 'to': 5, 'textvariable': {testobj.columncount}}}
+called SpinBox.grid with args () {{'row': 3, 'column': 1, 'sticky': 'w'}}
+called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Location for save files:'}}
+called Label.grid with args () {{'row': 4, 'column': 0, 'sticky': 'w'}}
 called StringVar.__init__ with args ()
 called StringVar.set with arg 'qqq'
 called Entry.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'width': 48, 'textvariable': {testobj.savepath_text}}}
-called Entry.grid with args () {{'row': 3, 'column': 1}}
+called Entry.grid with args () {{'row': 4, 'column': 1}}
 called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Browse', 'command': {testobj.select_savepath}}}
-called Button.grid with args () {{'row': 3, 'column': 2, 'sticky': 'w'}}
+called Button.grid with args () {{'row': 4, 'column': 2, 'sticky': 'w'}}
 called Frame.__init__ with args <class 'src.tkgui.SettingsDialog'> () {{'padding': 10}}
 called Frame.grid with args () {{'row': 1, 'column': 0}}
 called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Save', 'underline': 0, 'command': {testobj.update}}}
@@ -239,7 +214,7 @@ called ComboBox.focus_set
 @pytest.fixture
 def expected_output():
     "fixture returning output to be expected from (mostly) gui setup methods"
-    results = {'showmods': showmods, 'sett': sett, 'choice': choice, 'attrs': attrs, 'saves': saves}
+    results = {'sett': sett, 'choice': choice, 'attrs': attrs, 'saves': saves}
     return results
 
 
@@ -388,39 +363,120 @@ class TestShowMods:
         def mock_init(self, *args):
             """stub
             """
-            print('called ShowMods.root.__init__()')
+            print('called ShowMods.root.__init__')
+        def mock_title(self, *args):
+            """stub
+            """
+            print('called ShowMods.root.__title__ with args', args)
         monkeypatch.setattr(testee.ImageTk, 'PhotoImage', mockttk.MockPhotoImage)
         monkeypatch.setattr(testee.tk.Tk, '__init__', mock_init)
+        monkeypatch.setattr(testee.tk.Tk, 'title', mock_title)
+        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
         master = types.SimpleNamespace()
         monkeypatch.setattr(testee, 'ECIMAGE', 'ecimage')
         testobj = testee.ShowMods(master)
         assert isinstance(testobj.root, testee.tk.Tk)
+        assert isinstance(testobj.main, testee.ttk.Frame)
         assert testobj.master == master
-        assert capsys.readouterr().out == ('called ShowMods.root.__init__()\n'
-                                           "called PhotoImage.__init__ with args ('ecimage',)\n")
+        assert testobj.buttons == {}
+        assert capsys.readouterr().out == (
+                'called ShowMods.root.__init__\n'
+                "called PhotoImage.__init__ with args ('ecimage',)\n"
+                "called ShowMods.root.__title__ with args ('SDV Mod Manager',)\n"
+                "called Frame.__init__ with args <class 'tkinter.Tk'> () {}\n"
+                "called Frame.grid with args"
+                " () {'column': 0, 'row': 0, 'sticky': ('n', 'e', 's', 'w')}\n")
 
-    def test_setup_screen(self, monkeypatch, capsys, expected_output):
-        """unittest for ShowMods.setup_screen
+    def test_create_selectables_title(self, monkeypatch, capsys):
+        """unittest for ShowMods.create_selectables_title
         """
-        def mock_title(title):
-            print(f"called root.title with arg '{title}'")
+        monkeypatch.setattr(testee.ttk, 'Label', mockttk.MockLabel)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.main = mockttk.MockFrame()
+        assert capsys.readouterr().out == (
+                "called Frame.__init__ with args <class 'NoneType'> () {}\n")
+        testobj.create_selectables_title('xxxx')
+        assert capsys.readouterr().out == (
+                "called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'>"
+                " () {'text': 'xxxx', 'padding': 10}\n"
+                "called Label.grid with args () {'column': 0, 'row': 0, 'sticky': ('n', 'w')}\n")
+
+    def test_create_selectables_grid(self, monkeypatch, capsys):
+        """unittest for ShowMods.create_selectables_grid
+        """
+        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.main = mockttk.MockFrame()
+        assert capsys.readouterr().out == (
+                "called Frame.__init__ with args <class 'NoneType'> () {}\n")
+        testobj.create_selectables_grid()
+        assert capsys.readouterr().out == (
+                "called Frame.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'>"
+                " () {'padding': (10, 0)}\n"
+                "called Frame.grid with args () {'column': 0, 'row': 1}\n")
+
+    def test_create_dependencies_title(self, monkeypatch, capsys):
+        """unittest for ShowMods.create_dependencies_title
+        """
+        monkeypatch.setattr(testee.ttk, 'Label', mockttk.MockLabel)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.main = mockttk.MockFrame()
+        assert capsys.readouterr().out == (
+                "called Frame.__init__ with args <class 'NoneType'> () {}\n")
+        testobj.create_dependencies_title('yyyy')
+        assert capsys.readouterr().out == (
+                "called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'>"
+                " () {'text': 'yyyy', 'padding': 10}\n"
+                "called Label.grid with args () {'column': 0, 'row': 2, 'sticky': ('n', 'w')}\n")
+
+    def test_create_dependencies_grid(self, monkeypatch, capsys):
+        """unittest for ShowMods.create_dependencies_grid
+        """
+        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.main = mockttk.MockFrame()
+        assert capsys.readouterr().out == (
+                "called Frame.__init__ with args <class 'NoneType'> () {}\n")
+        testobj.create_dependencies_grid()
+        assert capsys.readouterr().out == (
+                "called Frame.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'>"
+                " () {'padding': (10, 0)}\n"
+                "called Frame.grid with args () {'column': 0, 'row': 3}\n")
+
+    def test_create_buttons(self, monkeypatch, capsys, expected_output):
+        """unittest for ShowMods.create_buttons
+        """
         def mock_refresh(*args, **kwargs):
             """stub
             """
             print('called ShowMods.refresh_widgets with args', args, kwargs)
         monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
-        monkeypatch.setattr(testee.ttk, 'Label', mockttk.MockLabel)
-        monkeypatch.setattr(testee.ttk, 'Checkbutton', mockttk.MockCheckBox)
         monkeypatch.setattr(testee.ttk, 'Button', mockttk.MockButton)
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.root = types.SimpleNamespace(title=mock_title, quit=lambda: "dummy")
+        testobj.root = mockttk.MockFrame()
+        assert capsys.readouterr().out == (
+                "called Frame.__init__ with args <class 'NoneType'> () {}\n")
+        testobj.buttons = {}
         testobj.refresh_widgets = mock_refresh
-        testobj.setup_screen()
-        assert isinstance(testobj.activatables, testee.ttk.Frame)
-        assert isinstance(testobj.dependencies, testee.ttk.Frame)
-        assert isinstance(testobj.attr_button, testee.ttk.Button)
-        assert isinstance(testobj.activate_button, testee.ttk.Button)
-        assert capsys.readouterr().out == expected_output['showmods'].format(testobj=testobj)
+        callback1 = lambda: '0'
+        callback2 = lambda: '1'
+        testobj.create_buttons([
+            {'name': 'xxx', 'text': '&xxxxxx', 'tooltip': 'xxxxxxxxx', 'callback': callback1},
+            {'name': 'actv', 'text': 'yyy&yyy', 'tooltip': 'yyyyyyyyy', 'callback': callback2}])
+        assert len(testobj.buttons) == 2
+        assert isinstance(testobj.buttons['xxx'], mockttk.MockButton)
+        assert isinstance(testobj.buttons['actv'], mockttk.MockButton)
+        assert capsys.readouterr().out == (
+                "called Frame.__init__ with args"
+                " <class 'mockgui.mockttkwidgets.MockFrame'> () {'padding': 10}\n"
+                "called Frame.grid with args () {'column': 0, 'row': 3, 'sticky': 's'}\n"
+                "called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'>"
+                f" () {{'text': 'xxxxxx', 'command': {callback1}, 'underline': 0}}\n"
+                "called Button.grid with args () {'column': 0, 'row': 0}\n"
+                "called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'>"
+                f" () {{'text': 'yyyyyy', 'command': {callback2}, 'underline': 3}}\n"
+                "called Button.grid with args () {'column': 1, 'row': 0}\n"
+                "called ShowMods.refresh_widgets with args () {'first_time': True}\n")
 
     def test_setup_actions(self, monkeypatch, capsys):
         """unittest for ShowMods.setup_actions
@@ -429,22 +485,23 @@ class TestShowMods:
             print('called ShowMods.root.bind with args', args)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.root = types.SimpleNamespace(bind=mock_bind)
-        testobj.manage_defaults = lambda: 'dummy'
-        testobj.manage_attributes = lambda: 'dummy'
-        testobj.manage_savefiles = lambda: 'dummy'
-        testobj.update = lambda: 'dummy'
-        testobj.confirm = lambda: 'dummy'
-        testobj.stop = lambda: 'dummy'
+        # testobj.manage_defaults = lambda: 'dummy'
+        # testobj.manage_attributes = lambda: 'dummy'
+        # testobj.manage_savefiles = lambda: 'dummy'
+        # testobj.update = lambda: 'dummy'
+        # testobj.confirm = lambda: 'dummy'
+        # testobj.stop = lambda: 'dummy'
         testobj.setup_actions()
         assert capsys.readouterr().out == (
                 f"called ShowMods.root.bind with args ('<Alt-d>', {testobj.manage_defaults})\n"
-                f"called ShowMods.root.bind with args ('<Alt-i>', {testobj.update})\n"
+                f"called ShowMods.root.bind with args ('<Alt-i>', {testobj.update_mods})\n"
+                f"called ShowMods.root.bind with args ('<Alt-r>', {testobj.remove_mods})\n"
                 f"called ShowMods.root.bind with args ('<Alt-m>', {testobj.manage_attributes})\n"
                 f"called ShowMods.root.bind with args ('<Alt-a>', {testobj.confirm})\n"
                 f"called ShowMods.root.bind with args ('<Control-Return>', {testobj.confirm})\n"
                 f"called ShowMods.root.bind with args ('<Alt-s>', {testobj.manage_savefiles})\n"
-                f"called ShowMods.root.bind with args ('<Alt-x>', {testobj.stop})\n"
-                f"called ShowMods.root.bind with args ('<Control-q>', {testobj.stop})\n")
+                f"called ShowMods.root.bind with args ('<Alt-x>', {testobj.close})\n"
+                f"called ShowMods.root.bind with args ('<Control-q>', {testobj.close})\n")
 
     def test_show_screen(self, monkeypatch, capsys):
         """unittest for ShowMods.show_screen
@@ -465,8 +522,7 @@ class TestShowMods:
         testobj.activatables = 'activatables'
         testobj.dependencies = 'dependencies'
         testobj.master = types.SimpleNamespace(screeninfo={}, order_widgets=mock_order)
-        testobj.attr_button = mockttk.MockButton()
-        testobj.select_button = mockttk.MockButton()
+        testobj.buttons = {"attr": mockttk.MockButton(), "sel": mockttk.MockButton()}
         assert capsys.readouterr().out == (
                 "called Button.__init__ with args <class 'NoneType'> () {}\n"
                 "called Button.__init__ with args <class 'NoneType'> () {}\n")
@@ -584,21 +640,21 @@ class TestShowMods:
         assert capsys.readouterr().out == ("called IntVar.set with arg 1\n"
                                            "called IntVar.get\n")
 
-    def test_stop(self, monkeypatch, capsys):
-        """unittest for ShowMods.quit
+    def test_close(self, monkeypatch, capsys):
+        """unittest for ShowMods.close
         """
         def mock_quit():
             print('called root.quit')
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.root = types.SimpleNamespace(quit=mock_quit)
-        testobj.stop('stopevent')
+        testobj.close('stopevent')
         assert capsys.readouterr().out == "called root.quit\n"
 
     def test_enable_button(self, monkeypatch, capsys):
         """unittest for ShowMods.enable_button
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.activate_button = mockttk.MockButton()
+        testobj.buttons = {'actv': mockttk.MockButton()}
         assert capsys.readouterr().out == (
                 "called Button.__init__ with args <class 'NoneType'> () {}\n")
         testobj.enable_button()
@@ -614,7 +670,7 @@ class TestShowMods:
         testobj.manage_defaults('event')
         assert capsys.readouterr().out == "called Manager.manage_defaults\n"
 
-    def test_update(self, monkeypatch, capsys):
+    def test_update_mods(self, monkeypatch, capsys):
         """unittest for ShowMods.update
         """
         def mock_update(arg):
@@ -625,14 +681,14 @@ class TestShowMods:
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.root = 'root'
         testobj.master = types.SimpleNamespace(update_mods=mock_update, downloads='here')
-        testobj.update()
+        testobj.update_mods()
         assert capsys.readouterr().out == (
                 "called FileDialog.askopenfilename with args"
                 " {'title': 'Install downloaded mods', 'multiple': True,"
                 " 'initialdir': 'here', 'filetypes': [('Zip files', '.zip')]}\n")
 
         monkeypatch.setattr(testee.tk.filedialog, 'askopenfilename', mockttk.mock_askopen_file)
-        testobj.update()
+        testobj.update_mods()
         assert capsys.readouterr().out == (
                 "called FileDialog.askopenfilename with args"
                 " {'title': 'Install downloaded mods', 'multiple': True,"
@@ -648,7 +704,7 @@ class TestShowMods:
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.root = 'root'
         testobj.master = MockManager()
-        testobj.activate_button = mockttk.MockButton()
+        testobj.buttons = {'actv': mockttk.MockButton()}
         assert capsys.readouterr().out == (
                 "called Button.__init__ with args <class 'NoneType'> () {}\n")
         testobj.confirm()
@@ -773,6 +829,7 @@ class TestSettingsDialog:
         monkeypatch.setattr(testee.ttk, 'Entry', mockttk.MockEntry)
         monkeypatch.setattr(testee.ttk, 'Checkbutton', mockttk.MockCheckBox)
         monkeypatch.setattr(testee.ttk, 'Button', mockttk.MockButton)
+        monkeypatch.setattr(testee.ttk, 'Spinbox', mockttk.MockSpinBox)
         monkeypatch.setattr(testee.tk, 'StringVar', mockttk.MockStringVar)
         monkeypatch.setattr(testee.tk, 'IntVar', mockttk.MockIntVar)
 
@@ -782,13 +839,14 @@ class TestSettingsDialog:
         monkeypatch.setattr(testee.SettingsDialog, 'update', lambda: 'dummy')
         monkeypatch.setattr(testee.SettingsDialog, 'close', lambda: 'dummy')
         parent = types.SimpleNamespace(root='root')
-        parent.master = types.SimpleNamespace(dialog_data=('xxx', 'yyy', 'zzz', 'qqq'))
+        parent.master = types.SimpleNamespace(dialog_data=('xxx', 'yyy', 'zzz', 1, 'qqq'))
         # breakpoint()
         testobj = testee.SettingsDialog(parent)
         assert testobj.parent == parent
         assert isinstance(testobj.modbase_text, testee.tk.StringVar)
         assert isinstance(testobj.config_text, testee.tk.StringVar)
         assert isinstance(testobj.download_text, testee.tk.StringVar)
+        assert isinstance(testobj.columncount, testee.tk.IntVar)
         assert isinstance(testobj.savepath_text, testee.tk.StringVar)
         assert capsys.readouterr().out == expected_output['sett'].format(testobj=testobj)
 
@@ -916,6 +974,8 @@ class TestSettingsDialog:
         testobj.config_text.set('yy')
         testobj.download_text = mockttk.MockStringVar()
         testobj.download_text.set('zz')
+        testobj.columncount = mockttk.MockIntVar()
+        testobj.columncount.set(2)
         testobj.savepath_text = mockttk.MockStringVar()
         testobj.savepath_text.set('qq')
         assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
@@ -924,14 +984,17 @@ class TestSettingsDialog:
                                            "called StringVar.set with arg 'yy'\n"
                                            "called StringVar.__init__ with args ()\n"
                                            "called StringVar.set with arg 'zz'\n"
+                                           "called IntVar.__init__ with args ()\n"
+                                           "called IntVar.set with arg 2\n"
                                            "called StringVar.__init__ with args ()\n"
                                            "called StringVar.set with arg 'qq'\n")
         testobj.close = mock_close
         testobj.update()
-        assert testobj.parent.master.dialog_data == ('xx', 'yy', 'zz', 'qq')
+        assert testobj.parent.master.dialog_data == ('xx', 'yy', 'zz', 2, 'qq')
         assert capsys.readouterr().out == ("called StringVar.get\n"
                                            "called StringVar.get\n"
                                            "called StringVar.get\n"
+                                           "called IntVar.get\n"
                                            "called StringVar.get\n"
                                            "called SettingsDialog.close\n")
 

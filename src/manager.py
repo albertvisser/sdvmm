@@ -27,7 +27,27 @@ def main(rebuild=False):
 
 class Manager:
     "Processing class (the one that contains the application logic (except the GUI stuff)"
-    maxcol = 3
+    SEL_TITLE = ('Dit overzicht toont de namen van mods die je kunt activeren'
+                 ' (inclusief die al geactiveerd zijn).\n'
+                 'In de achterliggende configuratie is geregeld welke mods'
+                 ' hiervoor eventueel nog meer aangezet moeten worden\n'
+                 'De onderstreepte items zijn hyperlinks; ze leiden naar de pagina'
+                 ' waarvandaan ik ze van gedownload heb (doorgaans op Nexus)')
+    DEP_TITLE = ('Hieronder volgen afhankelijkheden; deze zijn niet'
+                 ' apart te activeren maar je kunt wel zien of ze actief zijn')
+    BUTTON_LIST = [{"name": "dflt", "text": 'Set &Defaults',
+                    "tooltip": "define key locations for the application"},
+                   {"name": "inst", "text": '&Install / update', "tooltip": 'Selecteer uit een lijst'
+                    ' met recent gedownloade mods één of meer om te installeren'},
+                   {"name": "rmv", "text": '&Remove',
+                    "tooltip": "Selecteer mods om van het scherm te verwijderen"},
+                   {"name": "attr", "text": '&Mod attributes', "tooltip": "Set/Change selectability,"
+                    " View components and dependencies of a mod etc."},
+                   {"name": "actv", "text": '&Activate changes',
+                    "tooltip": "Make the game work with the indicated selection of mods"},
+                   {"name": "sel", "text": '&Select Savefile',
+                    "tooltip": "Activate mods associated with a selected save file"},
+                   {"name": "close", "text": '&Close', "tooltip": "Sluit de applicatie af"}]
 
     def __init__(self):
         self.conf = dmlj.JsonConf(CONFIG)
@@ -36,6 +56,7 @@ class Manager:
         self.modnames = []
         self.modbase = MODBASE
         self.downloads = DOWNLOAD
+        self.maxcol = dmlj.read_defaults()[3] or 3
         self.directories = set()
         self.screeninfo = {}
         self.unplotted = []
@@ -52,7 +73,19 @@ class Manager:
         """
         self.extract_screeninfo()
         self.doit = gui.ShowMods(self)
-        self.doit.setup_screen()
+        # self.doit.setup_screen()
+        self.BUTTON_LIST[0]["callback"] = self.manage_defaults
+        self.BUTTON_LIST[1]["callback"] = self.doit.update_mods
+        self.BUTTON_LIST[2]["callback"] = self.doit.remove_mods
+        self.BUTTON_LIST[3]["callback"] = self.manage_attributes
+        self.BUTTON_LIST[4]["callback"] = self.doit.confirm
+        self.BUTTON_LIST[5]["callback"] = self.manage_savefiles
+        self.BUTTON_LIST[6]["callback"] = self.doit.close
+        self.doit.create_selectables_title(self.SEL_TITLE)
+        self.doit.create_selectables_grid()
+        self.doit.create_dependencies_title(self.DEP_TITLE)
+        self.doit.create_dependencies_grid()
+        self.doit.create_buttons(self.BUTTON_LIST)
         self.doit.setup_actions()
         self.doit.show_screen()
 
@@ -302,7 +335,8 @@ class Manager:
         elif text != oldtext or name != oldname:
             # alleen schermtekst wijzigen
             widgetlist = self.get_widget_list(rownum, colnum, oldselect)
-            self.build_screen_text(widgetlist, name, text, self.screeninfo[name]['key'])
+            # self.build_screen_text(widgetlist, name, text, self.screeninfo[name]['key'])
+            self.doit.set_label_text(widgetlist, name, self.screeninfo[name]['key'], text)
         return True, ''
 
     def switch_by_selectability(self, selectable, name, oldname):
@@ -497,10 +531,13 @@ class Manager:
     def manage_defaults(self):
         """handle dialog for settings several application defaults
         """
-        origdata = self.dialog_data = dmlj.read_defaults(bare=True)
+        origdata = dmlj.read_defaults(bare=True)
+        self.dialog_data = list(origdata)
+        self.dialog_data[3] = self.maxcol
         gui.show_dialog(gui.SettingsDialog, self.doit)
         if self.dialog_data != origdata:
             dmlj.save_defaults(*self.dialog_data)
+            self.maxcol = self.dialog_data[3]
 
 
 def get_toplevel(dirname):

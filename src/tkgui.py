@@ -27,64 +27,58 @@ class ShowMods():
         self.master = master
         self.root = tk.Tk()
         self.ecimage = ImageTk.PhotoImage(ECIMAGE)
-
-    def setup_screen(self):
-        "define the screen elements"
         self.root.title("SDV Mod Manager")
-        main = ttk.Frame(self.root)
-        main.grid(column=0, row=0, sticky=(tk.N, tk.E, tk.S, tk.W))  # main.pack()
-        toptext = ttk.Label(main, text=(
-            'Dit overzicht toont de namen van mods die je kunt activeren'
-            ' (inclusief die al geactiveerd zijn).\n'
-            'In de achterliggende configuratie is geregeld welke mods'
-            ' hiervoor eventueel nog meer aangezet moeten worden\n'
-            'De nummers tussen haakjes kunnen gebruikt worden om naar de'
-            ' download pagina op NexusMods.com te gaan\n'
-            '(de volledige link is https://www.nexusmods.com/stardewvalley/mods/<updateid>)'),
-            padding=10)
-        toptext.grid(column=0, row=1, sticky=(tk.N, tk.W))  # toptext.pack()
+        self.main = ttk.Frame(self.root)
+        self.main.grid(column=0, row=0, sticky=(tk.N, tk.E, tk.S, tk.W))  # main.pack()
+        self.buttons = {}
 
-        middle_bit = ttk.Frame(self.root)
-        middle_bit.grid(column=0, row=2, sticky=(tk.N, tk.W))  # middle_bit.pack()
-        self.activatables = ttk.Frame(middle_bit, padding=(10, 0))
-        self.activatables.grid(column=0, row=0)  # pack()
-        mid_message = ttk.Label(middle_bit, text=('Hieronder volgen afhankelijkheden; deze zijn niet'
-                                                  ' apart te activeren maar je kunt wel zien of ze'
-                                                  ' actief zijn'), padding=10)
-        mid_message.grid(column=0, row=1, sticky=(tk.N, tk.W))  # pack(side=tk.LEFT)
-        self.dependencies = ttk.Frame(middle_bit, padding=(10, 0))
-        self.dependencies.grid(column=0, row=2)  # pack()
+    def create_selectables_title(self, text):
+        "create the first block of text"
+        toptext = ttk.Label(self.main, text=text, padding=10)
+        toptext.grid(column=0, row=0, sticky=(tk.N, tk.W))  # toptext.pack()
 
+    def create_selectables_grid(self):
+        "show the mods that can be selected"
+        self.activatables = ttk.Frame(self.main, padding=(10, 0))
+        self.activatables.grid(column=0, row=1)  # pack()
+
+    def create_dependencies_title(self, text):
+        "create the second block of text"
+        mid_message = ttk.Label(self.main, text=text, padding=10)
+        mid_message.grid(column=0, row=2, sticky=(tk.N, tk.W))  # pack(side=tk.LEFT)
+
+    def create_dependencies_grid(self):
+        "show the mods that are selected automatically when needed"
+        self.dependencies = ttk.Frame(self.main, padding=(10, 0))
+        self.dependencies.grid(column=0, row=3)  # pack()
+
+    def create_buttons(self, buttondefs):
+        "create the stuff that makes the application do things"
         bottomline = ttk.Frame(self.root, padding=10)
         bottomline.grid(column=0, row=3, sticky=tk.S)  # pack(side=tk.BOTTOM)
-        ttk.Button(bottomline, text="Set defaults", command=self.manage_defaults,
-                   underline=4).grid(column=0, row=0)  # .pack(side=tk.LEFT)
-        ttk.Button(bottomline, text="Install / Update", command=self.update,
-                   underline=0).grid(column=1, row=0)  # .pack(side=tk.LEFT)
-        self.attr_button = ttk.Button(bottomline, text="Mod Attributes",
-                                      command=self.manage_attributes, underline=0)
-        self.attr_button.grid(column=2, row=0)  # pack(side=tk.LEFT)
-        self.activate_button = ttk.Button(bottomline, text="Activate Changes", command=self.confirm,
-                                          underline=0)
-        self.activate_button.state(['disabled'])
-        self.activate_button.grid(column=3, row=0)  # pack(side=tk.LEFT)
-        self.select_button = ttk.Button(bottomline, text="Select Savefile",
-                                        command=self.manage_savefiles, underline=0)
-        self.select_button.grid(column=4, row=0)  # pack(side=tk.LEFT)
-        ttk.Button(bottomline, text="Exit", command=self.root.quit,
-                   underline=1).grid(column=5, row=0)  # pack(side=tk.RIGHT)
+        pos = 0
+        for bdef in buttondefs:
+            underline_index = bdef["text"].index('&')
+            newtext = bdef["text"].replace("&", '')
+            self.buttons[bdef["name"]] = ttk.Button(bottomline, text=newtext,
+                                                    command=bdef["callback"],
+                                                    underline=underline_index)
+            # self.buttons[key].setToolTip(bdef["tooltip"])
+            self.buttons[bdef["name"]].grid(column=pos, row=0)  # .pack(side=tk.LEFT)\
+            pos += 1
         self.refresh_widgets(first_time=True)
 
     def setup_actions(self):
-        "define the screen elements"
+        "define hotkey actions"
         self.root.bind('<Alt-d>', self.manage_defaults)
-        self.root.bind('<Alt-i>', self.update)
+        self.root.bind('<Alt-i>', self.update_mods)
+        self.root.bind('<Alt-r>', self.remove_mods)
         self.root.bind('<Alt-m>', self.manage_attributes)
         self.root.bind('<Alt-a>', self.confirm)
         self.root.bind('<Control-Return>', self.confirm)
         self.root.bind('<Alt-s>', self.manage_savefiles)
-        self.root.bind('<Alt-x>', self.stop)
-        self.root.bind('<Control-q>', self.stop)
+        self.root.bind('<Alt-x>', self.close)
+        self.root.bind('<Control-q>', self.close)
 
     def show_screen(self):
         "show the screen and start the event loop"
@@ -92,8 +86,8 @@ class ShowMods():
 
     def refresh_widgets(self, first_time=False):
         "set the checkboxes to the right values (first time: also create them)"
-        self.attr_button.state([f'{"!" if self.master.screeninfo else ""}disabled'])
-        self.select_button.state([f'{"!" if self.master.screeninfo else ""}disabled'])
+        self.buttons['attr'].state([f'{"!" if self.master.screeninfo else ""}disabled'])
+        self.buttons['sel'].state([f'{"!" if self.master.screeninfo else ""}disabled'])
         self.master.order_widgets(first_time, self.activatables, self.dependencies)
 
     def remove_widgets(self, *args):  # widgetlist, container, row, col):
@@ -135,19 +129,19 @@ class ShowMods():
         widgetlist[4].set(int(state))
         widgetlist = (widgetlist[0], widgetlist[1], widgetlist[2], widgetlist[3], widgetlist[4])
 
-    def stop(self, event):
+    def close(self, event=None):
         "button callback to close the application"
         self.root.quit()
 
     def enable_button(self):
         "make activating the selected mods possible"
-        self.activate_button.state(['!disabled'])
+        self.buttons['actv'].state(['!disabled'])
 
     def manage_defaults(self, event=None):
         "open dialog to change defaults"
         self.master.manage_defaults()
 
-    def update(self, event=None):
+    def update_mods(self, event=None):
         "(re)install downloaded mods"
         filenames = FileDialog.askopenfilename(title="Install downloaded mods", multiple=True,
                                                initialdir=self.master.downloads,
@@ -156,11 +150,15 @@ class ShowMods():
             report = self.master.update_mods(filenames)
             MessageBox.showinfo(parent=self.root, message='\n'.join(report))
 
+    def remove_mods(self):
+        "remove mods from screen and config"
+        MessageBox.showinfo(parent=self.root, message='W.I.P. - Nog even geduld a.u.b.')
+
     def confirm(self):
         "build a list from the checked entries and pass it back to the caller"
         self.master.process_activations()
         MessageBox.showinfo(parent=self.root, message='wijzigingen zijn doorgevoerd')
-        self.activate_button.state(['disabled'])
+        self.buttons['actv'].state(['disabled'])
 
     def get_labeltext_if_checked(self, widgetlist):
         """return the name of the mod associated with a checkbox
@@ -199,7 +197,8 @@ class SettingsDialog(tk.Toplevel):
         self.choice = ''
         super().__init__(parent.root)
 
-        origmodbase, origconfig, origdownload, origsavepath = self.parent.master.dialog_data
+        data = self.parent.master.dialog_data
+        origmodbase, origconfig, origdownload, origcolcount, origsavepath = data
 
         frm = ttk.Frame(self, padding=10)
         frm.grid(row=0, column=0, sticky=(tk.N, tk.E, tk.S, tk.W))
@@ -226,6 +225,12 @@ class SettingsDialog(tk.Toplevel):
         download.grid(row=row, column=1)
         sel_download_button = ttk.Button(frm, text='Browse', command=self.select_download_path)
         sel_download_button.grid(row=row, column=2, sticky=tk.W)
+        row += 1
+        ttk.Label(frm, text='Number of columns on screen:').grid(row=row, column=0, sticky=tk.W)
+        self.columncount = tk.IntVar()
+        self.columncount.set(origcolcount)
+        columns = ttk.Spinbox(frm, width=5, from_=0, to=5, textvariable=self.columncount)
+        columns.grid(row=row, column=1, sticky=tk.W)
         row += 1
         ttk.Label(frm, text='Location for save files:').grid(row=row, column=0, sticky=tk.W)
         self.savepath_text = tk.StringVar()
@@ -275,7 +280,8 @@ class SettingsDialog(tk.Toplevel):
     def update(self, event=None):
         "update settings and exit"
         self.parent.master.dialog_data = (self.modbase_text.get(), self.config_text.get(),
-                                          self.download_text.get(), self.savepath_text.get())
+                                          self.download_text.get(), self.columncount.get(),
+                                          self.savepath_text.get())
         self.close()
 
     def close(self, event=None):

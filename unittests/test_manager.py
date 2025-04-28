@@ -65,6 +65,26 @@ class MockShowMods:
         """stub
         """
         print('called gui.ShowMods.setup_screen()')
+    def create_selectables_title(self, text):
+        """stub
+        """
+        print('called gui.create_selectables_title with arg', text)
+    def create_selectables_grid(self):
+        """stub
+        """
+        print('called gui.create_selectables_grid')
+    def create_dependencies_title(self, text):
+        """stub
+        """
+        print('called gui.create_dependencies_title with arg', text)
+    def create_dependencies_grid(self):
+        """stub
+        """
+        print('called gui.create_dependencies_grid')
+    def create_buttons(self, buttondict):
+        """stub
+        """
+        print('called gui.create_buttons with arg', buttondict)
     def setup_actions(self):
         """stub
         """
@@ -77,6 +97,14 @@ class MockShowMods:
         """stub
         """
         print('called gui.ShowMods.refresh_widgets with args', kwargs)
+    def update_mods(self):
+        "callback"
+    def remove_mods(self):
+        "callback"
+    def confirm(self):
+        "callback"
+    def close(self):
+        "callback"
 
 
 def test_main(monkeypatch, capsys, tmp_path):
@@ -166,15 +194,30 @@ class TestManager:
             print('called Manager.extract_screen_locations')
         monkeypatch.setattr(testee.gui, 'ShowMods', MockShowMods)
         testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.SEL_TITLE = 'xxxxx'
+        testobj.DEP_TITLE = 'yyyyy'
+        testobj.BUTTON_LIST = [{}, {}, {}, {}, {}, {}, {}]
         testobj.extract_screeninfo = mock_extract
         testobj.modnames = []
         testobj.build_and_start_gui()
         assert testobj.modnames == ['one', 'two', 'three']
-        assert capsys.readouterr().out == ('called Manager.extract_screen_locations\n'
-                                           f"called gui.ShowMods.__init__() with arg '{testobj}'\n"
-                                           'called gui.ShowMods.setup_screen()\n'
-                                           'called gui.ShowMods.setup_actions()\n'
-                                           'called gui.ShowMods.show_screen()\n')
+        assert capsys.readouterr().out == (
+                'called Manager.extract_screen_locations\n'
+                f"called gui.ShowMods.__init__() with arg '{testobj}'\n"
+                # 'called gui.ShowMods.setup_screen()\n'
+                "called gui.create_selectables_title with arg xxxxx\n"
+                "called gui.create_selectables_grid\n"
+                "called gui.create_dependencies_title with arg yyyyy\n"
+                "called gui.create_dependencies_grid\n"
+                f"called gui.create_buttons with arg [{{'callback': {testobj.manage_defaults}}},"
+                f" {{'callback': {testobj.doit.update_mods}}},"
+                f" {{'callback': {testobj.doit.remove_mods}}},"
+                f" {{'callback': {testobj.manage_attributes}}},"
+                f" {{'callback': {testobj.doit.confirm}}},"
+                f" {{'callback': {testobj.manage_savefiles}}},"
+                f" {{'callback': {testobj.doit.close}}}]\n"
+                'called gui.ShowMods.setup_actions()\n'
+                'called gui.ShowMods.show_screen()\n')
 
     def test_extract_screeninfo(self, monkeypatch, capsys):
         """unittest for Manager.extract_screen_locations
@@ -371,8 +414,9 @@ class TestManager:
             return 'hbox', 'btn', 'cbox'
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.doit = types.SimpleNamespace(add_checkbox=mock_add)
+        testobj.maxcol = 3
         testobj.screeninfo = {'x': {'sel': True}, 'y': {'sel': True}, 'z': {'sel': False},
-                                     'q': {'sel': False}}
+                              'q': {'sel': False}}
         assert testobj.add_items_to_grid('grid', []) == ({}, {})
         assert capsys.readouterr().out == ""
         assert testobj.add_items_to_grid('grid', ['x', 'y', 'z', 'q']) == (
@@ -763,21 +807,19 @@ class TestManager:
         """unittest for Manager.update_attributes
         """
         def mock_switch(*args):
-            print('called Manager.switch_selectability with args', args)
+            print('called Manager.switch_by_selectability with args', args)
             return False
-        def mock_switch_2(*args):
-            print('called Manager.switch_selectability with args', args)
-            return True
         def mock_refresh(*args):
             print('called ShowMods.refresh_widgets with args', args)
         def mock_get(*args):
             print('called Manager.get_widget_list with args', args)
             return ['widget', 'label']
         def mock_build(*args):
-            print('called ShowMods.build_screen_text with args', args)
+            print('called ShowMods.set_label_text with args', args)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.doit = types.SimpleNamespace(refresh_widgets=mock_refresh)
-        testobj.build_screen_text = mock_build
+        # testobj.build_screen_text = mock_build
+        testobj.doit.set_label_text = mock_build
         testobj.switch_by_selectability = mock_switch
         testobj.get_widget_list = mock_get
         testobj.screeninfo = {}
@@ -791,7 +833,7 @@ class TestManager:
         assert testobj.screeninfo == {'xxx': {'sel': True, 'txt': 'yyy', 'opt': True, 'pos': '1x2'}}
         assert testobj.attr_changes == [('xxx', '')]
         assert capsys.readouterr().out == (
-                "called Manager.switch_selectability with args (True, 'xxx', 'xxx')\n"
+                "called Manager.switch_by_selectability with args (True, 'xxx', 'xxx')\n"
                 "called ShowMods.refresh_widgets with args ()\n")
         testobj.screeninfo = {'xxx': {'sel': False, 'txt': '', 'opt': False, 'pos': '1x2', 'key': 1}}
         testobj.attr_changes = []
@@ -801,7 +843,7 @@ class TestManager:
         assert testobj.attr_changes == [('yyy', 'xxx')]
         assert capsys.readouterr().out == (
                 "called Manager.get_widget_list with args (1, 2, False)\n"
-                "called ShowMods.build_screen_text with args (['widget', 'label'], 'yyy', '', 1)\n")
+                "called ShowMods.set_label_text with args (['widget', 'label'], 'yyy', 1, '')\n")
         testobj.screeninfo = {'xxx': {'sel': False, 'txt': '', 'opt': False, 'pos': '1x2', 'key': 1}}
         testobj.attr_changes = []
         assert testobj.update_attributes(False, 'xxx', 'xxx', '', False) == (True, '')
@@ -1119,7 +1161,6 @@ class TestManager:
                 "called ZipFile.__exit__\n")
 
         monkeypatch.setattr(testee, 'get_archive_roots', mock_get_3)
-        zipfileinstalled = zipfilepath.parent / 'installed' / zipfilepath.name
         assert testobj.install_zipfile(zipfilepath) == (
                 [], None, None, ["SMAPI-install is waiting in a terminal window to be finished"
                                  " by executing './install on Linux.sh'"])
@@ -1453,32 +1494,46 @@ class TestManager:
         """
         def mock_read(**kwargs):
             print('called dmlj.read_defaults with args', kwargs)
-            return 'origdata'
+            return origdata
+        def mock_read_2(**kwargs):
+            print('called dmlj.read_defaults with args', kwargs)
+            return newdata
         def mock_show(self, *args):
             print('called show_dialog with args', args)
-            args[0].parent.dialog_data = 'origdata'
+            args[0].parent.dialog_data = newdata
         def mock_show_2(self, *args):
             print('called show_dialog with args', args)
-            args[0].parent.dialog_data = ('new', 'data')
+            args[0].parent.dialog_data = origdata
         def mock_save(*args):
             print('called dmlj.save_defaults with args', args)
+        origdata = ('orig', 'data', 'x', 'y', 'z')
+        newdata = ('orig', 'data', 'x', 'max_col', 'z')
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.doit = MockShowMods(testobj)
         assert capsys.readouterr().out == f"called gui.ShowMods.__init__() with arg '{testobj}'\n"
+        testobj.maxcol = 'max_col'
         testobj.doit.parent = testobj
         monkeypatch.setattr(testee.dmlj, 'read_defaults', mock_read)
         monkeypatch.setattr(testee.gui, 'show_dialog', mock_show)
         monkeypatch.setattr(testee.dmlj, 'save_defaults', mock_save)
+        testobj.manage_defaults()
+        assert testobj.dialog_data == newdata
+        assert capsys.readouterr().out == (
+                "called dmlj.read_defaults with args {'bare': True}\n"
+                f"called show_dialog with args ({testobj.doit},)\n"
+                f"called dmlj.save_defaults with args {newdata}\n")
+        monkeypatch.setattr(testee.dmlj, 'read_defaults', mock_read_2)
         testobj.manage_defaults()
         assert capsys.readouterr().out == (
                 "called dmlj.read_defaults with args {'bare': True}\n"
                 f"called show_dialog with args ({testobj.doit},)\n")
         monkeypatch.setattr(testee.gui, 'show_dialog', mock_show_2)
         testobj.manage_defaults()
+        assert testobj.maxcol == 'y'
         assert capsys.readouterr().out == (
                 "called dmlj.read_defaults with args {'bare': True}\n"
                 f"called show_dialog with args ({testobj.doit},)\n"
-                "called dmlj.save_defaults with args ('new', 'data')\n")
+                f"called dmlj.save_defaults with args {origdata}\n")
 
 
 def test_get_toplevel():

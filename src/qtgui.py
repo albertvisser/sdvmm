@@ -24,54 +24,44 @@ class ShowMods(qtw.QWidget):
         self.master = master
         self.app = qtw.QApplication(sys.argv)
         super().__init__()
-
-    def setup_screen(self):
-        "define the screen elements"
         self.setWindowTitle('SDV Mod Manager')
         self.vbox = qtw.QVBoxLayout()
-        hbox = qtw.QHBoxLayout()
-        hbox.addWidget(qtw.QLabel('Dit overzicht toont de namen van mods die je kunt activeren'
-                                  ' (inclusief die al geactiveerd zijn).\n'
-                                  'In de achterliggende configuratie is geregeld welke mods'
-                                  ' hiervoor eventueel nog meer aangezet moeten worden\n'
-                                  'De onderstreepte items zijn hyperlinks; ze leiden naar de pagina'
-                                  ' waarvandaan ik ze van gedownload heb (doorgaans op Nexus)'))
-        self.vbox.addLayout(hbox)
-        self.gbox1 = qtw.QGridLayout()  # activatable mods
+        self.setLayout(self.vbox)
+        self.buttons = {}
+
+    def create_selectables_title(self, text):
+        "create the first block of text"
+        self.vbox.addWidget(qtw.QLabel(text))
+
+    def create_selectables_grid(self):
+        "show the mods that can be selected"
+        self.gbox1 = qtw.QGridLayout()
         self.vbox.addLayout(self.gbox1)
-        self.vbox.addWidget(qtw.QLabel('Hieronder volgen afhankelijkheden; deze zijn niet'
-                                       ' apart te activeren maar je kunt wel zien of ze'
-                                       ' actief zijn'))
-        self.gbox2 = qtw.QGridLayout()  # dependencies
+
+    def create_dependencies_title(self, text):
+        "create the second block of text"
+        self.vbox.addWidget(qtw.QLabel(text))
+
+    def create_dependencies_grid(self):
+        "show the mods that are selected automatically when needed"
+        self.gbox2 = qtw.QGridLayout()
         self.vbox.addLayout(self.gbox2)
-        self.attr_button = qtw.QPushButton('&Mod attributes', self)
-        self.activate_button = qtw.QPushButton('&Activate changes', self)
-        self.select_button = qtw.QPushButton('&Select Savefile', self)
-        self.refresh_widgets(first_time=True)
+
+    def create_buttons(self, buttondefs):
+        "create the stuff that makes the application do things"
         self.vbox.addSpacing(10)
         hbox = qtw.QHBoxLayout()
         hbox.addStretch()
-        btn = qtw.QPushButton('Set &Defaults', self)
-        btn.clicked.connect(self.master.manage_defaults)
-        hbox.addWidget(btn)
-        btn = qtw.QPushButton('&Install / update', self)
-        btn.setToolTip('Selecteer uit een lijst met recent gedownloade mods één of meer om te'
-                       ' installeren')
-        btn.clicked.connect(self.update)
-        hbox.addWidget(btn)
-        self.attr_button.clicked.connect(self.master.manage_attributes)
-        hbox.addWidget(self.attr_button)
-        self.activate_button.clicked.connect(self.confirm)
-        self.activate_button.setEnabled(False)
-        hbox.addWidget(self.activate_button)
-        self.select_button.clicked.connect(self.master.manage_savefiles)
-        hbox.addWidget(self.select_button)
-        btn = qtw.QPushButton('&Close', self)
-        btn.clicked.connect(self.close)
-        hbox.addWidget(btn)
+        for bdef in buttondefs:
+            btn = qtw.QPushButton(bdef["text"], self)
+            btn.clicked.connect(bdef["callback"])
+            btn.setToolTip(bdef["tooltip"])
+            hbox.addWidget(btn)
+            self.buttons[bdef["name"]] = btn
         hbox.addStretch()
         self.vbox.addLayout(hbox)
-        self.setLayout(self.vbox)
+        self.buttons["actv"].setEnabled(False)
+        self.refresh_widgets(first_time=True)
 
     def setup_actions(self):
         "define hotkey actions"
@@ -93,8 +83,8 @@ class ShowMods(qtw.QWidget):
         "set the checkboxes to the right values (first time: also create them)"
         # on first-time we build all the checkbox containers
         # otherwise we remove the variable elements from the gridboxes
-        self.attr_button.setEnabled(bool(self.master.screeninfo))
-        self.select_button.setEnabled(bool(self.master.screeninfo))
+        self.buttons['attr'].setEnabled(bool(self.master.screeninfo))
+        self.buttons['sel'].setEnabled(bool(self.master.screeninfo))
         self.master.order_widgets(first_time, self.gbox1, self.gbox2)
 
     def remove_widgets(self, *args):
@@ -145,9 +135,9 @@ class ShowMods(qtw.QWidget):
 
     def enable_button(self):
         "make activating mods possible"
-        self.activate_button.setEnabled(True)
+        self.buttons['actv'].setEnabled(True)
 
-    def update(self):
+    def update_mods(self):
         "(re)install downloaded mods"
         filenames, ok = qtw.QFileDialog.getOpenFileNames(self, caption="Install downloaded mods",
                                                          directory=self.master.downloads,
@@ -156,11 +146,15 @@ class ShowMods(qtw.QWidget):
             report = self.master.update_mods(filenames)
             qtw.QMessageBox.information(self, 'Change Config', '\n'.join(report))
 
+    def remove_mods(self):
+        "remove mods from screen and config"
+        qtw.QMessageBox.information(self, 'Change Config', 'W.I.P., Nog even geduld a.u.b.')
+
     def confirm(self):
         "build a list from the checked entries and pass it back to the caller"
         self.master.process_activations()
         qtw.QMessageBox.information(self, 'Change Config', 'wijzigingen zijn doorgevoerd')
-        self.activate_button.setEnabled(False)
+        self.buttons['actv'].setEnabled(False)
 
     def get_labeltext_if_checked(self, widgetlist):
         """return the name of the mod associated with a checkbox
@@ -194,14 +188,14 @@ class SettingsDialog(qtw.QDialog):
     """
     def __init__(self, parent):
         self.parent = parent
-        origmodbase, origconfig, origdownload, origsavepath = self.parent.master.dialog_data
+        origmodbase, origconfig, origdownload, origcount, origsavepath = self.parent.master.dialog_data
         super().__init__(parent)
         vbox = qtw.QVBoxLayout()
         gbox = qtw.QGridLayout()
         row = 0
         gbox.addWidget(qtw.QLabel('Base location for mods:', self), row, 0)
         self.modbase_text = qtw.QLineEdit(self)
-        self.modbase_text.setText(origmodbase)
+        self.modbase_text.setText(self.parent.master.dialog_data[0])
         self.modbase_text.setMinimumWidth(380)
         # self.modbase_text.setMaximumWidth(380)
         gbox.addWidget(self.modbase_text, row, 1)
@@ -211,13 +205,13 @@ class SettingsDialog(qtw.QDialog):
         row += 1
         gbox.addWidget(qtw.QLabel('Configuration file name:', self), row, 0)
         self.config_text = qtw.QLineEdit(self)
-        self.config_text.setText(origconfig)
+        self.config_text.setText(self.parent.master.dialog_data[1])
         self.config_text.setMinimumWidth(380)
         gbox.addWidget(self.config_text, row, 1)
         row += 1
         gbox.addWidget(qtw.QLabel('Location for downloads:', self), row, 0)
         self.download_text = qtw.QLineEdit(self)
-        self.download_text.setText(origdownload)
+        self.download_text.setText(self.parent.master.dialog_data[2])
         self.download_text.setMinimumWidth(380)
         # self.download_text.setMaximumWidth(220)
         gbox.addWidget(self.download_text, row, 1)
@@ -225,9 +219,14 @@ class SettingsDialog(qtw.QDialog):
         self.select_download_button.clicked.connect(self.select_download_path)
         gbox.addWidget(self.select_download_button, row, 2)
         row += 1
+        gbox.addWidget(qtw.QLabel('Number of columns on screen:', self), row, 0)
+        self.columns = qtw.QSpinBox(self)
+        self.columns.setValue(self.parent.master.dialog_data[3])
+        gbox.addWidget(self.columns, row, 1)
+        row += 1
         gbox.addWidget(qtw.QLabel('Location for save files:', self), row, 0)
         self.savepath_text = qtw.QLineEdit(self)
-        self.savepath_text.setText(origsavepath)
+        self.savepath_text.setText(self.parent.master.dialog_data[4])
         self.savepath_text.setMinimumWidth(380)
         # self.savepath_text.setMaximumWidth(120)
         gbox.addWidget(self.savepath_text, row, 1)
@@ -277,7 +276,8 @@ class SettingsDialog(qtw.QDialog):
     def update(self):
         "update settings and exit"
         self.parent.master.dialog_data = (self.modbase_text.text(), self.config_text.text(),
-                                          self.download_text.text(), self.savepath_text.text())
+                                          self.download_text.text(), self.columns.value(),
+                                          self.savepath_text.text())
         self.accept()
 
 
