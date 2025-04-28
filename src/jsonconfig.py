@@ -27,6 +27,7 @@ def read_defaults(bare=False):
     modbase = data.get('modbase', '')
     config = data.get('config', '')
     download = data.get('download', '')
+    columns = data.get('columns', 0)
     savepath = data.get('savepath', '')
     if not bare:
         modbase = os.path.expanduser(modbase)
@@ -35,12 +36,13 @@ def read_defaults(bare=False):
         download = os.path.expanduser(download)
         if savepath:
             savepath = pathlib.Path(savepath).expanduser()
-    return modbase, config, download, savepath
+    return modbase, config, download, columns, savepath
 
 
-def save_defaults(modbase, config, download, savepath):
+def save_defaults(modbase, config, download, columns, savepath):
     "write new/changed default values"
-    data = {'modbase': modbase, 'config': config, 'download': download, 'savepath': savepath}
+    data = {'modbase': modbase, 'config': config, 'download': download, 'columns': columns,
+            'savepath': savepath}
     if os.path.exists(DEFAULTS):
         shutil.copyfile(DEFAULTS, DEFAULTS + '~')
     with open(DEFAULTS, 'w') as f:

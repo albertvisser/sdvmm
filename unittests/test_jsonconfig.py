@@ -7,17 +7,20 @@ from src import jsonconfig as testee
 def test_read_defaults(monkeypatch, tmp_path):
     "unittest for jsonconfig.read_defaults"
     monkeypatch.setattr(testee, 'DEFAULTS', str(tmp_path / 'defaults.json'))
-    assert testee.read_defaults() == ('', '', '', '')
+    assert testee.read_defaults() == ('', '', '', 0, '')
     (tmp_path / 'defaults.json').write_text('{"modbase": "xxx", "config": "yyy",'
-                                            '"download": "zzz",' '"savepath": "qqq"}')
-    assert testee.read_defaults() == ('xxx', 'xxx/yyy', 'zzz', testee.pathlib.Path('qqq'))
+                                            '"download": "zzz",' '"columns": 0,'
+                                            '"savepath": "qqq"}')
+    assert testee.read_defaults() == ('xxx', 'xxx/yyy', 'zzz', 0, testee.pathlib.Path('qqq'))
     (tmp_path / 'defaults.json').write_text('{"modbase": "~/xxx", "config": "yyy",'
-                                            '"download": "~/zzz",' '"savepath": "~/qqq"}')
+                                            ' "download": "~/zzz", "columns": 2,'
+                                            ' "savepath": "~/qqq"}')
     assert testee.read_defaults() == (testee.os.path.expanduser('~/xxx'),
                                       testee.os.path.expanduser('~/xxx/yyy'),
                                       testee.os.path.expanduser('~/zzz'),
+                                      2,
                                       testee.pathlib.Path('~/qqq').expanduser())
-    assert testee.read_defaults(bare=True) == ('~/xxx', 'yyy', '~/zzz', '~/qqq')
+    assert testee.read_defaults(bare=True) == ('~/xxx', 'yyy', '~/zzz', 2, '~/qqq')
 
 
 def test_save_defaults(monkeypatch, tmp_path):
@@ -26,14 +29,14 @@ def test_save_defaults(monkeypatch, tmp_path):
     backuploc = tmp_path / 'defaults.json~'
     monkeypatch.setattr(testee, 'DEFAULTS', str(defaultloc))
     assert not defaultloc.exists()
-    testee.save_defaults('xxx', 'yyy', 'zzz', 'qqq')
+    testee.save_defaults('xxx', 'yyy', 'zzz', 0, 'qqq')
     assert defaultloc.exists()
-    assert defaultloc.read_text() == ('{"modbase": "xxx", "config": "yyy",'
-                                      ' "download": "zzz", "savepath": "qqq"}')
+    assert defaultloc.read_text() == ('{"modbase": "xxx", "config": "yyy", "download": "zzz",'
+                                      ' "columns": 0, "savepath": "qqq"}')
     assert not backuploc.exists()
-    testee.save_defaults('aaa', 'bbb', 'ccc', 'ddd')
-    assert defaultloc.read_text() == ('{"modbase": "aaa", "config": "bbb", '
-                                      '"download": "ccc", "savepath": "ddd"}')
+    testee.save_defaults('aaa', 'bbb', 'ccc', 2, 'ddd')
+    assert defaultloc.read_text() == ('{"modbase": "aaa", "config": "bbb", "download": "ccc",'
+                                      ' "columns": 2, "savepath": "ddd"}')
     assert backuploc.exists()
 
 
@@ -528,7 +531,7 @@ class TestJsonConf:
                                                         'ingameDate': '01 02 year 03'}}}
         assert capsys.readouterr().out == "called get_saveitem_attrs with arg 'xxx'\n"
         testobj._data = {testobj.SAVES: {'yyy': 'zzz'}}
-        assert testobj.get_saveitem_attrs('xxx') == (('xxx', 'yyy Farm', '01 02 year 03'), False)
+        assert testobj.get_saveitem_attrs('xxx') == (('xxx', 'yyy Farm', '01 02 year 03'), True)
         assert testobj._data == {'savedgames': {'yyy': 'zzz',
                                                 'xxx': {'player': 'xxx', 'farmName': 'yyy Farm',
                                                         'ingameDate': '01 02 year 03'}}}
