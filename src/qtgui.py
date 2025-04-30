@@ -37,6 +37,7 @@ class ShowMods(qtw.QWidget):
         "show the mods that can be selected"
         self.gbox1 = qtw.QGridLayout()
         self.vbox.addLayout(self.gbox1)
+        return self.gbox1
 
     def create_dependencies_title(self, text):
         "create the second block of text"
@@ -46,6 +47,7 @@ class ShowMods(qtw.QWidget):
         "show the mods that are selected automatically when needed"
         self.gbox2 = qtw.QGridLayout()
         self.vbox.addLayout(self.gbox2)
+        return self.gbox2
 
     def create_buttons(self, buttondefs):
         "create the stuff that makes the application do things"
@@ -61,7 +63,6 @@ class ShowMods(qtw.QWidget):
         hbox.addStretch()
         self.vbox.addLayout(hbox)
         self.buttons["actv"].setEnabled(False)
-        self.refresh_widgets(first_time=True)
 
     def setup_actions(self):
         "define hotkey actions"
@@ -85,7 +86,7 @@ class ShowMods(qtw.QWidget):
         # otherwise we remove the variable elements from the gridboxes
         self.buttons['attr'].setEnabled(bool(self.master.screeninfo))
         self.buttons['sel'].setEnabled(bool(self.master.screeninfo))
-        self.master.order_widgets(first_time, self.gbox1, self.gbox2)
+        self.master.order_widgets(self.gbox1, self.gbox2, first_time)
 
     def remove_widgets(self, *args):
         """remove the widgets from the screen before replacing them
@@ -146,10 +147,6 @@ class ShowMods(qtw.QWidget):
             report = self.master.update_mods(filenames)
             qtw.QMessageBox.information(self, 'Change Config', '\n'.join(report))
 
-    def remove_mods(self):
-        "remove mods from screen and config"
-        qtw.QMessageBox.information(self, 'Change Config', 'W.I.P., Nog even geduld a.u.b.')
-
     def confirm(self):
         "build a list from the checked entries and pass it back to the caller"
         self.master.process_activations()
@@ -188,7 +185,7 @@ class SettingsDialog(qtw.QDialog):
     """
     def __init__(self, parent):
         self.parent = parent
-        origmodbase, origconfig, origdownload, origcount, origsavepath = self.parent.master.dialog_data
+        data = self.parent.master.dialog_data
         super().__init__(parent)
         vbox = qtw.QVBoxLayout()
         gbox = qtw.QGridLayout()
@@ -279,6 +276,56 @@ class SettingsDialog(qtw.QDialog):
                                           self.download_text.text(), self.columns.value(),
                                           self.savepath_text.text())
         self.accept()
+
+
+class DeleteDialog(qtw.QDialog):
+    """Dialog for viewing and optionally changing a mod's properties
+    """
+    seltext = 'select a mod to remove'
+
+    def __init__(self, parent, conf):
+        self.parent = parent
+        self.conf = conf
+        self.choice = ''
+        self.modnames = {}
+        for x in conf.list_all_mod_dirs():
+            name = conf.get_diritem_data(x, conf.SCRNAM) or x
+            self.modnames[name] = x
+        super().__init__(parent)
+        vbox = qtw.QVBoxLayout()
+        self.lbox = qtw.QComboBox(self)
+        self.lbox.setEditable(False)
+        self.lbox.addItem(self.seltext)
+        self.lbox.addItems(sorted(self.modnames))
+        # self.lbox.currentTextChanged.connect(self.enable_select)
+        self.lbox.currentTextChanged.connect(self.process)
+        vbox.addWidget(self.lbox)
+        hbox = qtw.QHBoxLayout()
+        self.change_button = qtw.QPushButton('&Remove')
+        self.change_button.setDisabled(True)
+        self.change_button.clicked.connect(self.update)
+        hbox.addWidget(self.change_button)
+        close_button = qtw.QPushButton('&Exit')
+        close_button.clicked.connect(self.accept)
+        hbox.addWidget(close_button)
+        vbox.addLayout(hbox)
+        self.setLayout(vbox)
+        self.lbox.setFocus()
+
+    def process(self):
+        "determine the selected mod"
+        self.choice = self.lbox.currentText()
+        if self.choice == self.seltext:
+            self.change_button.setEnabled(False)
+            return
+        self.change_button.setEnabled(True)
+
+    def update(self):
+        "start the removal"
+        self.parent.master.remove_mod(self.choice)
+        qtw.QMessageBox.information(self, 'SDVMM', f'{self.choice} has been removed')
+        self.lbox.setCurrentIndex(0)
+        self.change_button.setDisabled(True)
 
 
 class AttributesDialog(qtw.QDialog):
@@ -391,12 +438,17 @@ class AttributesDialog(qtw.QDialog):
         # self.select_button.setDisabled(True)
         self.choice = self.lbox.currentText()
         if self.choice == self.seltext:
+            self.clear_name_text()
             self.name.setEnabled(False)
+            self.clear_text_text()
             self.text.setEnabled(False)
             self.activate_button.setDisabled(True)
+            self.activate_button.setChecked(False)
             self.exempt_button.setDisabled(True)
+            self.exempt_button.setChecked(False)
             self.comps_button.setDisabled(True)
             self.deps_button.setDisabled(True)
+            self.change_button.setDisabled(True)
             return
         self.name.clear()
         self.name.addItem(self.choice)

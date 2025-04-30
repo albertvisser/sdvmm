@@ -41,6 +41,7 @@ class ShowMods():
         "show the mods that can be selected"
         self.activatables = ttk.Frame(self.main, padding=(10, 0))
         self.activatables.grid(column=0, row=1)  # pack()
+        return self.activatables
 
     def create_dependencies_title(self, text):
         "create the second block of text"
@@ -51,6 +52,7 @@ class ShowMods():
         "show the mods that are selected automatically when needed"
         self.dependencies = ttk.Frame(self.main, padding=(10, 0))
         self.dependencies.grid(column=0, row=3)  # pack()
+        return self.dependencies
 
     def create_buttons(self, buttondefs):
         "create the stuff that makes the application do things"
@@ -66,13 +68,12 @@ class ShowMods():
             # self.buttons[key].setToolTip(bdef["tooltip"])
             self.buttons[bdef["name"]].grid(column=pos, row=0)  # .pack(side=tk.LEFT)\
             pos += 1
-        self.refresh_widgets(first_time=True)
 
     def setup_actions(self):
         "define hotkey actions"
         self.root.bind('<Alt-d>', self.manage_defaults)
         self.root.bind('<Alt-i>', self.update_mods)
-        self.root.bind('<Alt-r>', self.remove_mods)
+        self.root.bind('<Alt-r>', self.manage_deletions)
         self.root.bind('<Alt-m>', self.manage_attributes)
         self.root.bind('<Alt-a>', self.confirm)
         self.root.bind('<Control-Return>', self.confirm)
@@ -88,7 +89,7 @@ class ShowMods():
         "set the checkboxes to the right values (first time: also create them)"
         self.buttons['attr'].state([f'{"!" if self.master.screeninfo else ""}disabled'])
         self.buttons['sel'].state([f'{"!" if self.master.screeninfo else ""}disabled'])
-        self.master.order_widgets(first_time, self.activatables, self.dependencies)
+        self.master.order_widgets(self.activatables, self.dependencies, first_time)
 
     def remove_widgets(self, *args):  # widgetlist, container, row, col):
         """remove the widgets from the screen before replacing them
@@ -150,10 +151,6 @@ class ShowMods():
             report = self.master.update_mods(filenames)
             MessageBox.showinfo(parent=self.root, message='\n'.join(report))
 
-    def remove_mods(self):
-        "remove mods from screen and config"
-        MessageBox.showinfo(parent=self.root, message='W.I.P. - Nog even geduld a.u.b.')
-
     def confirm(self):
         "build a list from the checked entries and pass it back to the caller"
         self.master.process_activations()
@@ -183,6 +180,10 @@ class ShowMods():
     def manage_attributes(self, event=None):
         "relay to master, swallowing the event argument"
         self.master.manage_attributes()
+
+    def manage_deletions(self, event=None):
+        "relay to master, swallowing the event argument"
+        self.master.manage_deletions()
 
     def manage_savefiles(self, event=None):
         "relay to master, swallowing the event argument"
@@ -346,6 +347,66 @@ class ChoiceDialog(tk.Toplevel):
         self.destroy()
 
 
+class DeleteDialog(tk.Toplevel):
+    """Dialog for viewing and optionally changing a mod's properties
+    """
+    def __init__(self, parent, conf):
+        self.parent = parent
+        self.conf = conf
+        self.choice = ''
+        self.modnames = {}
+        for x in conf.list_all_mod_dirs():
+            name = conf.get_diritem_data(x, conf.SCRNAM) or x
+            self.modnames[name] = x
+        super().__init__(parent.root)
+
+        frm = ttk.Frame(self, padding=10)
+        frm.grid(row=0, column=0, sticky=(tk.N, tk.E, tk.S, tk.W))
+        row = 0
+        self.modname = tk.StringVar()
+        self.lbox = ttk.Combobox(frm, values=sorted(self.modnames), textvariable=self.modname,
+                                 width=40)
+        self.modname.set('Select a mod to remove from the config')
+        self.lbox.state(['readonly'])
+        self.lbox.bind('<<ComboboxSelected>>', self.process)
+        self.lbox.grid(row=row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W))
+        row += 1
+        hfrm = ttk.Frame(frm)
+        hfrm.grid(row=row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W), pady=2)
+        self.change_button = ttk.Button(hfrm, text="Remove", underline=0, command=self.update)
+        self.change_button.state(['disabled'])
+        self.change_button.grid(row=0, column=0, sticky=(tk.E, tk.W))
+        hfrm.columnconfigure(0, weight=1)
+        close_button = ttk.Button(hfrm, text="Close", underline=2, command=self.close)
+        close_button.grid(row=0, column=1, sticky=(tk.E, tk.W))
+        hfrm.columnconfigure(1, weight=1)
+        # self.bind('<Alt-r>', self.process)
+        self.bind('<Alt-r>', self.update)
+        self.bind('<Alt-o>', self.close)
+        self.bind("<Escape>", self.close)
+        self.lbox.focus_set()
+
+    def process(self, event=None):
+        "determine the selected mod"
+        # self.select_button.state(['disabled'])
+        self.choice = self.modname.get()  # lbox.currentText()
+        self.change_button.state(['!disabled'])
+
+    def update(self, event=None):
+        "start the removal"
+        if self.change_button.instate(['!disabled']):
+            self.parent.master.remove_mod(self.choice)
+            MessageBox.showinfo(parent=self, message=f'{self.choice} has been removed')
+            self.change_button.state(['disabled'])
+
+    def close(self, event=None):
+        "close the dialog"
+        # put focus back to the parent window
+        if self.parent is not None:
+            self.parent.root.focus_set()
+        self.destroy()
+
+
 class AttributesDialog(tk.Toplevel):
     """Dialog for viewing and optionally changing a mod's properties
     """
@@ -455,7 +516,7 @@ class AttributesDialog(tk.Toplevel):
         close_button = ttk.Button(hfrm, text="Close", underline=2, command=self.close)
         close_button.grid(row=0, column=1, sticky=(tk.E, tk.W))
         hfrm.columnconfigure(1, weight=1)
-        self.bind('<Alt-a>', self.process)
+        # self.bind('<Alt-a>', self.process)
         self.bind('<Alt-c>', self.view_components)
         self.bind('<Alt-d>', self.view_dependencies)
         self.bind('<Alt-u>', self.update)
@@ -509,26 +570,32 @@ class AttributesDialog(tk.Toplevel):
 
     def clear_name_text(self, event=None):
         "visually delete screen text"
-        self.scrname.set('')
-        # self.name.delete(0, 'end')
+        if self.clear_name_button.instate(['!disabled']):
+            self.scrname.set('')
+            # self.name.delete(0, 'end')
 
     def clear_text_text(self, event=None):
         "visually delete additional text if any"
-        self.scrtext.set('')
-        # self.text.delete(0, 'end')
+        if self.clear_text_button.instate(['!disabled']):
+            self.scrtext.set('')
+            # self.text.delete(0, 'end')
 
     def view_components(self, event=None):
         "list components for mod"
-        message = self.parent.master.get_mod_components(self.modnames[self.choice])
-        MessageBox.showinfo(parent=self, message=message)
+        if self.comps_button.instate(['!disabled']):
+            message = self.parent.master.get_mod_components(self.modnames[self.choice])
+            MessageBox.showinfo(parent=self, message=message)
 
     def view_dependencies(self, event=None):
         "list dependencies for mod"
-        message = self.parent.master.get_mod_dependencies(self.modnames[self.choice])
-        MessageBox.showinfo(parent=self, message=message)
+        if self.deps_button.instate(['!disabled']):
+            message = self.parent.master.get_mod_dependencies(self.modnames[self.choice])
+            MessageBox.showinfo(parent=self, message=message)
 
     def update(self, event=None):
         "update screentext etc. in dictionary"
+        if self.change_button.instate(['disabled']):
+            return
         # self.text.setReadOnly(True)
         self.clear_name_button.state(['disabled'])
         self.clear_text_button.state(['disabled'])

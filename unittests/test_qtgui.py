@@ -59,6 +59,30 @@ called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLay
 called Dialog.setLayout
 called LineEdit.setFocus
 """
+delete = """\
+called Conf.list_all_mod_dirs
+called Conf.get_diritem_data with args ('xxx', 'SCRNAM')
+called Conf.get_diritem_data with args ('yyy', 'SCRNAM')
+called Dialog.__init__ with args {testobj.parent} () {{}}
+called VBox.__init__
+called ComboBox.__init__
+called ComboBox.setEditable with arg `False`
+called ComboBox.addItem with arg `select a mod to remove`
+called ComboBox.addItems with arg ['xxx_name', 'yyy_name']
+called Signal.connect with args ({testobj.process},)
+called VBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockComboBox'>
+called HBox.__init__
+called PushButton.__init__ with args ('&Remove',) {{}}
+called PushButton.setDisabled with arg `True`
+called Signal.connect with args ({testobj.update},)
+called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
+called PushButton.__init__ with args ('&Exit',) {{}}
+called Signal.connect with args ({testobj.accept},)
+called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
+called VBox.addLayout with arg of type <class 'mockgui.mockqtwidgets.MockHBoxLayout'>
+called Dialog.setLayout
+called ComboBox.setFocus
+"""
 attrs = """\
 called Conf.list_all_mod_dirs
 called Conf.get_diritem_data with args ('xxx', 'SCRNAM')
@@ -191,7 +215,7 @@ called ComboBox.setFocus
 @pytest.fixture
 def expected_output():
     "fixture returning output to be expected from (mostly) gui setup methods"
-    results = {'sett': sett, 'attrs': attrs, 'saves': saveitems}
+    results = {'sett': sett, 'delete': delete, 'attrs': attrs, 'saves': saveitems}
     return results
 
 
@@ -423,8 +447,8 @@ class TestShowMods:
         callback1 = lambda: '0'
         callback2 = lambda: '1'
         testobj.create_buttons([
-            {'name': 'xxx', 'text': 'xxxxxx', 'tooltip': 'xxxxxxxxx','callback': callback1},
-            {'name': 'actv', 'text': 'yyyyyy', 'tooltip': 'yyyyyyyyy','callback': callback2}])
+            {'name': 'xxx', 'text': 'xxxxxx', 'tooltip': 'xxxxxxxxx', 'callback': callback1},
+            {'name': 'actv', 'text': 'yyyyyy', 'tooltip': 'yyyyyyyyy', 'callback': callback2}])
         assert len(testobj.buttons) == 2
         assert isinstance(testobj.buttons['xxx'], mockqtw.MockPushButton)
         assert isinstance(testobj.buttons['actv'], mockqtw.MockPushButton)
@@ -445,8 +469,7 @@ class TestShowMods:
                 "called HBox.addStretch\n"
                 "called VBox.addLayout with arg of type"
                 " <class 'mockgui.mockqtwidgets.MockHBoxLayout'>\n"
-                "called PushButton.setEnabled with arg `False`\n"
-                "called ShowMods.refresh_widgets with args () {'first_time': True}\n")
+                "called PushButton.setEnabled with arg `False`\n")
 
     def test_setup_actions(self, monkeypatch, capsys):
         """unittest for ShowMods.setup_actions
@@ -526,13 +549,13 @@ class TestShowMods:
                 "called PushButton.setEnabled with arg `False`\n"
                 "called PushButton.setEnabled with arg `False`\n"
                 "called Manager.order_widgets with args"
-                f" (False, {testobj.gbox1}, {testobj.gbox2})\n")
+                f" ({testobj.gbox1}, {testobj.gbox2}, False)\n")
         testobj.refresh_widgets()
         assert capsys.readouterr().out == (
                 "called PushButton.setEnabled with arg `False`\n"
                 "called PushButton.setEnabled with arg `False`\n"
                 "called Manager.order_widgets with args"
-                f" (False, {testobj.gbox1}, {testobj.gbox2})\n")
+                f" ({testobj.gbox1}, {testobj.gbox2}, False)\n")
         testobj.master.screeninfo = {'xx': {'pos': '1x1', 'sel': True},
                                      'yy': {'pos': '', 'sel': True},
                                      'zz': {'pos': '', 'sel': False}}
@@ -541,7 +564,7 @@ class TestShowMods:
                 "called PushButton.setEnabled with arg `True`\n"
                 "called PushButton.setEnabled with arg `True`\n"
                 "called Manager.order_widgets with args"
-                f" (True, {testobj.gbox1}, {testobj.gbox2})\n")
+                f" ({testobj.gbox1}, {testobj.gbox2}, True)\n")
 
     def test_remove_widgets(self, monkeypatch, capsys):
         """unittest for ShowMods.remove_widgets
@@ -986,6 +1009,97 @@ class TestSettingsDialog:
                                            "called SettingsDialog.accept\n")
 
 
+class TestDeleteDialog:
+    """unittests for qtgui.DeleteDialog
+    """
+    def setup_testobj(self, monkeypatch, capsys):
+        """stub for qtgui.DeleteDialog object
+
+        create the object skipping the normal initialization
+        intercept messages during creation
+        return the object so that other methods can be monkeypatched in the caller
+        """
+        def mock_init(self, *args):
+            print('called DeleteDialog.__init__ with args', args)
+        def mock_accept(self):
+            print('called DeleteDialog.accept')
+        monkeypatch.setattr(testee.DeleteDialog, '__init__', mock_init)
+        monkeypatch.setattr(testee.DeleteDialog, 'accept', mock_accept)
+        testobj = testee.DeleteDialog()
+        assert capsys.readouterr().out == 'called DeleteDialog.__init__ with args ()\n'
+        return testobj
+
+    def test_init(self, monkeypatch, capsys, expected_output):
+        """unittest for DeleteDialog.__init__
+        """
+        monkeypatch.setattr(testee.qtw.QDialog, '__init__', mockqtw.MockDialog.__init__)
+        monkeypatch.setattr(testee.qtw.QDialog, 'setLayout', mockqtw.MockDialog.setLayout)
+        monkeypatch.setattr(testee.qtw, 'QVBoxLayout', mockqtw.MockVBoxLayout)
+        monkeypatch.setattr(testee.qtw, 'QHBoxLayout', mockqtw.MockHBoxLayout)
+        # monkeypatch.setattr(testee.qtw, 'QLabel', mockqtw.MockLabel)
+        monkeypatch.setattr(testee.qtw, 'QComboBox', mockqtw.MockComboBox)
+        monkeypatch.setattr(testee.qtw, 'QPushButton', mockqtw.MockPushButton)
+        monkeypatch.setattr(testee.DeleteDialog, 'process', lambda: 'dummy')
+        monkeypatch.setattr(testee.DeleteDialog, 'update', lambda: 'dummy')
+        parent = mockqtw.MockWidget()
+        assert capsys.readouterr().out == "called Widget.__init__\n"
+        conf = MockConf()
+        testobj = testee.DeleteDialog(parent, conf)
+        assert testobj.parent == parent
+        assert testobj.conf == conf
+        assert testobj.modnames == {'xxx_name': 'xxx', 'yyy_name': 'yyy'}
+        assert isinstance(testobj.lbox, testee.qtw.QComboBox)
+        assert isinstance(testobj.change_button, testee.qtw.QPushButton)
+        assert capsys.readouterr().out == expected_output['delete'].format(testobj=testobj)
+
+    def test_process(self, monkeypatch, capsys):
+        """unittest for DeleteDialog.process
+        """
+        def mock_text(self):
+            print('called ComboBox.currentText')
+            return 'qqq'
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.seltext = 'selected text'
+        testobj.lbox = mockqtw.MockComboBox()
+        testobj.change_button = mockqtw.MockPushButton()
+        assert capsys.readouterr().out == ("called ComboBox.__init__\n"
+                                           "called PushButton.__init__ with args () {}\n")
+        testobj.process()
+        assert testobj.choice == 'current text'
+        assert capsys.readouterr().out == (
+                "called ComboBox.currentText\n"
+                "called PushButton.setEnabled with arg `True`\n")
+        testobj.seltext = 'qqq'
+        monkeypatch.setattr(mockqtw.MockComboBox, 'currentText', mock_text)
+        testobj.process()
+        assert testobj.choice == 'qqq'
+        assert capsys.readouterr().out == (
+                "called ComboBox.currentText\n"
+                "called PushButton.setEnabled with arg `False`\n")
+
+    def test_update(self, monkeypatch, capsys):
+        """unittest for DeleteDialog.update
+        """
+        def mock_remove(*args):
+            print('called Manager.remove_mod with args', args)
+        monkeypatch.setattr(testee.qtw, 'QMessageBox', mockqtw.MockMessageBox)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.parent = types.SimpleNamespace(
+                master=types.SimpleNamespace(remove_mod=mock_remove))
+        testobj.lbox = mockqtw.MockComboBox()
+        testobj.change_button = mockqtw.MockPushButton()
+        assert capsys.readouterr().out == ("called ComboBox.__init__\n"
+                                           "called PushButton.__init__ with args () {}\n")
+        testobj.choice = 'current text'
+        testobj.update()
+        assert capsys.readouterr().out == (
+                "called Manager.remove_mod with args ('current text',)\n"
+                "called MessageBox.information with args"
+                f" `{testobj}` `SDVMM` `current text has been removed`\n"
+                "called ComboBox.setCurrentIndex with arg `0`\n"
+                "called PushButton.setDisabled with arg `True`\n")
+
+
 class TestAttributesDialog:
     """unittests for qtgui.AttributesDialog
     """
@@ -1052,23 +1166,6 @@ class TestAttributesDialog:
         assert capsys.readouterr().out == "called PushButton.__init__ with args () {}\n"
         testobj.enable_change()
         assert capsys.readouterr().out == "called PushButton.setEnabled with arg `True`\n"
-
-    # def test_enable_select(self, monkeypatch, capsys):
-    #     """unittest for AttributesDialog.enable_select
-    #     """
-    #     testobj = self.setup_testobj(monkeypatch, capsys)
-    #     testobj.select_button = mockqtw.MockPushButton()
-    #     testobj.comps_button = mockqtw.MockPushButton()
-    #     testobj.deps_button = mockqtw.MockPushButton()
-    #     testobj.change_button = mockqtw.MockPushButton()
-    #     assert capsys.readouterr().out == ("called PushButton.__init__ with args () {}\n"
-    #                                        "called PushButton.__init__ with args () {}\n"
-    #                                        "called PushButton.__init__ with args () {}\n"
-    #                                        "called PushButton.__init__ with args () {}\n")
-    #     testobj.enable_select()
-    #     assert capsys.readouterr().out == ("called PushButton.setDisabled with arg `True`\n"
-    #                                        "called PushButton.setDisabled with arg `True`\n"
-    #                                        "called PushButton.setDisabled with arg `True`\n")
 
     def test_process(self, monkeypatch, capsys):
         """unittest for AttributesDialog.process
@@ -1157,10 +1254,15 @@ class TestAttributesDialog:
         assert testobj.choice == 'qqq'
         assert capsys.readouterr().out == (
                 "called ComboBox.currentText\n"
+                "called ComboBox.clear\n"
                 "called ComboBox.setEnabled with arg False\n"
+                "called LineEdit.clear\n"
                 "called LineEdit.setEnabled with arg False\n"
                 "called CheckBox.setDisabled with arg True\n"
+                "called CheckBox.setChecked with arg False\n"
                 "called CheckBox.setDisabled with arg True\n"
+                "called CheckBox.setChecked with arg False\n"
+                "called PushButton.setDisabled with arg `True`\n"
                 "called PushButton.setDisabled with arg `True`\n"
                 "called PushButton.setDisabled with arg `True`\n")
 

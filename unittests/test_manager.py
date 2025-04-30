@@ -52,6 +52,12 @@ class MockConf:
         if args[1] == self.VRS:
             return f'{args[0]}_version'
         return f'{args[0]}_name'
+    def remove_componentdata(self, name):
+        "stub"
+        print(f"called Conf.remove_component with arg '{name}'")
+    def remove_diritem(self, name):
+        "stub"
+        print(f"called Conf.remove_diritem with arg '{name}'")
 
 
 class MockShowMods:
@@ -211,11 +217,12 @@ class TestManager:
                 "called gui.create_dependencies_grid\n"
                 f"called gui.create_buttons with arg [{{'callback': {testobj.manage_defaults}}},"
                 f" {{'callback': {testobj.doit.update_mods}}},"
-                f" {{'callback': {testobj.doit.remove_mods}}},"
+                f" {{'callback': {testobj.manage_deletions}}},"
                 f" {{'callback': {testobj.manage_attributes}}},"
                 f" {{'callback': {testobj.doit.confirm}}},"
                 f" {{'callback': {testobj.manage_savefiles}}},"
                 f" {{'callback': {testobj.doit.close}}}]\n"
+                "called gui.ShowMods.refresh_widgets with args {'first_time': True}\n"
                 'called gui.ShowMods.setup_actions()\n'
                 'called gui.ShowMods.show_screen()\n')
 
@@ -381,7 +388,7 @@ class TestManager:
         testobj.nonsel_widgets = {}
         testobj.nonsel_positions = {}
         testobj.screeninfo = {'abc': {'sel': True}, 'def': {'sel': False}}
-        testobj.order_widgets(True, ['selectables'], ['dependencies'])
+        testobj.order_widgets(['selectables'], ['dependencies'], True)
         assert testobj.unplotted == ['abc']
         assert testobj.unplotted_widgets == {('s', 't'): 'uvw'}
         assert testobj.unplotted_positions == {('p', 'q'): 'rrr'}
@@ -392,7 +399,7 @@ class TestManager:
                 "called ShowMods.add_items_to_grid with args (['selectables'], ['abc'])\n"
                 "called ShowMods.add_items_to_grid with args (['dependencies'], ['def'])\n"
                 "called Manager.refresh_widget_data with args {'texts_also': True}\n")
-        testobj.order_widgets(False, ['selectables'], ['dependencies'])
+        testobj.order_widgets(['selectables'], ['dependencies'], False)
         assert testobj.unplotted == ['abc']
         assert testobj.unplotted_widgets == {('s', 't'): 'uvw'}
         assert testobj.unplotted_positions == {('p', 'q'): 'rrr'}
@@ -700,13 +707,13 @@ class TestManager:
     def test_manage_attributes(self, monkeypatch, capsys):
         """unittest for Manager.manage_attributes
         """
-        def mock_show(self, *args):
-            print('called show_dialog with args', args)
-            args[0].master.attr_changes = []
-        def mock_show_2(self, *args):
-            print('called show_dialog with args', args)
-            args[0].master.attr_changes = [('xxx', 'yyy'), ('zzz', '')]  # , ('', 'qqq')]i kan dit?
-            args[0].master.screeninfo = {'xxx': {'dir': 'xxx-dir', 'txt': 'xxx-txt', 'sel': True,
+        def mock_show(*args):
+            print('called show_dialog with args', args[0].__name__, args[1:])
+            args[1].master.attr_changes = []
+        def mock_show_2(*args):
+            print('called show_dialog with args', args[0].__name__, args[1:])
+            args[1].master.attr_changes = [('xxx', 'yyy'), ('zzz', '')]  # , ('', 'qqq')]i kan dit?
+            args[1].master.screeninfo = {'xxx': {'dir': 'xxx-dir', 'txt': 'xxx-txt', 'sel': True,
                                                  'opt': False},
                                          'zzz': {'dir': 'zzz-dir', 'txt': 'zzz-txt', 'sel': False,
                                                  'opt': True}}
@@ -719,11 +726,11 @@ class TestManager:
         assert capsys.readouterr().out == f"called gui.ShowMods.__init__() with arg '{testobj}'\n"
         testobj.manage_attributes()
         assert capsys.readouterr().out == (
-                f"called show_dialog with args ({testobj.doit}, {testobj.conf})\n")
+                f"called show_dialog with args AttributesDialog ({testobj.doit}, {testobj.conf})\n")
         monkeypatch.setattr(testee.gui, 'show_dialog', mock_show_2)
         testobj.manage_attributes()
         assert capsys.readouterr().out == (
-                f"called show_dialog with args ({testobj.doit}, {testobj.conf})\n"
+                f"called show_dialog with args AttributesDialog ({testobj.doit}, {testobj.conf})\n"
                 "called Conf.set_diritem_value with args ('xxx-dir', 0, 'xxx')\n"
                 "called Conf.set_diritem_value with args ('xxx-dir', 4, 'xxx-txt')\n"
                 "called Conf.set_diritem_value with args ('xxx-dir', 1, True)\n"
@@ -907,15 +914,15 @@ class TestManager:
     def test_manage_savefiles(self, monkeypatch, capsys):
         """unittest for Manager.manage_savefiles
         """
-        def mock_show(self, *args):
-            print('called show_dialog with args', args)
+        def mock_show(*args):
+            print('called show_dialog with args', args[0].__name__, args[1:])
         monkeypatch.setattr(testee.gui, 'show_dialog', mock_show)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.doit = MockShowMods(testobj)
         assert capsys.readouterr().out == f"called gui.ShowMods.__init__() with arg '{testobj}'\n"
         testobj.manage_savefiles()
         assert capsys.readouterr().out == (
-                f"called show_dialog with args ({testobj.doit}, {testobj.conf})\n")
+                f"called show_dialog with args SaveGamesDialog ({testobj.doit}, {testobj.conf})\n")
 
     def test_update_config_from_screenpos(self, monkeypatch, capsys):
         """unittest for Manager.update_config_from_screenpos
@@ -1498,12 +1505,12 @@ class TestManager:
         def mock_read_2(**kwargs):
             print('called dmlj.read_defaults with args', kwargs)
             return newdata
-        def mock_show(self, *args):
-            print('called show_dialog with args', args)
-            args[0].parent.dialog_data = newdata
-        def mock_show_2(self, *args):
-            print('called show_dialog with args', args)
-            args[0].parent.dialog_data = origdata
+        def mock_show(*args):
+            print('called show_dialog with args', args[0].__name__, args[1:])
+            args[1].parent.dialog_data = newdata
+        def mock_show_2(*args):
+            print('called show_dialog with args', args[0].__name__, args[1:])
+            args[1].parent.dialog_data = origdata
         def mock_save(*args):
             print('called dmlj.save_defaults with args', args)
         origdata = ('orig', 'data', 'x', 'y', 'z')
@@ -1520,20 +1527,71 @@ class TestManager:
         assert testobj.dialog_data == newdata
         assert capsys.readouterr().out == (
                 "called dmlj.read_defaults with args {'bare': True}\n"
-                f"called show_dialog with args ({testobj.doit},)\n"
+                f"called show_dialog with args SettingsDialog ({testobj.doit},)\n"
                 f"called dmlj.save_defaults with args {newdata}\n")
         monkeypatch.setattr(testee.dmlj, 'read_defaults', mock_read_2)
         testobj.manage_defaults()
         assert capsys.readouterr().out == (
                 "called dmlj.read_defaults with args {'bare': True}\n"
-                f"called show_dialog with args ({testobj.doit},)\n")
+                f"called show_dialog with args SettingsDialog ({testobj.doit},)\n")
         monkeypatch.setattr(testee.gui, 'show_dialog', mock_show_2)
         testobj.manage_defaults()
         assert testobj.maxcol == 'y'
         assert capsys.readouterr().out == (
                 "called dmlj.read_defaults with args {'bare': True}\n"
-                f"called show_dialog with args ({testobj.doit},)\n"
+                f"called show_dialog with args SettingsDialog ({testobj.doit},)\n"
                 f"called dmlj.save_defaults with args {origdata}\n")
+
+    def test_manage_deletions(self, monkeypatch, capsys):
+        """unittest for manager.manage_deletions
+        """
+        def mock_show(*args):
+            print('called show_dialog with args', args[0].__name__, args[1:])
+        monkeypatch.setattr(testee.gui, 'show_dialog', mock_show)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.doit = types.SimpleNamespace()
+        testobj.conf = types.SimpleNamespace()
+        testobj.manage_deletions()
+        assert capsys.readouterr().out == (
+                f"called show_dialog with args DeleteDialog ({testobj.doit}, {testobj.conf})\n")
+
+    def test_remove_mod(self, monkeypatch, capsys):
+        """unittest for manager.remove_mod
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.doit = MockShowMods(testobj)
+        testobj.conf = MockConf()
+        assert capsys.readouterr().out == (
+                f"called gui.ShowMods.__init__() with arg '{testobj}'\n"
+                "called JsonConf.__init__ with args () {}\n")
+        testobj.screeninfo = {'moddir': {'dir': 'stuff'}}
+        testobj.unplotted = ['moddir', 'stuff']
+        testobj.not_selectable = ['stuff']
+        testobj.remove_mod('moddir')
+        assert testobj.screeninfo == {}
+        assert testobj.unplotted == ['stuff']
+        assert testobj.not_selectable == ['stuff']
+        assert capsys.readouterr().out == (
+                "called gui.ShowMods.refresh_widgets with args {'first_time': False}\n"
+                "called Conf.list_components_for_dir with arg 'stuff'\n"
+                "called Conf.remove_component with arg 'xxx'\n"
+                "called Conf.remove_component with arg 'yyy'\n"
+                "called Conf.remove_diritem with arg 'stuff'\n"
+                "called JsonConf.save\n")
+        testobj.screeninfo = {'moddir': {'dir': 'stuff'}}
+        testobj.unplotted = ['stuff']
+        testobj.not_selectable = ['moddir', 'stuff']
+        testobj.remove_mod('moddir')
+        assert testobj.screeninfo == {}
+        assert testobj.unplotted == ['stuff']
+        assert testobj.not_selectable == ['stuff']
+        assert capsys.readouterr().out == (
+                "called gui.ShowMods.refresh_widgets with args {'first_time': False}\n"
+                "called Conf.list_components_for_dir with arg 'stuff'\n"
+                "called Conf.remove_component with arg 'xxx'\n"
+                "called Conf.remove_component with arg 'yyy'\n"
+                "called Conf.remove_diritem with arg 'stuff'\n"
+                "called JsonConf.save\n")
 
 
 def test_get_toplevel():

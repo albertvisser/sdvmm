@@ -337,6 +337,11 @@ class JsonConf:
         if self.has_moddir(dirname):
             self._data[self.MODS][dirname] = value
 
+    def remove_diritem(self, dirname):
+        "delete a mod directory from the config"
+        if self.has_moddir(dirname):
+            self._data[self.MODS].pop(dirname)
+
     def set_diritem_value(self, dirname, key, value):
         "set the value for a given key for the given mod directory"
         if self.has_moddir(dirname):
@@ -353,6 +358,11 @@ class JsonConf:
         "set all values for the keys for the given component at once"
         if self.has_component(component):
             self._data[self.COMPS][component] = value
+
+    def remove_componentdata(self, component):
+        "delete a mod component from the config"
+        if self.has_component(component):
+            self._data[self.COMPS].pop(component)
 
     def set_componentdata_value(self, component, key, value):
         "set the value for a given key for the given component"

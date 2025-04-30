@@ -591,6 +591,16 @@ class TestJsonConf:
         testobj.update_diritem('xxx', 'value')
         assert testobj._data['moddirs']['xxx'] == 'value'
 
+    def test_remove_diritem(self, monkeypatch, capsys):
+        """unittest for JsonConf.remove_diritem
+        """
+        testobj = self.setup_testobj('', monkeypatch, capsys)
+        testobj._data = {'moddirs': {'xxx': {}, 'yyy': {}}}
+        testobj.remove_diritem('zzz')
+        assert testobj._data['moddirs'] == {'xxx': {}, 'yyy': {}}
+        testobj.remove_diritem('xxx')
+        assert testobj._data['moddirs'] == {'yyy': {}}
+
     def test_set_diritem_value(self, monkeypatch, capsys):
         """unittest for JsonConf.set_diritem_value
         """
@@ -626,6 +636,16 @@ class TestJsonConf:
         assert testobj._data['components'] == {'xxx': {}, 'yyy': {}}
         testobj.update_componentdata('xxx', 'value')
         assert testobj._data['components']['xxx'] == 'value'
+
+    def test_remove_componentdata(self, monkeypatch, capsys):
+        """unittest for JsonConf.remove_componentdata
+        """
+        testobj = self.setup_testobj('', monkeypatch, capsys)
+        testobj._data = {'components': {'xxx': {}, 'yyy': {}}}
+        testobj.remove_componentdata('zzz')
+        assert testobj._data['components'] == {'xxx': {}, 'yyy': {}}
+        testobj.remove_componentdata('xxx')
+        assert testobj._data['components'] == {'yyy': {}}
 
     def test_set_componentdata_value(self, monkeypatch, capsys):
         """unittest for JsonConf.set_componentdata_value

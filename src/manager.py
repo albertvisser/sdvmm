@@ -4,6 +4,7 @@ Oorspronkelijk idee: selecteer uit een lijst met mogelijkheden welke je actief w
 import os
 import json
 import pathlib
+import contextlib
 import shutil
 import zipfile
 import subprocess
@@ -76,7 +77,7 @@ class Manager:
         # self.doit.setup_screen()
         self.BUTTON_LIST[0]["callback"] = self.manage_defaults
         self.BUTTON_LIST[1]["callback"] = self.doit.update_mods
-        self.BUTTON_LIST[2]["callback"] = self.doit.remove_mods
+        self.BUTTON_LIST[2]["callback"] = self.manage_deletions
         self.BUTTON_LIST[3]["callback"] = self.manage_attributes
         self.BUTTON_LIST[4]["callback"] = self.doit.confirm
         self.BUTTON_LIST[5]["callback"] = self.manage_savefiles
@@ -86,6 +87,7 @@ class Manager:
         self.doit.create_dependencies_title(self.DEP_TITLE)
         self.doit.create_dependencies_grid()
         self.doit.create_buttons(self.BUTTON_LIST)
+        self.doit.refresh_widgets(first_time=True)
         self.doit.setup_actions()
         self.doit.show_screen()
 
@@ -115,7 +117,7 @@ class Manager:
                 'key': self.conf.get_diritem_data(dirname, self.conf.NXSKEY) or oldinfo['key'],
                 'txt': self.conf.get_diritem_data(dirname, self.conf.SCRTXT) or oldinfo['txt']}
 
-    def order_widgets(self, first_time, selectable_container, dependencies_container):
+    def order_widgets(self, selectable_container, dependencies_container, first_time=True):
         """reshuffle the lists and dicts containing the widget info:
         """
         if first_time:
@@ -538,6 +540,28 @@ class Manager:
         if self.dialog_data != origdata:
             dmlj.save_defaults(*self.dialog_data)
             self.maxcol = self.dialog_data[3]
+
+    def manage_deletions(self):
+        "call up a dialog to select mods to remove"
+        gui.show_dialog(gui.DeleteDialog, self.doit, self.conf)
+
+    def remove_mod(self, modname):
+        "remove a mod from the config"
+        # remove from screen attributes dict
+        moddata = self.screeninfo.pop(modname)
+        with contextlib.suppress(ValueError):
+            self.unplotted.remove(modname)
+        with contextlib.suppress(ValueError):
+            self.not_selectable.remove(modname)
+        # refresh names on screen
+        self.doit.refresh_widgets(first_time=False)
+        # remove from config
+        moddir = moddata['dir']
+        components = self.conf.list_components_for_dir(moddir)
+        for comp in components:
+            self.conf.remove_componentdata(comp)
+        self.conf.remove_diritem(moddir)
+        self.conf.save()
 
 
 def get_toplevel(dirname):
