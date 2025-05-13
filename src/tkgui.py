@@ -7,6 +7,7 @@ from tkinter import ttk
 import tkinter.messagebox as MessageBox
 import tkinter.filedialog as FileDialog
 from PIL import ImageTk, Image
+import webbrowser
 # ECIMAGE = Image.open('/usr/share/icons/HighContrast/16x16/actions/edit-clear.png')
 ECIMAGE = Image.open(os.path.join(os.path.dirname(__file__), 'edit-clear.png'))
 
@@ -117,8 +118,11 @@ class ShowMods():
     def set_label_text(self, widgetlist, name, updateid, text):
         """change the text on a label
         """
+        label = widgetlist[1]
         if updateid:
             name = f'{name} ({updateid})'
+            label.bind('<Button-1>', self.open_browser)
+            label.configure(foreground="blue", cursor="hand2")
         if text:
             name += ' ' + text
         labeltext = widgetlist[3]
@@ -129,6 +133,15 @@ class ShowMods():
         "check or uncheck a checkbox"
         widgetlist[4].set(int(state))
         widgetlist = (widgetlist[0], widgetlist[1], widgetlist[2], widgetlist[3], widgetlist[4])
+
+    def open_browser(self, event):
+        """go to web address in label
+        """
+        text = event.widget.cget('text')
+        name, rest = text.split("(", 1)
+        updateid = rest.split(')', 1)[0]
+        webaddr = self.master.build_link_text(name, updateid).split('"', 1)[1].split('"', 1)[0]
+        webbrowser.open_new(webaddr)
 
     def close(self, event=None):
         "button callback to close the application"

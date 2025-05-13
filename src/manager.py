@@ -32,7 +32,7 @@ class Manager:
                  ' (inclusief die al geactiveerd zijn).\n'
                  'In de achterliggende configuratie is geregeld welke mods'
                  ' hiervoor eventueel nog meer aangezet moeten worden\n'
-                 'De onderstreepte items zijn hyperlinks; ze leiden naar de pagina'
+                 'De blauw gekleurde items zijn hyperlinks; ze leiden naar de pagina'
                  ' waarvandaan ik ze van gedownload heb (doorgaans op Nexus)')
     DEP_TITLE = ('Hieronder volgen afhankelijkheden; deze zijn niet'
                  ' apart te activeren maar je kunt wel zien of ze actief zijn')

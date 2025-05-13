@@ -619,10 +619,12 @@ class TestShowMods:
         """unittest for ShowMods.set_label_text
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
-        widgetlist = ['frame', 'label', 'check', mockttk.MockStringVar(), 'intvar']
+        widgetlist = ['frame', mockttk.MockLabel(), 'check', mockttk.MockStringVar(), 'intvar']
         assert widgetlist[3].get() is None
-        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
-                                           "called StringVar.get\n")
+        assert capsys.readouterr().out == (
+                "called Label.__init__ with args <class 'NoneType'> () {}\n"
+                "called StringVar.__init__ with args ()\n"
+                "called StringVar.get\n")
         testobj.set_label_text(widgetlist, 'xxxx', '', '')
         assert widgetlist[3].get() == 'xxxx'
         assert capsys.readouterr().out == ("called StringVar.set with arg 'xxxx'\n"
@@ -633,12 +635,18 @@ class TestShowMods:
                                            "called StringVar.get\n")
         testobj.set_label_text(widgetlist, 'xxxx', 'zz', '')
         assert widgetlist[3].get() == 'xxxx (zz)'
-        assert capsys.readouterr().out == ("called StringVar.set with arg 'xxxx (zz)'\n"
-                                           "called StringVar.get\n")
+        assert capsys.readouterr().out == (
+                f"called Label.bind with args ('<Button-1>', {testobj.open_browser})\n"
+                "called Label.configure with args {'foreground': 'blue', 'cursor': 'hand2'}\n"
+                "called StringVar.set with arg 'xxxx (zz)'\n"
+                "called StringVar.get\n")
         testobj.set_label_text(widgetlist, 'xxxx', 'zz', 'yyy')
         assert widgetlist[3].get() == 'xxxx (zz) yyy'
-        assert capsys.readouterr().out == ("called StringVar.set with arg 'xxxx (zz) yyy'\n"
-                                           "called StringVar.get\n")
+        assert capsys.readouterr().out == (
+                f"called Label.bind with args ('<Button-1>', {testobj.open_browser})\n"
+                "called Label.configure with args {'foreground': 'blue', 'cursor': 'hand2'}\n"
+                "called StringVar.set with arg 'xxxx (zz) yyy'\n"
+                "called StringVar.get\n")
 
     def test_set_checkbox_state(self, monkeypatch, capsys):
         """unittest for showmods.set_checkbox_state
@@ -656,6 +664,27 @@ class TestShowMods:
         assert widgetlist[4].get() == 1
         assert capsys.readouterr().out == ("called IntVar.set with arg 1\n"
                                            "called IntVar.get\n")
+
+    def test_open_browser(self, monkeypatch, capsys):
+        """unittest for ShowMods.open_browser
+        """
+        def mock_get(arg):
+            print('called event.widget.cget with arg', arg)
+            return "name (number)"
+        def mock_build(*args):
+            print('called Manager.build_link_text with args', args)
+            return '<a href="xxxxx">yyyy</a>'
+        def mock_open(arg):
+            print("called webbrowser.open_new with arg", arg)
+        monkeypatch.setattr(testee.webbrowser, 'open_new', mock_open)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.master = types.SimpleNamespace(build_link_text=mock_build)
+        event = types.SimpleNamespace(widget=types.SimpleNamespace(cget=mock_get))
+        testobj.open_browser(event)
+        assert capsys.readouterr().out == (
+                "called event.widget.cget with arg text\n"
+                "called Manager.build_link_text with args ('name ', 'number')\n"
+                "called webbrowser.open_new with arg xxxxx\n")
 
     def test_close(self, monkeypatch, capsys):
         """unittest for ShowMods.close
