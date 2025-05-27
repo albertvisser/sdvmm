@@ -80,6 +80,7 @@ class ShowMods():
         self.root.bind('<Control-Return>', self.confirm)
         self.root.bind('<Alt-s>', self.manage_savefiles)
         self.root.bind('<Alt-x>', self.close)
+        self.root.bind('<Alt-c>', self.close)
         self.root.bind('<Control-q>', self.close)
 
     def show_screen(self):
