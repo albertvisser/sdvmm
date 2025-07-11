@@ -5,57 +5,6 @@ import pytest
 from src import tkgui as testee
 from mockgui import mockttkwidgets as mockttk
 
-sett = """\
-called Toplevel.__init__ with args ('root',) {{}}
-called Frame.__init__ with args SettingsDialog () {{'padding': 10}}
-called Frame.grid with args () {{'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
-called Frame.columnconfigure with args (0,)
-called Label.__init__ with args MockFrame () {{'text': 'Base location for mods:'}}
-called Label.grid with args () {{'row': 0, 'column': 0, 'sticky': 'w'}}
-called StringVar.__init__ with args ()
-called StringVar.set with arg 'xxx'
-called Entry.__init__ with args MockFrame () {{'width': 48, 'textvariable': {testobj.modbase_text}}}
-called Entry.grid with args () {{'row': 0, 'column': 1}}
-called Button.__init__ with args MockFrame () {{'text': 'Browse', 'command': {testobj.select_modbase}}}
-called Button.grid with args () {{'row': 0, 'column': 2, 'sticky': 'w'}}
-called Label.__init__ with args MockFrame () {{'text': 'Name of configuration file:'}}
-called Label.grid with args () {{'row': 1, 'column': 0, 'sticky': 'w'}}
-called StringVar.__init__ with args ()
-called StringVar.set with arg 'yyy'
-called Entry.__init__ with args MockFrame () {{'width': 48, 'textvariable': {testobj.config_text}}}
-called Entry.grid with args () {{'row': 1, 'column': 1}}
-called Label.__init__ with args MockFrame () {{'text': 'Location for downloads:'}}
-called Label.grid with args () {{'row': 2, 'column': 0, 'sticky': 'w'}}
-called StringVar.__init__ with args ()
-called StringVar.set with arg 'zzz'
-called Entry.__init__ with args MockFrame () {{'width': 48, 'textvariable': {testobj.download_text}}}
-called Entry.grid with args () {{'row': 2, 'column': 1}}
-called Button.__init__ with args MockFrame () {{'text': 'Browse', 'command': {testobj.select_download_path}}}
-called Button.grid with args () {{'row': 2, 'column': 2, 'sticky': 'w'}}
-called Label.__init__ with args MockFrame () {{'text': 'Number of columns on screen:'}}
-called Label.grid with args () {{'row': 3, 'column': 0, 'sticky': 'w'}}
-called IntVar.__init__ with args ()
-called IntVar.set with arg 1
-called SpinBox.__init__ with args MockFrame () {{'width': 5, 'from_': 0, 'to': 5, 'textvariable': {testobj.columncount}}}
-called SpinBox.grid with args () {{'row': 3, 'column': 1, 'sticky': 'w'}}
-called Label.__init__ with args MockFrame () {{'text': 'Location for save files:'}}
-called Label.grid with args () {{'row': 4, 'column': 0, 'sticky': 'w'}}
-called StringVar.__init__ with args ()
-called StringVar.set with arg 'qqq'
-called Entry.__init__ with args MockFrame () {{'width': 48, 'textvariable': {testobj.savepath_text}}}
-called Entry.grid with args () {{'row': 4, 'column': 1}}
-called Button.__init__ with args MockFrame () {{'text': 'Browse', 'command': {testobj.select_savepath}}}
-called Button.grid with args () {{'row': 4, 'column': 2, 'sticky': 'w'}}
-called Frame.__init__ with args SettingsDialog () {{'padding': 10}}
-called Frame.grid with args () {{'row': 1, 'column': 0}}
-called Button.__init__ with args MockFrame () {{'text': 'Save', 'underline': 0, 'command': {testobj.update}}}
-called Button.grid with args () {{'row': 0, 'column': 0}}
-called Button.__init__ with args MockFrame () {{'text': 'Cancel', 'underline': 0, 'command': {testobj.close}}}
-called Button.grid with args () {{'row': 0, 'column': 1}}
-called Toplevel.bind_all with args ('<Alt-s>', {testobj.update}) {{}}
-called Toplevel.bind_all with args ('<Alt-c>', {testobj.close}) {{}}
-called Toplevel.bind_all with args ('<Escape>', {testobj.close}) {{}}
-"""
 choice = """\
 called Toplevel.__init__ with args ('root',) {{}}
 called Frame.__init__ with args ChoiceDialog () {{'padding': 10}}
@@ -86,163 +35,12 @@ called Toplevel.focus_set
 called Toplevel.grab_set
 called Toplevel.wait_window
 """
-delete = """\
-called Conf.list_all_mod_dirs
-called Conf.get_diritem_data with args ('xxx', 'SCRNAM')
-called Conf.get_diritem_data with args ('yyy', 'SCRNAM')
-called Toplevel.__init__ with args ('root',) {{}}
-called Frame.__init__ with args DeleteDialog () {{'padding': 10}}
-called Frame.grid with args () {{'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
-called StringVar.__init__ with args ()
-called ComboBox.__init__ with args MockFrame () {{'values': ['xxx_name', 'yyy_name'], 'textvariable': {testobj.modname}, 'width': 40}}
-called StringVar.set with arg 'Select a mod to remove from the config'
-called ComboBox.state with args (['readonly'],)
-called ComboBox.bind with args ('<<ComboboxSelected>>', {testobj.process})
-called ComboBox.grid with args () {{'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
-called Frame.__init__ with args MockFrame () {{}}
-called Frame.grid with args () {{'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
-called Button.__init__ with args MockFrame () {{'text': 'Remove', 'underline': 0, 'command': {testobj.update}}}
-called Button.state with args (['disabled'],)
-called Button.grid with args () {{'row': 0, 'column': 0, 'sticky': ('e', 'w')}}
-called Frame.columnconfigure with args (0,)
-called Button.__init__ with args MockFrame () {{'text': 'Close', 'underline': 2, 'command': {testobj.close}}}
-called Button.grid with args () {{'row': 0, 'column': 1, 'sticky': ('e', 'w')}}
-called Frame.columnconfigure with args (1,)
-called ComboBox.focus_set
-"""
-attrs = """\
-called Conf.list_all_mod_dirs
-called Conf.get_diritem_data with args ('xxx', 'SCRNAM')
-called Conf.get_diritem_data with args ('yyy', 'SCRNAM')
-called Toplevel.__init__ with args ('root',) {{}}
-called Frame.__init__ with args AttributesDialog () {{'padding': 10}}
-called Frame.grid with args () {{'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
-called StringVar.__init__ with args ()
-called ComboBox.__init__ with args MockFrame () {{'values': ['xxx_name', 'yyy_name'], 'textvariable': {testobj.modname}}}
-called StringVar.set with arg 'Select a mod to change the screen text etc.'
-called ComboBox.state with args (['readonly'],)
-called ComboBox.bind with args ('<<ComboboxSelected>>', {testobj.process})
-called ComboBox.grid with args () {{'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
-called Label.__init__ with args MockFrame () {{'text': 'Screen Name:\\n(the suggestions in the box below are taken from\\nthe mod components'}}
-called Label.grid with args () {{'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
-called Frame.__init__ with args MockFrame () {{}}
-called Frame.grid with args () {{'row': 2, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
-called StringVar.__init__ with args ()
-called StringVar.set with arg ''
-called StringVar.trace_add with args ('write', {testobj.monitor_textvar})
-called ComboBox.__init__ with args MockFrame () {{'textvariable': {testobj.scrname}}}
-called ComboBox.state with args (['!readonly', 'disabled'],)
-called ComboBox.bind with args ('<<ComboboxSelected>>', {testobj.enable_change})
-called ComboBox.grid with args () {{'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
-called Frame.columnconfigure with args (0,)
-called Button.__init__ with args MockFrame () {{'image': 'ecimage', 'command': {testobj.clear_name_text}}}
-called Button.state with args (['disabled'],)
-called Button.grid with args () {{'row': 0, 'column': 1, 'sticky': 'w'}}
-called Label.__init__ with args MockFrame () {{'text': 'Screen Text:\\n(to add some information e.q. if the mod is broken)'}}
-called Label.grid with args () {{'row': 3, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
-called Frame.__init__ with args MockFrame () {{}}
-called Frame.grid with args () {{'row': 4, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
-called Frame.columnconfigure with args (0,)
-called StringVar.__init__ with args ()
-called StringVar.set with arg ''
-called StringVar.trace_add with args ('write', {testobj.monitor_textvar})
-called Entry.__init__ with args MockFrame () {{'textvariable': {testobj.scrtext}}}
-called Entry.grid with args () {{'row': 0, 'column': 0, 'sticky': ('e', 'w')}}
-called Entry.state with args (['disabled'],)
-called Button.__init__ with args MockFrame () {{'image': 'ecimage', 'command': {testobj.clear_text_text}}}
-called Button.state with args (['disabled'],)
-called Button.grid with args () {{'row': 0, 'column': 1, 'sticky': 'w'}}
-called IntVar.__init__ with args ()
-called IntVar.set with arg 0
-called CheckBox.__init__ with args MockFrame () {{'text': 'This mod can be activated by itself', 'variable': {testobj.activate}, 'command': {testobj.enable_change}}}
-called CheckBox.grid with args () {{'row': 5, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
-called CheckBox.state with args (['disabled'],)
-called IntVar.__init__ with args ()
-called IntVar.set with arg 0
-called CheckBox.__init__ with args MockFrame () {{'text': 'Do not touch when (de)activating for a save', 'variable': {testobj.exempt}, 'command': {testobj.enable_change}}}
-called CheckBox.grid with args () {{'row': 6, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
-called CheckBox.state with args (['disabled'],)
-called Button.__init__ with args MockFrame () {{'text': 'View Components', 'underline': 5, 'command': {testobj.view_components}}}
-called Button.grid with args () {{'row': 7, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
-called Button.state with args (['disabled'],)
-called Button.__init__ with args MockFrame () {{'text': 'View Dependencies', 'underline': 5, 'command': {testobj.view_dependencies}}}
-called Button.grid with args () {{'row': 8, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
-called Button.state with args (['disabled'],)
-called Frame.__init__ with args MockFrame () {{}}
-called Frame.grid with args () {{'row': 9, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
-called Button.__init__ with args MockFrame () {{'text': 'Update', 'underline': 0, 'command': {testobj.update}}}
-called Button.state with args (['disabled'],)
-called Button.grid with args () {{'row': 0, 'column': 0, 'sticky': ('e', 'w')}}
-called Frame.columnconfigure with args (0,)
-called Button.__init__ with args MockFrame () {{'text': 'Add dependency', 'underline': 0, 'command': {testobj.add_dep}}}
-called Button.state with args (['disabled'],)
-called Button.grid with args () {{'row': 0, 'column': 1, 'sticky': ('e', 'w')}}
-called Frame.columnconfigure with args (1,)
-called Button.__init__ with args MockFrame () {{'text': 'Close', 'underline': 2, 'command': {testobj.close}}}
-called Button.grid with args () {{'row': 0, 'column': 2, 'sticky': ('e', 'w')}}
-called Frame.columnconfigure with args (2,)
-called ComboBox.focus_set
-"""
-saves = """\
-called Conf.list_all_mod_savetemitems
-called Conf.list_all_mod_dirs
-called Conf.get_diritem_data with args ('xxx', 'SCRNAM')
-called Conf.get_diritem_data with args ('yyy', 'SCRNAM')
-called Toplevel.__init__ with args ('root',) {{}}
-called Frame.__init__ with args SaveGamesDialog () {{'padding': 10}}
-called Frame.grid with args () {{'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
-called ComboBox.__init__ with args MockFrame () {{'values': ['qqq', 'rrr'], 'textvariable': {testobj.savegame_selector_text!r}}}
-called ComboBox.state with args (['readonly'],)
-called ComboBox.bind with args ('<<ComboboxSelected>>', {testobj.get_savedata})
-called ComboBox.grid with args () {{'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
-called Frame.__init__ with args MockFrame () {{}}
-called Frame.grid with args () {{'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
-called Frame.columnconfigure with args (1,)
-called Label.__init__ with args MockFrame () {{'text': 'Player name:'}}
-called Label.grid with args () {{'row': 0, 'column': 0}}
-called Entry.__init__ with args MockFrame () {{'textvariable': {testobj.pname_text!r}}}
-called Entry.grid with args () {{'row': 0, 'column': 1}}
-called Label.__init__ with args MockFrame () {{'text': 'Farm name:'}}
-called Label.grid with args () {{'row': 1, 'column': 0}}
-called Entry.__init__ with args MockFrame () {{'textvariable': {testobj.fname_text!r}}}
-called Entry.grid with args () {{'row': 1, 'column': 1}}
-called Label.__init__ with args MockFrame () {{'text': 'In-game date:'}}
-called Label.grid with args () {{'row': 2, 'column': 0}}
-called Entry.__init__ with args MockFrame () {{'textvariable': {testobj.gdate_text!r}}}
-called Entry.grid with args () {{'row': 2, 'column': 1}}
-called Frame.__init__ with args MockFrame () {{}}
-called Frame.grid with args () {{'row': 2, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
-called Label.__init__ with args MockFrame () {{'text': 'Uses:'}}
-called Label.grid with args () {{'row': 0, 'column': 0}}
-called Frame.__init__ with args MockFrame () {{}}
-called Frame.grid with args () {{'row': 3, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
-called Frame.columnconfigure with args (0,)
-called SaveGamesDialog.add_modselector
-called Frame.__init__ with args MockFrame () {{}}
-called Frame.grid with args () {{'row': 4, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
-called Button.__init__ with args MockFrame () {{'text': 'Update config', 'underline': 0, 'command': {testobj.update}}}
-called Button.state with args (['disabled'],)
-called Button.grid with args () {{'row': 0, 'column': 0}}
-called Toplevel.bind with args ('<Alt-u>', {testobj.update})
-called Frame.columnconfigure with args (0,)
-called Button.__init__ with args MockFrame () {{'text': 'Activate Mods', 'underline': 0, 'command': {testobj.confirm}}}
-called Button.state with args (['disabled'],)
-called Button.grid with args () {{'row': 0, 'column': 1}}
-called Toplevel.bind with args ('<Alt-a>', {testobj.confirm})
-called Frame.columnconfigure with args (1,)
-called Button.__init__ with args MockFrame () {{'text': 'Close', 'underline': 0, 'command': {testobj.close}}}
-called Button.grid with args () {{'row': 0, 'column': 2}}
-called Toplevel.bind with args ('<Alt-c>', {testobj.close})
-called Toplevel.bind with args ('<Escape>', {testobj.close})
-called Frame.columnconfigure with args (2,)
-called ComboBox.focus_set
-"""
 
 
 @pytest.fixture
 def expected_output():
     "fixture returning output to be expected from (mostly) gui setup methods"
-    results = {'sett': sett, 'choice': choice, 'delete': delete, 'attrs': attrs, 'saves': saves}
+    results = {'choice': choice}
     return results
 
 
@@ -352,18 +150,55 @@ class MockConf:
         print('called Conf.update_saveitem_data with args', args)
 
 
+def test_get_shortcut_info():
+    "unittest for tkgui.get_shortcut_info"
+    with pytest.raises(ValueError):
+        testee.get_shortcut_info('xyz')
+    assert testee.get_shortcut_info('&xyz') == (0, 'xyz', 'x')
+    assert testee.get_shortcut_info('x&yz') == (1, 'xyz', 'y')
+    assert testee.get_shortcut_info('xy&z') == (2, 'xyz', 'z')
+
+
+def test_show_message(monkeypatch, capsys):
+    """unittests for tkgui.show_message
+    """
+    monkeypatch.setattr(testee.MessageBox, 'showinfo', mockttk.mock_show_info)
+    testee.show_message('win', 'xxx')
+    assert capsys.readouterr().out == ("called MessageBox.showinfo with args ()"
+                                       " {'parent': 'win', 'message': 'xxx', 'title': 'SDVMM'}\n")
+    testee.show_message('win', 'yyy', 'zzz')
+    assert capsys.readouterr().out == ("called MessageBox.showinfo with args ()"
+                                       " {'parent': 'win', 'message': 'yyy', 'title': 'zzz'}\n")
+
+
 def test_show_dialog(capsys):
     """unittests for tkgui.show_dialog
     """
+    class MockDialogGui:
+        "stub"
+        def __init__(self):
+            print('called DialogGui.__init__')
+        def focus_set(self):
+            print("called DialogGui.focus_set")
+        def grab_set(self):
+            print("called DialogGui.grab_set")
+        def wait_window(self):
+            print("called DialogGui.wait_window")
+    class MockDialog:
+        "stub"
+        def __init__(self, *args, **kwargs):
+            print('called Dialog.__init__ with args', args, kwargs)
+            self.doit = MockDialogGui()
+    cls = MockDialog
     parent = types.SimpleNamespace()
-    cls = mockttk.MockDialog
     modnames = ['x', 'y']
     assert testee.show_dialog(cls, parent, modnames, True)
     assert capsys.readouterr().out == (
-        "called Toplevel.__init__ with args (namespace(), ['x', 'y'], True) {}\n"
-        "called Toplevel.focus_set\n"
-        "called Toplevel.grab_set\n"
-        "called Toplevel.wait_window\n")
+        "called Dialog.__init__ with args (namespace(), ['x', 'y'], True) {}\n"
+        "called DialogGui.__init__\n"
+        "called DialogGui.focus_set\n"
+        "called DialogGui.grab_set\n"
+        "called DialogGui.wait_window\n")
 
 
 class TestShowMods:
@@ -438,7 +273,8 @@ class TestShowMods:
                 "called Frame.__init__ with args NoneType () {}\n")
         testobj.create_selectables_grid()
         assert capsys.readouterr().out == (
-                "called Frame.__init__ with args MockFrame () {'padding': (10, 0)}\n"
+                "called Frame.__init__ with args MockFrame"
+                " () {'padding': (10, 0)}\n"
                 "called Frame.grid with args () {'column': 0, 'row': 1}\n")
 
     def test_create_dependencies_title(self, monkeypatch, capsys):
@@ -469,13 +305,19 @@ class TestShowMods:
                 " () {'padding': (10, 0)}\n"
                 "called Frame.grid with args () {'column': 0, 'row': 3}\n")
 
-    def test_create_buttons(self, monkeypatch, capsys, expected_output):
+    def test_create_buttons(self, monkeypatch, capsys):
         """unittest for ShowMods.create_buttons
         """
         def mock_refresh(*args, **kwargs):
             """stub
             """
             print('called ShowMods.refresh_widgets with args', args, kwargs)
+        def callback1():
+            "dummy callback function"
+        def callback2():
+            "dummy callback function"
+        def callback3():
+            "dummy callback function"
         monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
         monkeypatch.setattr(testee.ttk, 'Button', mockttk.MockButton)
         testobj = self.setup_testobj(monkeypatch, capsys)
@@ -484,17 +326,16 @@ class TestShowMods:
                 "called Frame.__init__ with args NoneType () {}\n")
         testobj.buttons = {}
         testobj.refresh_widgets = mock_refresh
-        callback1 = lambda: '0'
-        callback2 = lambda: '1'
         testobj.create_buttons([
             {'name': 'xxx', 'text': '&xxxxxx', 'tooltip': 'xxxxxxxxx', 'callback': callback1},
-            {'name': 'actv', 'text': 'yyy&yyy', 'tooltip': 'yyyyyyyyy', 'callback': callback2}])
-        assert len(testobj.buttons) == 2
+            {'name': 'actv', 'text': 'yyy&yyy', 'tooltip': 'yyyyyyyyy', 'callback': callback2},
+            {'name': 'close', 'text': '&Close', 'tooltip': 'close', 'callback': callback3}])
+        assert len(testobj.buttons) == 3
         assert isinstance(testobj.buttons['xxx'], mockttk.MockButton)
         assert isinstance(testobj.buttons['actv'], mockttk.MockButton)
+        assert isinstance(testobj.buttons['close'], mockttk.MockButton)
         assert capsys.readouterr().out == (
-                "called Frame.__init__ with args"
-                " MockFrame () {'padding': 10}\n"
+                "called Frame.__init__ with args MockFrame () {'padding': 10}\n"
                 "called Frame.grid with args () {'column': 0, 'row': 3, 'sticky': 's'}\n"
                 "called Button.__init__ with args MockFrame"
                 f" () {{'text': 'xxxxxx', 'command': {callback1}, 'underline': 0}}\n"
@@ -502,7 +343,10 @@ class TestShowMods:
                 "called Button.__init__ with args MockFrame"
                 f" () {{'text': 'yyyyyy', 'command': {callback2}, 'underline': 3}}\n"
                 "called Button.grid with args () {'column': 1, 'row': 0}\n"
-                "called Button.state with args (['disabled'],)\n")
+                "called Button.state with args (['disabled'],)\n"
+                "called Button.__init__ with args MockFrame"
+                f" () {{'text': 'Close', 'command': {callback3}, 'underline': 2}}\n"
+                "called Button.grid with args () {'column': 2, 'row': 0}\n")
 
     def test_setup_actions(self, monkeypatch, capsys):
         """unittest for ShowMods.setup_actions
@@ -521,7 +365,7 @@ class TestShowMods:
                 f"called ShowMods.root.bind with args ('<Control-Return>', {testobj.confirm})\n"
                 f"called ShowMods.root.bind with args ('<Alt-s>', {testobj.manage_savefiles})\n"
                 f"called ShowMods.root.bind with args ('<Alt-x>', {testobj.close})\n"
-                f"called ShowMods.root.bind with args ('<Alt-c>', {testobj.close})\n"
+                f"called ShowMods.root.bind with args ('<Alt-o>', {testobj.close})\n"
                 f"called ShowMods.root.bind with args ('<Control-q>', {testobj.close})\n")
 
     def test_show_screen(self, monkeypatch, capsys):
@@ -706,10 +550,9 @@ class TestShowMods:
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.buttons = {'actv': mockttk.MockButton()}
-        assert capsys.readouterr().out == (
-                "called Button.__init__ with args NoneType () {}\n")
+        assert capsys.readouterr().out == "called Button.__init__ with args NoneType () {}\n"
         testobj.enable_button()
-        assert capsys.readouterr().out == ("called Button.state with args (['!disabled'],)\n")
+        assert capsys.readouterr().out == "called Button.state with args (['!disabled'],)\n"
 
     def test_manage_defaults(self, monkeypatch, capsys):
         """unittest for ShowMods.manage_defaults
@@ -756,8 +599,7 @@ class TestShowMods:
         testobj.root = 'root'
         testobj.master = MockManager()
         testobj.buttons = {'actv': mockttk.MockButton()}
-        assert capsys.readouterr().out == (
-                "called Button.__init__ with args NoneType () {}\n")
+        assert capsys.readouterr().out == "called Button.__init__ with args NoneType () {}\n"
         testobj.confirm()
         assert capsys.readouterr().out == (
                 "called Manager.process_activations\n"
@@ -853,27 +695,29 @@ class TestShowMods:
         assert capsys.readouterr().out == "called Manager.manage_savefiles\n"
 
 
-class TestSettingsDialog:
-    """unittests for qtgui.SettingsDialog
+class TestSettingsDialogGui:
+    """unittests for qtgui.SettingsDialogGui
     """
     def setup_testobj(self, monkeypatch, capsys):
-        """stub for qtgui.SettingsDialog object
+        """stub for qtgui.SettingsDialogGui objeict
 
         create the object skipping the normal initialization
         intercept messages during creation
         return the object so that other methods can be monkeypatched in the caller
         """
         def mock_init(self, *args):
-            print('called SettingsDialog.__init__ with args', args)
-        # def mock_accept(self):
-        #     print('called SettingsDialog.accept')
-        monkeypatch.setattr(testee.SettingsDialog, '__init__', mock_init)
-        # monkeypatch.setattr(testee.SettingsDialog, 'accept', mock_accept)
-        testobj = testee.SettingsDialog()
-        assert capsys.readouterr().out == 'called SettingsDialog.__init__ with args ()\n'
+            print('called SettingsDialogGui.__init__ with args', args)
+            # self._w = ' (mocked)'
+        def mock_bind_all(self, *args):
+            print('called SettingsDialogGui.bind_all with args', args)
+        monkeypatch.setattr(testee.SettingsDialogGui, '__init__', mock_init)
+        monkeypatch.setattr(testee.SettingsDialogGui, 'bind_all', mock_bind_all)
+        testobj = testee.SettingsDialogGui()
+        # print(testobj)
+        assert capsys.readouterr().out == 'called SettingsDialogGui.__init__ with args ()\n'
         return testobj
 
-    def test_init(self, monkeypatch, capsys, expected_output):
+    def test_init(self, monkeypatch, capsys):  # , expected_output):
         """unittest for SettingsDialog.__init__
         """
         old_init = testee.tk.Toplevel.__init__
@@ -886,195 +730,208 @@ class TestSettingsDialog:
         monkeypatch.setattr(testee.tk.Toplevel, 'bind_all', mock_bind)
 
         monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
+        maingui = types.SimpleNamespace()
+        parent = types.SimpleNamespace(root='root')
+        testobj = testee.SettingsDialogGui(maingui, parent)
+        assert testobj.maingui == maingui
+        assert testobj.parent == parent
+        assert isinstance(testobj.frm, testee.ttk.Frame)
+        assert capsys.readouterr().out == (
+                "called Toplevel.__init__ with args ('root',) {}\n"
+                "called Frame.__init__ with args SettingsDialogGui () {'padding': 10}\n"
+                "called Frame.grid with args ()"
+                " {'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}\n"
+                "called Frame.columnconfigure with args (0,)\n")
+
+    def test_add_label(self, monkeypatch, capsys):
+        """unittest for SettingsDialogGui.add_label
+        """
         monkeypatch.setattr(testee.ttk, 'Label', mockttk.MockLabel)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.row = 0
+        testobj.add_label('xxx')
+        assert capsys.readouterr().out == (
+                "called Label.__init__ with args MockFrame () {'text': 'xxx'}\n"
+                "called Label.grid with args () {'row': 1, 'column': 0, 'sticky': 'w'}\n")
+
+    def test_add_line_entry(self, monkeypatch, capsys):
+        """unittest for SettingsDialogGui.add_line_entry
+        """
+        monkeypatch.setattr(testee.tk, 'StringVar', mockttk.MockStringVar)
         monkeypatch.setattr(testee.ttk, 'Entry', mockttk.MockEntry)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.row = 0
+        testobj.textvars = {}
+        result = testobj.add_line_entry('xxx')
+        assert isinstance(result, testee.ttk.Entry)
+        assert testobj.textvars[result] == result.getvar(result.cget('textvariable'))
+        assert capsys.readouterr().out == (
+                "called StringVar.__init__ with args ()\n"
+                "called Entry.__init__ with args MockFrame ()"
+                f" {{'width': 48, 'textvariable': {testobj.textvars[result]}}}\n"
+                "called StringVar.set with arg 'xxx'\n"
+                "called Entry.grid with args () {'row': 0, 'column': 1}\n")
+
+    def test_add_browse_button(self, monkeypatch, capsys):
+        """unittest for SettingsDialogGui.add_browse_button
+        """
+        def callback():
+            """empty stub for callback function
+            """
         monkeypatch.setattr(testee.ttk, 'Checkbutton', mockttk.MockCheckBox)
         monkeypatch.setattr(testee.ttk, 'Button', mockttk.MockButton)
-        monkeypatch.setattr(testee.ttk, 'Spinbox', mockttk.MockSpinBox)
-        monkeypatch.setattr(testee.tk, 'StringVar', mockttk.MockStringVar)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.row = 0
+        result = testobj.add_browse_button(callback)
+        assert isinstance(result, testee.ttk.Button)
+        assert capsys.readouterr().out == (
+                "called Button.__init__ with args MockFrame ()"
+                f" {{'text': 'Browse', 'command': {callback}}}\n"
+                "called Button.grid with args () {'row': 0, 'column': 2, 'sticky': 'w'}\n")
+
+    def test_add_spinbox(self, monkeypatch, capsys):
+        """unittest for SettingsDialogGui.add_spinbox
+        """
         monkeypatch.setattr(testee.tk, 'IntVar', mockttk.MockIntVar)
-
-        monkeypatch.setattr(testee.SettingsDialog, 'select_modbase', lambda: 'dummy')
-        monkeypatch.setattr(testee.SettingsDialog, 'select_download_path', lambda: 'dummy')
-        monkeypatch.setattr(testee.SettingsDialog, 'select_savepath', lambda: 'dummy')
-        monkeypatch.setattr(testee.SettingsDialog, 'update', lambda: 'dummy')
-        monkeypatch.setattr(testee.SettingsDialog, 'close', lambda: 'dummy')
-        parent = types.SimpleNamespace(root='root')
-        parent.master = types.SimpleNamespace(dialog_data=('xxx', 'yyy', 'zzz', 1, 'qqq'))
-        # breakpoint()
-        testobj = testee.SettingsDialog(parent)
-        assert testobj.parent == parent
-        assert isinstance(testobj.modbase_text, testee.tk.StringVar)
-        assert isinstance(testobj.config_text, testee.tk.StringVar)
-        assert isinstance(testobj.download_text, testee.tk.StringVar)
-        assert isinstance(testobj.columncount, testee.tk.IntVar)
-        assert isinstance(testobj.savepath_text, testee.tk.StringVar)
-        assert capsys.readouterr().out == expected_output['sett'].format(testobj=testobj)
-
-    def test_select_modbase(self, monkeypatch, capsys):
-        """unittest for SettingsDialog.select_modbase
-        """
-        def mock_get(**kwargs):
-            print('called FileDialog.askdirectory with args', kwargs)
-            return ''
-        def mock_get_2(**kwargs):
-            print('called FileDialog.askdirectory with args', kwargs)
-            return 'xxx'
-        monkeypatch.setattr(testee.FileDialog, 'askdirectory', mock_get)
+        monkeypatch.setattr(testee.ttk, 'Spinbox', mockttk.MockSpinBox)
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.modbase_text = mockttk.MockStringVar()
-        assert capsys.readouterr().out == "called StringVar.__init__ with args ()\n"
-        testobj.select_modbase()
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.row = 0
+        testobj.textvars = {}
+        result = testobj.add_spinbox('xxx')
+        assert isinstance(result, testee.ttk.Spinbox)
+        assert testobj.textvars[result] == result.getvar(result.cget('textvariable'))
         assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called FileDialog.askdirectory with args"
-                " {'title': 'Where to install downloaded mods?',"
-                f" 'initialdir': '{testee.os.path.expanduser('~')}',"
-                " 'mustexist': True}\n")
-        testobj.modbase_text.set('qqq')
-        assert capsys.readouterr().out == "called StringVar.set with arg 'qqq'\n"
-        testobj.select_modbase()
-        assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called FileDialog.askdirectory with args"
-                " {'title': 'Where to install downloaded mods?', 'initialdir': 'qqq',"
-                " 'mustexist': True}\n")
-        monkeypatch.setattr(testee.FileDialog, 'askdirectory', mock_get_2)
-        testobj.select_modbase()
-        assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called FileDialog.askdirectory with args"
-                " {'title': 'Where to install downloaded mods?', 'initialdir': 'qqq',"
-                " 'mustexist': True}\n"
-                "called StringVar.set with arg 'xxx'\n")
+                "called IntVar.__init__ with args ()\n"
+                "called IntVar.set with arg xxx\n"
+                "called SpinBox.__init__ with args MockFrame () {'width': 5, 'from_': 0,"
+                f" 'to': 5, 'textvariable': {testobj.textvars[result]}}}\n"
+                "called SpinBox.grid with args () {'row': 0, 'column': 1, 'sticky': 'w'}\n")
 
-    def test_select_download_path(self, monkeypatch, capsys):
-        """unittest for SettingsDialog.select_modbase
+    def test_add_buttonbox(self, monkeypatch, capsys):
+        """unittest for SettingsDialogGui.add_buttonbox
         """
-        def mock_get(**kwargs):
-            print('called FileDialog.askdirectory with args', kwargs)
-            return ''
-        def mock_get_2(**kwargs):
-            print('called FileDialog.askdirectory with args', kwargs)
-            return 'xxx'
-        monkeypatch.setattr(testee.FileDialog, 'askdirectory', mock_get)
+        def mock_get_info(text):
+            "stub"
+            return 0, text, 'q'
+        def mock_bind(*args):
+            print('called SettingsDialogGui.bind with args', args)
+        def mock_confirm(*args):
+            "dummy stub for callback"
+        def callback():
+            """empty stub for callback function
+            """
+        monkeypatch.setattr(testee, 'get_shortcut_info', mock_get_info)
+        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
+        monkeypatch.setattr(testee.ttk, 'Button', mockttk.MockButton)
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.download_text = mockttk.MockStringVar()
-        assert capsys.readouterr().out == "called StringVar.__init__ with args ()\n"
-        testobj.select_download_path()
+        testobj.row = 0
+        testobj.bind = mock_bind
+        testobj.confirm = mock_confirm
+        testobj.add_buttonbox([('xxx', callback)])
         assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called FileDialog.askdirectory with args"
-                " {'title': 'Where to download mods to?',"
-                f" 'initialdir': '{testee.os.path.expanduser('~')}',"
-                " 'mustexist': True}\n")
-        testobj.download_text.set('qqq')
-        assert capsys.readouterr().out == "called StringVar.set with arg 'qqq'\n"
-        testobj.select_download_path()
-        assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called FileDialog.askdirectory with args"
-                " {'title': 'Where to download mods to?', 'initialdir': 'qqq',"
-                " 'mustexist': True}\n")
-        monkeypatch.setattr(testee.FileDialog, 'askdirectory', mock_get_2)
-        testobj.select_download_path()
-        assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called FileDialog.askdirectory with args"
-                " {'title': 'Where to download mods to?', 'initialdir': 'qqq',"
-                " 'mustexist': True}\n"
-                "called StringVar.set with arg 'xxx'\n")
+                "called Frame.__init__ with args SettingsDialogGui () {'padding': 10}\n"
+                "called Frame.grid with args () {'row': 1, 'column': 0}\n"
+                "called Button.__init__ with args MockFrame ()"
+                f" {{'text': 'xxx', 'underline': 0, 'command': {callback}}}\n"
+                "called Button.grid with args () {'row': 0, 'column': 0}\n"
+                f"called SettingsDialogGui.bind with args ('<Alt-q>', {callback})\n"
+                f"called SettingsDialogGui.bind with args ('<Escape>', {testobj.confirm})\n")
 
-    def test_select_savepath(self, monkeypatch, capsys):
-        """unittest for SettingsDialog.select_modbase
+    def test_set_focus(self, monkeypatch, capsys):
+        """unittest for SettingsDialogGui.set_focus
         """
-        def mock_get(**kwargs):
-            print('called FileDialog.askdirectory with args', kwargs)
-            return ''
-        def mock_get_2(**kwargs):
-            print('called FileDialog.askdirectory with args', kwargs)
-            return 'xxx'
-        monkeypatch.setattr(testee.FileDialog, 'askdirectory', mock_get)
-        testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.savepath_text = mockttk.MockStringVar()
-        assert capsys.readouterr().out == "called StringVar.__init__ with args ()\n"
-        testobj.select_savepath()
-        assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called FileDialog.askdirectory with args"
-                " {'title': 'Where are the saved games stored?',"
-                f" 'initialdir': '{testee.os.path.expanduser('~')}',"
-                " 'mustexist': True}\n")
-        testobj.savepath_text.set('qqq')
-        assert capsys.readouterr().out == "called StringVar.set with arg 'qqq'\n"
-        testobj.select_savepath()
-        assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called FileDialog.askdirectory with args"
-                " {'title': 'Where are the saved games stored?', 'initialdir': 'qqq',"
-                " 'mustexist': True}\n")
-        monkeypatch.setattr(testee.FileDialog, 'askdirectory', mock_get_2)
-        testobj.select_savepath()
-        assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called FileDialog.askdirectory with args"
-                " {'title': 'Where are the saved games stored?', 'initialdir': 'qqq',"
-                " 'mustexist': True}\n"
-                "called StringVar.set with arg 'xxx'\n")
-
-    def test_update(self, monkeypatch, capsys):
-        """unittest for SettingsDialog.update
-        """
-        def mock_close():
-            print("called SettingsDialog.close")
-        testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.parent = types.SimpleNamespace(master=types.SimpleNamespace())
-        testobj.modbase_text = mockttk.MockStringVar()
-        testobj.modbase_text.set('xx')
-        testobj.config_text = mockttk.MockStringVar()
-        testobj.config_text.set('yy')
-        testobj.download_text = mockttk.MockStringVar()
-        testobj.download_text.set('zz')
-        testobj.columncount = mockttk.MockIntVar()
-        testobj.columncount.set(2)
-        testobj.savepath_text = mockttk.MockStringVar()
-        testobj.savepath_text.set('qq')
+        wvar = mockttk.MockStringVar()
+        widget = mockttk.MockEntry(textvariable=wvar)
         assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
-                                           "called StringVar.set with arg 'xx'\n"
-                                           "called StringVar.__init__ with args ()\n"
-                                           "called StringVar.set with arg 'yy'\n"
-                                           "called StringVar.__init__ with args ()\n"
-                                           "called StringVar.set with arg 'zz'\n"
-                                           "called IntVar.__init__ with args ()\n"
-                                           "called IntVar.set with arg 2\n"
-                                           "called StringVar.__init__ with args ()\n"
-                                           "called StringVar.set with arg 'qq'\n")
-        testobj.close = mock_close
-        testobj.update()
-        assert testobj.parent.master.dialog_data == ('xx', 'yy', 'zz', 2, 'qq')
-        assert capsys.readouterr().out == ("called StringVar.get\n"
-                                           "called StringVar.get\n"
-                                           "called StringVar.get\n"
-                                           "called IntVar.get\n"
-                                           "called StringVar.get\n"
-                                           "called SettingsDialog.close\n")
-
-    def test_close(self, monkeypatch, capsys):
-        """unittest for SettingsDialog.close
-        """
-        def mock_set():
-            print('called ShowMods.root.focus_set')
-        def mock_destroy():
-            print('called SettingsDialog.destroy')
+                                           "called Entry.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n")
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.destroy = mock_destroy
+        testobj.set_focus(widget)
+        assert capsys.readouterr().out == ("called Entry.focus_set\n")
+
+    def test_get_widget_text(self, monkeypatch, capsys):
+        """unittest for SettingsDialogGui.get_widget_text
+        """
+        wvar = mockttk.MockStringVar()
+        widget = mockttk.MockEntry(textvariable=wvar)
+        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+                                           "called Entry.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.textvars = {widget: wvar}
+        # breakpoint()
+        testobj.get_widget_text(widget)
+        assert capsys.readouterr().out == "called StringVar.get\n"
+
+    def test_set_widget_text(self, monkeypatch, capsys):
+        """unittest for SettingsDialogGui.set_widget_text
+        """
+        wvar = mockttk.MockStringVar()
+        widget = mockttk.MockEntry(textvariable=wvar)
+        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+                                           "called Entry.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.textvars = {widget: wvar}
+        testobj.set_widget_text(widget, 'xxx')
+        assert capsys.readouterr().out == "called StringVar.set with arg 'xxx'\n"
+
+    def test_select_directory(self, monkeypatch, capsys):
+        """unittest for SettingsDialogGui.select_directory
+        """
+        monkeypatch.setattr(testee.FileDialog, 'askdirectory', mockttk.mock_askopen_nofile)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        assert testobj.select_directory('xxx', 'yyy') == ''
+        assert capsys.readouterr().out == (
+                "called FileDialog.askopenfilename with args"
+                " {'title': 'xxx', 'initialdir': 'yyy', 'mustexist': True}\n")
+        monkeypatch.setattr(testee.FileDialog, 'askdirectory', mockttk.mock_askopen_file)
+        assert testobj.select_directory('xxx', 'yyy') == 'filename'
+        assert capsys.readouterr().out == (
+                "called FileDialog.askopenfilename with args"
+                " {'title': 'xxx', 'initialdir': 'yyy', 'mustexist': True}\n")
+
+    def test_reject(self, monkeypatch, capsys):
+        """unittest for SettingsDialogGui.reject
+        """
+        def mock_focus():
+            print('called ShowMods.focus_set')
+        def mock_destroy(self):
+            print('called SettingsDialogGui.destroy')
+        monkeypatch.setattr(testee.SettingsDialogGui, 'destroy', mock_destroy)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.parent = types.SimpleNamespace(root=types.SimpleNamespace(focus_set=mock_focus))
+        testobj.reject()
+        assert capsys.readouterr().out == ("called ShowMods.focus_set\n"
+                                           "called SettingsDialogGui.destroy\n")
         testobj.parent = None
-        testobj.close()
-        assert capsys.readouterr().out == "called SettingsDialog.destroy\n"
-        testobj.parent = types.SimpleNamespace(root=types.SimpleNamespace(focus_set=mock_set))
-        testobj.close()
-        assert capsys.readouterr().out == ("called ShowMods.root.focus_set\n"
-                                           "called SettingsDialog.destroy\n")
+        testobj.reject()
+        assert capsys.readouterr().out == "called SettingsDialogGui.destroy\n"
+
+    def test_confirm(self, monkeypatch, capsys):
+        """unittest for SettingsDialogGui.confirm
+        """
+        def mock_focus():
+            print('called ShowMods.focus_set')
+        def mock_destroy(self):
+            print('called SettingsDialogGui.destroy')
+        monkeypatch.setattr(testee.SettingsDialogGui, 'destroy', mock_destroy)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.parent = types.SimpleNamespace(root=types.SimpleNamespace(focus_set=mock_focus))
+        testobj.confirm()
+        assert capsys.readouterr().out == ("called ShowMods.focus_set\n"
+                                           "called SettingsDialogGui.destroy\n")
+        testobj.parent = None
+        testobj.confirm()
+        assert capsys.readouterr().out == "called SettingsDialogGui.destroy\n"
 
 
 class TestChoiceDialog:
@@ -1131,8 +988,7 @@ class TestChoiceDialog:
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.ok_button = mockttk.MockButton()
-        assert capsys.readouterr().out == (
-                "called Button.__init__ with args NoneType () {}\n")
+        assert capsys.readouterr().out == "called Button.__init__ with args NoneType () {}\n"
         testobj.enable_accept('buttonpressevent')
         assert capsys.readouterr().out == "called Button.state with args (['!disabled'],)\n"
 
@@ -1170,11 +1026,11 @@ class TestChoiceDialog:
                                            "called ChoiceDialog.destroy\n")
 
 
-class TestDeleteDialog:
-    """unittests for tkgui.DeleteDialog
+class TestDeleteDialogGui:
+    """unittests for tkgui.DeleteDialogGui
     """
     def setup_testobj(self, monkeypatch, capsys):
-        """stub for tkgui.DeleteDialog object
+        """stub for tkgui.DeleteDialogGui object
 
         create the object skipping the normal initialization
         intercept messages during creation
@@ -1184,119 +1040,207 @@ class TestDeleteDialog:
         def mock_init(self, *args, **kwargs):
             """stub
             """
-            print('called DeleteDialog.__init__ with args', args)
+            print('called DeleteDialogGui.__init__ with args', args)
             old_init(self, *args, **kwargs)
-        monkeypatch.setattr(testee.DeleteDialog, '__init__', mock_init)
-        testobj = testee.DeleteDialog()
-        assert capsys.readouterr().out == 'called DeleteDialog.__init__ with args ()\n'
+        def mock_bind_all(self, *args):
+            print('called SettingsDialogGui.bind_all with args', args)
+        monkeypatch.setattr(testee.DeleteDialogGui, '__init__', mock_init)
+        monkeypatch.setattr(testee.SettingsDialogGui, 'bind_all', mock_bind_all)
+        testobj = testee.DeleteDialogGui()
+        assert capsys.readouterr().out == 'called DeleteDialogGui.__init__ with args ()\n'
         return testobj
 
-    def test_init(self, monkeypatch, capsys, expected_output):
+    def test_init(self, monkeypatch, capsys):
         """unittest for DeleteDialog.__init__
         """
         old_init = testee.tk.Toplevel.__init__
         def mock_init(self, *args, **kwargs):
             print('called Toplevel.__init__ with args', args, kwargs)
             old_init(self, *kwargs, **kwargs)
+        def mock_bind(self, *args, **kwargs):
+            print('called Toplevel.bind_all with args', args, kwargs)
+        monkeypatch.setattr(testee.tk.Toplevel, 'bind_all', mock_bind)
         monkeypatch.setattr(testee.tk.Toplevel, '__init__', mock_init)
         monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
-        # monkeypatch.setattr(testee.ttk, 'Label', mockttk.MockLabel)
+        maingui = types.SimpleNamespace()
+        parent = types.SimpleNamespace(root='root')
+        testobj = testee.DeleteDialogGui(maingui, parent)
+        assert testobj.maingui == maingui
+        assert testobj.parent == parent
+        assert isinstance(testobj.frm, testee.ttk.Frame)
+        assert capsys.readouterr().out == (
+                "called Toplevel.__init__ with args ('root',) {}\n"
+                "called Frame.__init__ with args DeleteDialogGui () {'padding': 10}\n"
+                "called Frame.grid with args ()"
+                " {'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}\n")
+
+    def test_add_combobox(self, monkeypatch, capsys):
+        """unittest for DeleteDialogGui.add_combobox
+        """
+        def callback():
+            """empty stub for callback function
+            """
         monkeypatch.setattr(testee.tk, 'StringVar', mockttk.MockStringVar)
         monkeypatch.setattr(testee.ttk, 'Combobox', mockttk.MockComboBox)
-        monkeypatch.setattr(testee.ttk, 'Button', mockttk.MockButton)
-        monkeypatch.setattr(testee.DeleteDialog, 'process', lambda *x: 'dummy')
-        monkeypatch.setattr(testee.DeleteDialog, 'update', lambda *x: 'dummy')
-        # parent = mockttk.MockToplevel()
-        parent = types.SimpleNamespace(root='root')
-        conf = MockConf()
-        testobj = testee.DeleteDialog(parent, conf)
-        assert testobj.parent == parent
-        assert testobj.modnames == {'xxx_name': 'xxx', 'yyy_name': 'yyy'}
-        assert isinstance(testobj.lbox, testee.ttk.Combobox)
-        assert isinstance(testobj.change_button, testee.ttk.Button)
-        assert capsys.readouterr().out == expected_output['delete'].format(testobj=testobj)
-
-    def test_process(self, monkeypatch, capsys):
-        """unittest for DeleteDialog.process
-        """
-        def mock_list(self, name):
-            "stub"
-            print(f"called Conf.list_components_for_dir with arg '{name}'")
-            return []
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.modname = mockttk.MockStringVar()
-        testobj.modname.set('current text')
-        testobj.change_button = mockttk.MockButton()
+        testobj.row = 0
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.textvars = {}
+        result = testobj.add_combobox(['x', 'y'], callback)
+        assert isinstance(result, testee.ttk.Combobox)
+        assert testobj.row == 1
+        assert testobj.textvars[result] == result.getvar(result.cget('textvariable'))
         assert capsys.readouterr().out == (
                 "called StringVar.__init__ with args ()\n"
-                "called StringVar.set with arg 'current text'\n"
-                "called Button.__init__ with args NoneType () {}\n")
-        testobj.process()
-        assert testobj.choice == 'current text'
+                "called StringVar.set with arg 'x'\n"
+                "called ComboBox.__init__ with args MockFrame ()"
+                f" {{'values': ['y'], 'textvariable': {result.cget('textvariable')}, 'width': 40}}\n"
+                "called ComboBox.state with args (['!readonly'],)\n"
+                f"called ComboBox.bind with args ('<<ComboboxSelected>>', {callback})\n"
+                "called ComboBox.grid with args ()"
+                " {'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}\n")
+        result = testobj.add_combobox(['x', 'y'], callback, False)
+        assert isinstance(result, testee.ttk.Combobox)
+        assert testobj.row == 2
+        assert testobj.textvars[result] == result.getvar(result.cget('textvariable'))
         assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called Button.state with args (['!disabled'],)\n")
-        monkeypatch.setattr(MockConf, 'list_components_for_dir', mock_list)
-        testobj.process()
-        assert testobj.choice == 'current text'
-        assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called Button.state with args (['!disabled'],)\n")
+                "called StringVar.__init__ with args ()\n"
+                "called StringVar.set with arg 'x'\n"
+                "called ComboBox.__init__ with args MockFrame ()"
+                f" {{'values': ['y'], 'textvariable': {result.cget('textvariable')}, 'width': 40}}\n"
+                "called ComboBox.state with args (['readonly'],)\n"
+                f"called ComboBox.bind with args ('<<ComboboxSelected>>', {callback})\n"
+                "called ComboBox.grid with args ()"
+                " {'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}\n")
 
-    def test_update(self, monkeypatch, capsys):
-        """unittest for DeleteDialog.update
+    def test_add_buttonbox(self, monkeypatch, capsys):
+        """unittest for DeleteDialogGui.add_buttonbox
         """
-        def mock_instate(arg):
-            print(f'called Button.instate with arg {arg}')
-            return False
-        def mock_instate2(arg):
-            print(f'called Button.instate with arg {arg}')
-            return True
-        def mock_remove(*args):
-            print('called Manager.remove_mod with args', args)
-        monkeypatch.setattr(testee.MessageBox, 'showinfo', mockttk.mock_show_info)
+        def mock_get_info(text):
+            "stub"
+            return 0, text, 'q'
+        def callback():
+            """empty stub for callback function
+            """
+        monkeypatch.setattr(testee, 'get_shortcut_info', mock_get_info)
+        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
+        monkeypatch.setattr(testee.ttk, 'Button', mockttk.MockButton)
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.parent = types.SimpleNamespace(
-                master=types.SimpleNamespace(remove_mod=mock_remove))
-        testobj.change_button = mockttk.MockButton()
-        testobj.change_button.instate = mock_instate
+        testobj.row = 0
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.add_buttonbox([('xxx', callback, True), ('yyy', callback, False)])
         assert capsys.readouterr().out == (
-                "called Button.__init__ with args NoneType () {}\n")
-        testobj.choice = 'current text'
-        testobj.update()
-        assert capsys.readouterr().out == "called Button.instate with arg ['!disabled']\n"
-        testobj.change_button.instate = mock_instate2
-        testobj.update()
-        assert capsys.readouterr().out == (
-                "called Button.instate with arg ['!disabled']\n"
-                "called Manager.remove_mod with args ('current text',)\n"
-                f"called MessageBox.showinfo with args () {{'parent': {testobj!r},"
-                " 'message': 'current text has been removed'}\n"
-                "called Button.state with args (['disabled'],)\n")
+                # "called Frame.__init__ with args SettingsDialogGui () {'padding': 10}\n"
+                "called Frame.__init__ with args MockFrame () {}\n"
+                "called Frame.grid with args ()"
+                " {'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
+                "called Button.__init__ with args MockFrame ()"
+                f" {{'text': 'xxx', 'underline': 0, 'command': {callback}}}\n"
+                "called Button.state with args (['!disabled'],)\n"
+                "called Button.grid with args () {'row': 0, 'column': 0, 'sticky': ('e', 'w')}\n"
+                "called Frame.columnconfigure with args (0,)\n"
+                "called Button.__init__ with args MockFrame ()"
+                f" {{'text': 'yyy', 'underline': 0, 'command': {callback}}}\n"
+                "called Button.state with args (['disabled'],)\n"
+                "called Button.grid with args () {'row': 0, 'column': 1, 'sticky': ('e', 'w')}\n"
+                "called Frame.columnconfigure with args (1,)\n")
+                # "called SettingsDialogGui.bind_all with args ('<Alt-q>', None)\n")
 
-    def test_close(self, monkeypatch, capsys):
-        """unittest for DeleteDialog.close
+    def test_get_combobox_entry(self, monkeypatch, capsys):
+        """unittest for DeleteDialogGui.get_combobox_entry
         """
-        def mock_set():
-            print('called ShowMods.root.focus_set')
+        wvar = mockttk.MockStringVar()
+        widget = mockttk.MockComboBox(textvariable=wvar)
+        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+                                           "called ComboBox.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.textvars = {widget: wvar}
+        testobj.get_combobox_entry(widget)
+        assert capsys.readouterr().out == "called StringVar.get\n"
+
+    def test_set_combobox_entry(self, monkeypatch, capsys):
+        """unittest for DeleteDialogGui.set_combobox_entry
+        """
+        wvar = mockttk.MockStringVar()
+        widget = mockttk.MockComboBox(textvariable=wvar)
+        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+                                           "called ComboBox.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.textvars = {widget: wvar}
+        testobj.set_combobox_entry(widget, 'xxx')
+        assert capsys.readouterr().out == "called StringVar.set with arg 'xxx'\n"
+
+    def test_set_focus(self, monkeypatch, capsys):
+        """unittest for DeleteDialogGui.set_focus
+        """
+        wvar = mockttk.MockStringVar()
+        widget = mockttk.MockEntry(textvariable=wvar)
+        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+                                           "called Entry.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.set_focus(widget)
+        assert capsys.readouterr().out == ("called Entry.focus_set\n")
+
+    def test_enable_button(self, monkeypatch, capsys):
+        """unittest for DeleteDialogGui.enable_button
+        """
+        btn = mockttk.MockButton()
+        assert capsys.readouterr().out == "called Button.__init__ with args NoneType () {}\n"
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.enable_button(btn, True)
+        assert capsys.readouterr().out == "called Button.state with args (['!disabled'],)\n"
+        testobj.enable_button(btn, False)
+        assert capsys.readouterr().out == "called Button.state with args (['disabled'],)\n"
+
+    def test_confirm(self, monkeypatch, capsys):
+        """unittest for DeleteDialogGui.confirm
+        """
+        def mock_focus():
+            print('called ShowMods.focus_set')
         def mock_destroy():
-            print('called DeleteDialog.destroy')
+            print('called DeleteDialogGui.destroy')
         testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
         testobj.destroy = mock_destroy
+        testobj.parent = types.SimpleNamespace(root=types.SimpleNamespace(focus_set=mock_focus))
+        testobj.confirm()
+        assert capsys.readouterr().out == ("called ShowMods.focus_set\n"
+                                           "called DeleteDialogGui.destroy\n")
         testobj.parent = None
-        testobj.close()
-        assert capsys.readouterr().out == "called DeleteDialog.destroy\n"
-        testobj.parent = types.SimpleNamespace(root=types.SimpleNamespace(focus_set=mock_set))
-        testobj.close()
-        assert capsys.readouterr().out == ("called ShowMods.root.focus_set\n"
-                                           "called DeleteDialog.destroy\n")
+        testobj.confirm()
+        assert capsys.readouterr().out == "called DeleteDialogGui.destroy\n"
+
+    def test_accept(self, monkeypatch, capsys):
+        """unittest for DeleteDialogGui.accept
+        """
+        def mock_focus():
+            print('called ShowMods.focus_set')
+        def mock_destroy():
+            print('called DeleteDialogGui.destroy')
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.destroy = mock_destroy
+        testobj.parent = types.SimpleNamespace(root=types.SimpleNamespace(focus_set=mock_focus))
+        testobj.accept()
+        assert capsys.readouterr().out == ("called ShowMods.focus_set\n"
+                                           "called DeleteDialogGui.destroy\n")
+        testobj.parent = None
+        testobj.accept()
+        assert capsys.readouterr().out == "called DeleteDialogGui.destroy\n"
 
 
-class TestAttributesDialog:
-    """unittests for tkgui.AttributesDialog
+class TestAttributesDialogGui:
+    """unittests for tkgui.AttributesDialogGui
     """
     def setup_testobj(self, monkeypatch, capsys):
-        """stub for tkgui.AttributesDialog object
+        """stub for tkgui.AttributesDialogGui object
 
         create the object skipping the normal initialization
         intercept messages during creation
@@ -1306,14 +1250,14 @@ class TestAttributesDialog:
         def mock_init(self, *args, **kwargs):
             """stub
             """
-            print('called AttributesDialog.__init__ with args', args)
+            print('called AttributesDialogGui.__init__ with args', args)
             old_init(self, *args, **kwargs)
-        monkeypatch.setattr(testee.AttributesDialog, '__init__', mock_init)
-        testobj = testee.AttributesDialog()
-        assert capsys.readouterr().out == 'called AttributesDialog.__init__ with args ()\n'
+        monkeypatch.setattr(testee.AttributesDialogGui, '__init__', mock_init)
+        testobj = testee.AttributesDialogGui()
+        assert capsys.readouterr().out == 'called AttributesDialogGui.__init__ with args ()\n'
         return testobj
 
-    def test_init(self, monkeypatch, capsys, expected_output):
+    def test_init(self, monkeypatch, capsys):
         """unittest for AttributesDialog.__init__
         """
         old_init = testee.tk.Toplevel.__init__
@@ -1322,351 +1266,455 @@ class TestAttributesDialog:
             old_init(self, *kwargs, **kwargs)
         monkeypatch.setattr(testee.tk.Toplevel, '__init__', mock_init)
         monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
-        monkeypatch.setattr(testee.ttk, 'Label', mockttk.MockLabel)
-        monkeypatch.setattr(testee.ttk, 'Entry', mockttk.MockEntry)
+        maingui = types.SimpleNamespace()
+        parent = types.SimpleNamespace(root='root')
+        testobj = testee.AttributesDialogGui(maingui, parent)
+        assert testobj.maingui == maingui
+        assert testobj.parent == parent
+        assert isinstance(testobj.frm, testee.ttk.Frame)
+        assert testobj.row == 0
+        assert capsys.readouterr().out == (
+                "called Toplevel.__init__ with args ('root',) {}\n"
+                "called Frame.__init__ with args AttributesDialogGui () {'padding': 10}\n"
+                "called Frame.grid with args ()"
+                " {'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}\n")
+
+    def test_add_combobox(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.add_combobox
+        """
+        def callback():
+            """empty stub for callback function
+            """
         monkeypatch.setattr(testee.tk, 'StringVar', mockttk.MockStringVar)
         monkeypatch.setattr(testee.ttk, 'Combobox', mockttk.MockComboBox)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.row = 0
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.textvars = {}
+        result = testobj.add_combobox(['x', 'y'], callback)
+        assert isinstance(result, testee.ttk.Combobox)
+        assert testobj.row == 0
+        assert testobj.textvars[result] == result.getvar(result.cget('textvariable'))
+        assert capsys.readouterr().out == (
+                "called StringVar.__init__ with args ()\n"
+                "called StringVar.set with arg 'x'\n"
+                "called ComboBox.__init__ with args MockFrame ()"
+                f" {{'values': ['y'], 'textvariable': {result.cget('textvariable')}}}\n"
+                "called ComboBox.state with args (['!readonly', '!disabled'],)\n"
+                f"called ComboBox.bind with args ('<<ComboboxSelected>>', {callback})\n"
+                "called ComboBox.grid with args ()"
+                " {'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}\n")
+        result = testobj.add_combobox(['x', 'y'], callback, False, False)
+        assert isinstance(result, testee.ttk.Combobox)
+        assert testobj.row == 0
+        assert testobj.textvars[result] == result.getvar(result.cget('textvariable'))
+        assert capsys.readouterr().out == (
+                "called StringVar.__init__ with args ()\n"
+                "called StringVar.set with arg 'x'\n"
+                "called ComboBox.__init__ with args MockFrame ()"
+                f" {{'values': ['y'], 'textvariable': {result.cget('textvariable')}}}\n"
+                "called ComboBox.state with args (['readonly', 'disabled'],)\n"
+                f"called ComboBox.bind with args ('<<ComboboxSelected>>', {callback})\n"
+                "called ComboBox.grid with args ()"
+                " {'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}\n")
+
+    def test_add_label(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.add_label
+        """
+        monkeypatch.setattr(testee.ttk, 'Label', mockttk.MockLabel)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.row = 0
+        testobj.add_label('xxx')
+        assert capsys.readouterr().out == (
+                "called Label.__init__ with args MockFrame () {'text': 'xxx'}\n"
+                "called Label.grid with args () "
+                "{'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}\n")
+
+    def test_start_line_with_clear_button(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.istart_line_with_clear_button
+        """
+        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.row = 0
+        testobj.start_line_with_clear_button()
+        assert isinstance(testobj.hfrm, testee.ttk.Frame)
+        assert testobj.row == 1
+        assert capsys.readouterr().out == (
+                "called Frame.__init__ with args MockFrame () {}\n"
+                "called Frame.grid with args ()"
+                " {'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
+                "called Frame.columnconfigure with args (0,)\n")
+
+    def test_add_clear_button(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.add_clear_button
+        """
+        def callback():
+            """empty stub for callback function
+            """
+        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
+        monkeypatch.setattr(testee.ttk, 'Button', mockttk.MockButton)
+        # wvar = mockttk.MockStringVar()
+        # widget = mockttk.MockEntry(textvariable=wvar)
+        # assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+        #                                    "called Entry.__init__ with args NoneType ()"
+        #                                    f" {{'textvariable': {wvar}}}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.hfrm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.parent = types.SimpleNamespace(ecimage='ecimage')
+        testobj.row = 0
+        result = testobj.add_clear_button(callback)
+        assert isinstance(result, testee.ttk.Button)
+        assert capsys.readouterr().out == (
+                # "called Frame.__init__ with args MockFrame () {}\n"
+                # "called Frame.grid with args ()"
+                # " {'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
+                # "called Frame.columnconfigure with args (0,)\n"
+                # "called Entry.grid with args ()"
+                # " {'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}\n"
+                "called Button.__init__ with args MockFrame ()"
+                f" {{'image': 'ecimage', 'command': {callback}}}\n"
+                "called Button.state with args (['disabled'],)\n"
+                "called Button.grid with args () {'row': 0, 'column': 1, 'sticky': 'w'}\n")
+
+    def test_add_line_entry(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.add_line_entry
+        """
+        def callback():
+            """empty stub for callback function
+            """
+        monkeypatch.setattr(testee.tk, 'StringVar', mockttk.MockStringVar)
+        monkeypatch.setattr(testee.ttk, 'Entry', mockttk.MockEntry)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.hfrm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.row = 0
+        testobj.textvars = {}
+        result = testobj.add_line_entry('xxx', callback)
+        assert isinstance(result, testee.ttk.Entry)
+        assert testobj.textvars[result] == result.getvar(result.cget('textvariable'))
+        assert capsys.readouterr().out == (
+                "called StringVar.__init__ with args ()\n"
+                "called StringVar.set with arg 'xxx'\n"
+                f"called StringVar.trace_add with args ('write', {testobj.monitor_textvar})\n"
+                "called Entry.__init__ with args MockFrame ()"
+                f" {{'textvariable': {result.getvar(result.cget('textvariable'))}}}\n"
+                "called Entry.grid with args () {'row': 0, 'column': 0, 'sticky': ('e', 'w')}\n"
+                "called Entry.state with args (['!disabled'],)\n")
+
+    def test_add_line_entry_2(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.add_line_entry
+        """
+        monkeypatch.setattr(testee.tk, 'StringVar', mockttk.MockStringVar)
+        monkeypatch.setattr(testee.ttk, 'Entry', mockttk.MockEntry)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.hfrm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.row = 0
+        testobj.textvars = {}
+        result = testobj.add_line_entry('xxx', None, False)
+        assert isinstance(result, testee.ttk.Entry)
+        assert testobj.textvars[result] == result.getvar(result.cget('textvariable'))
+        assert capsys.readouterr().out == (
+                "called StringVar.__init__ with args ()\n"
+                "called StringVar.set with arg 'xxx'\n"
+                "called Entry.__init__ with args MockFrame ()"
+                f" {{'textvariable': {testobj.textvars[result]}}}\n"
+                "called Entry.grid with args () {'row': 0, 'column': 0, 'sticky': ('e', 'w')}\n"
+                "called Entry.state with args (['disabled'],)\n")
+
+    def test_add_checkbox(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.add_checkbox
+        """
+        def callback():
+            """empty stub for callback function
+            """
         monkeypatch.setattr(testee.tk, 'IntVar', mockttk.MockIntVar)
         monkeypatch.setattr(testee.ttk, 'Checkbutton', mockttk.MockCheckBox)
-        # monkeypatch.setattr(testee.ImageTk, 'PhotoImage', mockttk.MockPhotoImage)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.row = 0
+        testobj.textvars = {}
+        result = testobj.add_checkbox('xxx', callback)
+        assert isinstance(result, testee.ttk.Checkbutton)
+        assert testobj.textvars[result] == result.getvar(result.cget('variable'))
+        assert capsys.readouterr().out == (
+                "called IntVar.__init__ with args ()\n"
+                "called IntVar.set with arg 0\n"
+                "called CheckBox.__init__ with args MockFrame () {'text': 'xxx',"
+                f" 'variable': {testobj.textvars[result]}, 'command': {callback}}}\n"
+                "called CheckBox.grid with args ()"
+                " {'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
+                "called CheckBox.state with args (['!disabled'],)\n")
+
+    def test_add_checkbox_2(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.add_checkbox
+        """
+        def callback():
+            """empty stub for callback function
+            """
+        monkeypatch.setattr(testee.tk, 'IntVar', mockttk.MockIntVar)
+        monkeypatch.setattr(testee.ttk, 'Checkbutton', mockttk.MockCheckBox)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.row = 0
+        testobj.textvars = {}
+        result = testobj.add_checkbox('xxx', callback, False)
+        assert isinstance(result, testee.ttk.Checkbutton)
+        assert testobj.textvars[result] == result.getvar(result.cget('variable'))
+        assert capsys.readouterr().out == (
+                "called IntVar.__init__ with args ()\n"
+                "called IntVar.set with arg 0\n"
+                "called CheckBox.__init__ with args MockFrame () {'text': 'xxx',"
+                f" 'variable': {testobj.textvars[result]}, 'command': {callback}}}\n"
+                "called CheckBox.grid with args ()"
+                " {'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
+                "called CheckBox.state with args (['disabled'],)\n")
+
+    def test_add_button(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.add_button
+        """
+        def mock_get_info(text):
+            "stub"
+            return 0, text, 'q'
+        def callback():
+            """empty stub for callback function
+            """
+        def mock_bind(*args):
+            "stub"
+            print('called AttributesDialogGui.bind with args', args)
         monkeypatch.setattr(testee.ttk, 'Button', mockttk.MockButton)
-        monkeypatch.setattr(testee.AttributesDialog, 'process', lambda *x: 'dummy')
-        monkeypatch.setattr(testee.AttributesDialog, 'clear_name_text', lambda *x: 'dummy')
-        monkeypatch.setattr(testee.AttributesDialog, 'clear_text_text', lambda *x: 'dummy')
-        monkeypatch.setattr(testee.AttributesDialog, 'update', lambda *x: 'dummy')
-        monkeypatch.setattr(testee.AttributesDialog, 'monitor_textvar', lambda *x: 'dummy')
-        # parent = mockttk.MockToplevel()
-        parent = types.SimpleNamespace(root='root', ecimage='ecimage')
-        # assert capsys.readouterr().out == "called Widget.__init__\n"
-        conf = MockConf()
-        testobj = testee.AttributesDialog(parent, conf)
-        assert testobj.parent == parent
-        assert testobj.conf == conf
-        assert testobj.modnames == {'xxx_name': 'xxx', 'yyy_name': 'yyy'}
-        assert isinstance(testobj.lbox, testee.ttk.Combobox)
-        # assert isinstance(testobj.select_button, testee.ttk.QPushButton)
-        assert isinstance(testobj.name, testee.ttk.Combobox)
-        assert isinstance(testobj.clear_name_button, testee.ttk.Button)
-        assert isinstance(testobj.text, testee.ttk.Entry)
-        assert isinstance(testobj.clear_text_button, testee.ttk.Button)
-        assert isinstance(testobj.activate_button, testee.ttk.Checkbutton)
-        assert isinstance(testobj.comps_button, testee.ttk.Button)
-        assert isinstance(testobj.deps_button, testee.ttk.Button)
-        assert isinstance(testobj.change_button, testee.ttk.Button)
-        assert capsys.readouterr().out == expected_output['attrs'].format(
-                testobj=testobj, image=testee.ImageTk.PhotoImage(testee.ECIMAGE))
+        monkeypatch.setattr(testee, 'get_shortcut_info', mock_get_info)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.bind = mock_bind
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.row = 0
+        result = testobj.add_button('xxx', callback)
+        assert isinstance(result, testee.ttk.Button)
+        assert capsys.readouterr().out == (
+                "called Button.__init__ with args MockFrame ()"
+                f" {{'text': 'xxx', 'underline': 0, 'command': {callback}}}\n"
+                "called Button.grid with args ()"
+                " {'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
+                "called Button.state with args (['!disabled'],)\n"
+                f"called AttributesDialogGui.bind with args ('Alt-q', {callback})\n")
+        result = testobj.add_button('xxx', callback, False)
+        assert isinstance(result, testee.ttk.Button)
+        assert capsys.readouterr().out == (
+                "called Button.__init__ with args MockFrame ()"
+                f" {{'text': 'xxx', 'underline': 0, 'command': {callback}}}\n"
+                "called Button.grid with args ()"
+                " {'row': 2, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
+                "called Button.state with args (['disabled'],)\n"
+                f"called AttributesDialogGui.bind with args ('Alt-q', {callback})\n")
+
+    def test_add_buttonbox(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.add_buttonbox
+        """
+        def mock_get_info(text):
+            "stub"
+            return 0, text, 'q'
+        def callback():
+            """empty stub for callback function
+            """
+        def mock_bind(*args):
+            "stub"
+            print('called AttributesDialogGui.bind with args', args)
+        monkeypatch.setattr(testee, 'get_shortcut_info', mock_get_info)
+        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
+        monkeypatch.setattr(testee.ttk, 'Button', mockttk.MockButton)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.row = 0
+        testobj.bind = mock_bind
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.add_buttonbox([('xxx', callback, 'value')])
+        assert capsys.readouterr().out == (
+                "called Frame.__init__ with args MockFrame () {}\n"
+                "called Frame.grid with args ()"
+                " {'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
+                "called Button.__init__ with args MockFrame ()"
+                f" {{'text': 'xxx', 'underline': 0, 'command': {callback}}}\n"
+                "called Button.state with args (['!disabled'],)\n"
+                "called Button.grid with args () {'row': 0, 'column': 0, 'sticky': ('e', 'w')}\n"
+                "called Frame.columnconfigure with args (0,)\n"
+                f"called AttributesDialogGui.bind with args ('Alt-q', {callback})\n"
+                f"called AttributesDialogGui.bind with args ('<Escape>', {testobj.close})\n")
+
+    def test_set_focus(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.set_focus
+        """
+        wvar = mockttk.MockStringVar()
+        widget = mockttk.MockEntry(textvariable=wvar)
+        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+                                           "called Entry.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.set_focus(widget)
+        assert capsys.readouterr().out == ("called Entry.focus_set\n")
 
     def test_monitor_textvar(self, monkeypatch, capsys):
-        """unittest for AttributesDialog.monitor_textvar
+        """unittest for AttributesDialogGui.monitor_textvar
         """
-        def mock_enable(*args):
+        def mock_enable():
             print('called AttributesDialog.enable_change')
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.enable_change = mock_enable
+        testobj.maingui = types.SimpleNamespace(enable_change=mock_enable)
         testobj.monitor_textvar()
-        assert capsys.readouterr().out == "called AttributesDialog.enable_change\n"
+        assert capsys.readouterr().out == ("called AttributesDialog.enable_change\n")
 
-    def test_enable_change(self, monkeypatch, capsys):
-        """unittest for AttributesDialog.enable_change
+    def test_enable_button(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.enable_button
         """
+        button = mockttk.MockButton()
+        assert capsys.readouterr().out == "called Button.__init__ with args NoneType () {}\n"
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.change_button = mockttk.MockButton()
-        testobj.add_dep_button = mockttk.MockButton()
-        assert capsys.readouterr().out == (
-                "called Button.__init__ with args NoneType () {}\n"
-                "called Button.__init__ with args NoneType () {}\n")
-        testobj.enable_change()
-        assert capsys.readouterr().out == ("called Button.state with args (['!disabled'],)\n"
+        testobj.enable_button(button, False)
+        assert capsys.readouterr().out == "called Button.state with args (['disabled'],)\n"
+        testobj.enable_button(button, True)
+        assert capsys.readouterr().out == "called Button.state with args (['!disabled'],)\n"
+
+    def test_get_combobox_value(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.get_combobox_value
+        """
+        wvar = mockttk.MockStringVar()
+        widget = mockttk.MockComboBox(textvariable=wvar)
+        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+                                           "called ComboBox.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.textvars = {widget: wvar}
+        testobj.get_combobox_value(widget)
+        assert capsys.readouterr().out == "called StringVar.get\n"
+
+    def test_get_checkbox_value(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.get_checkbox_value
+        """
+        wvar = mockttk.MockIntVar()
+        widget = mockttk.MockCheckBox(variable=wvar)
+        assert capsys.readouterr().out == ("called IntVar.__init__ with args ()\n"
+                                           "called CheckBox.__init__ with args NoneType ()"
+                                           f" {{'variable': {wvar}}}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.textvars = {widget: wvar}
+        testobj.get_checkbox_value(widget)
+        assert capsys.readouterr().out == "called IntVar.get\n"
+
+    def test_get_field_text(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.get_field_text
+        """
+        wvar = mockttk.MockStringVar()
+        widget = mockttk.MockEntry(textvariable=wvar)
+        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+                                           "called Entry.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.textvars = {widget: wvar}
+        testobj.get_field_text(widget)
+        assert capsys.readouterr().out == "called StringVar.get\n"
+
+    def _test_reset_all_fields(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.reset_all_fields
+        """
+        # niet geïmplemeteerd, dus geen unittest
+
+    def test_activate_and_populate_fields(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.activate_and_populate_fields
+        """
+        uvar = mockttk.MockStringVar()
+        wvar = mockttk.MockStringVar()
+        xvar = mockttk.MockIntVar()
+        yvar = mockttk.MockIntVar()
+        field_list = (mockttk.MockComboBox(), mockttk.MockButton(),
+                      mockttk.MockEntry(textvariable=wvar), mockttk.MockButton(),
+                      mockttk.MockCheckBox(textvariable=xvar),
+                      mockttk.MockCheckBox(textvariable=yvar),
+                      mockttk.MockButton(), mockttk.MockButton(), mockttk.MockButton())
+        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+                                           "called StringVar.__init__ with args ()\n"
+                                           "called IntVar.__init__ with args ()\n"
+                                           "called IntVar.__init__ with args ()\n"
+                                           "called ComboBox.__init__ with args NoneType () {}\n"
+                                           "called StringVar.__init__ with args ()\n"
+                                           "called Button.__init__ with args NoneType () {}\n"
+                                           "called Entry.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n"
+                                           "called Button.__init__ with args NoneType () {}\n"
+                                           "called CheckBox.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {xvar}}}\n"
+                                           "called StringVar.__init__ with args ()\n"
+                                           "called CheckBox.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {yvar}}}\n"
+                                           "called StringVar.__init__ with args ()\n"
+                                           "called Button.__init__ with args NoneType () {}\n"
+                                           "called Button.__init__ with args NoneType () {}\n"
+                                           "called Button.__init__ with args NoneType () {}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.textvars = {field_list[0]: uvar, field_list[2]: wvar, field_list[4]: xvar,
+                            field_list[5]: yvar}
+        testobj.activate_and_populate_fields(field_list, ['x'], {'txt': 'TXT', 'sel': 'SEL',
+                                                                 'opt': 'OPT'})
+        assert capsys.readouterr().out == ("called ComboBox.configure with args {'values': ['x']}\n"
+                                           "called StringVar.set with arg 'x'\n"
+                                           "called ComboBox.state with args (['!disabled'],)\n"
+                                           "called Button.state with args (['!disabled'],)\n"
+                                           # f"called Entry.setvar with args {wvar}, TXT\n"
+                                           # f"called Entry.getvar with arg {wvar}\n"
+                                           "called StringVar.set with arg 'TXT'\n"
+                                           "called Entry.state with args (['!disabled'],)\n"
+                                           "called Button.state with args (['!disabled'],)\n"
+                                           # f"called CheckBox.setvar with args {xvar}, SEL\n"
+                                           # f"called CheckBox.getvar with arg {xvar}\n"
+                                           "called IntVar.set with arg SEL\n"
+                                           "called CheckBox.state with args (['!disabled'],)\n"
+                                           # f"called CheckBox.setvar with args {yvar}, OPT\n"
+                                           # f"called CheckBox.getvar with arg {yvar}\n"
+                                           "called IntVar.set with arg OPT\n"
+                                           "called CheckBox.state with args (['!disabled'],)\n"
+                                           "called Button.state with args (['!disabled'],)\n"
+                                           "called Button.state with args (['!disabled'],)\n"
                                            "called Button.state with args (['!disabled'],)\n")
 
-    def test_process(self, monkeypatch, capsys):
-        """unittest for AttributesDialog.process
+    def test_clear_field(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.clear_field
         """
-        def mock_list(self, name):
-            "stub"
-            print(f"called Conf.list_components_for_dir with arg '{name}'")
-            return []
+        wvar = mockttk.MockStringVar()
+        field = mockttk.MockEntry(textvariable=wvar)
+        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+                                           "called Entry.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n")
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.conf = MockConf()
-        testobj.parent = types.SimpleNamespace(
-                master=types.SimpleNamespace(
-                    screeninfo={'current text': {'txt': 'xxx', 'sel': True, 'opt': False}}))
-        testobj.modnames = {'current text': {'aaa'}}
-        # testobj.select_button = mockttk.MockPushButton()
-        testobj.lbox = mockttk.MockComboBox()
-        testobj.modname = mockttk.MockStringVar()
-        testobj.modname.set('current text')
-        testobj.name = mockttk.MockComboBox()
-        testobj.scrname = mockttk.MockStringVar()
-        testobj.clear_name_button = mockttk.MockButton()
-        testobj.text = mockttk.MockEntry()
-        testobj.scrtext = mockttk.MockStringVar()
-        testobj.clear_text_button = mockttk.MockButton()
-        testobj.activate_button = mockttk.MockCheckBox()
-        testobj.activate = mockttk.MockIntVar()
-        testobj.exempt_button = mockttk.MockCheckBox()
-        testobj.exempt = mockttk.MockIntVar()
-        testobj.comps_button = mockttk.MockButton()
-        testobj.deps_button = mockttk.MockButton()
-        testobj.change_button = mockttk.MockButton()
-        assert capsys.readouterr().out == (
-                "called ComboBox.__init__ with args NoneType () {}\n"
-                "called StringVar.__init__ with args ()\n"
-                "called StringVar.__init__ with args ()\n"
-                "called StringVar.set with arg 'current text'\n"
-                "called ComboBox.__init__ with args NoneType () {}\n"
-                "called StringVar.__init__ with args ()\n"
-                "called StringVar.__init__ with args ()\n"
-                "called Button.__init__ with args NoneType () {}\n"
-                "called Entry.__init__ with args NoneType () {}\n"
-                "called StringVar.__init__ with args ()\n"
-                "called StringVar.__init__ with args ()\n"
-                "called Button.__init__ with args NoneType () {}\n"
-                "called CheckBox.__init__ with args NoneType () {}\n"
-                "called StringVar.__init__ with args ()\n"
-                "called IntVar.__init__ with args ()\n"
-                "called CheckBox.__init__ with args NoneType () {}\n"
-                "called StringVar.__init__ with args ()\n"
-                "called IntVar.__init__ with args ()\n"
-                "called Button.__init__ with args NoneType () {}\n"
-                "called Button.__init__ with args NoneType () {}\n"
-                "called Button.__init__ with args NoneType () {}\n")
-        testobj.process()
-        assert testobj.choice == 'current text'
-        assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called StringVar.set with arg 'current text'\n"
-                "called Conf.list_components_for_dir with arg '{'aaa'}'\n"
-                "called Conf.get_component_data with args ('xxx', 'Name')\n"
-                "called Conf.get_component_data with args ('yyy', 'Name')\n"
-                "called ComboBox.configure with args {'values': ['xxx_compname', 'yyy_compname']}\n"
-                "called ComboBox.state with args (['!disabled'],)\n"
-                "called Button.state with args (['!disabled'],)\n"
-                "called StringVar.set with arg 'xxx'\n"
-                "called Entry.state with args (['!disabled'],)\n"
-                "called Button.state with args (['!disabled'],)\n"
-                "called IntVar.set with arg 1\n"
-                "called CheckBox.state with args (['!disabled'],)\n"
-                "called IntVar.set with arg 0\n"
-                "called CheckBox.state with args (['!disabled'],)\n"
-                "called Button.state with args (['!disabled'],)\n"
-                "called Button.state with args (['!disabled'],)\n"
-                "called Button.state with args (['disabled'],)\n")
-        monkeypatch.setattr(MockConf, 'list_components_for_dir', mock_list)
-        testobj.process()
-        assert testobj.choice == 'current text'
-        assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called StringVar.set with arg 'current text'\n"
-                "called Conf.list_components_for_dir with arg '{'aaa'}'\n"
-                "called ComboBox.configure with args {'values': []}\n"
-                "called ComboBox.state with args (['!disabled'],)\n"
-                "called Button.state with args (['!disabled'],)\n"
-                "called StringVar.set with arg 'xxx'\n"
-                "called Entry.state with args (['!disabled'],)\n"
-                "called Button.state with args (['!disabled'],)\n"
-                "called IntVar.set with arg 1\n"
-                "called CheckBox.state with args (['!disabled'],)\n"
-                "called IntVar.set with arg 0\n"
-                "called CheckBox.state with args (['!disabled'],)\n"
-                "called Button.state with args (['!disabled'],)\n"
-                "called Button.state with args (['!disabled'],)\n"
-                "called Button.state with args (['disabled'],)\n")
+        testobj.textvars = {field: wvar}
+        testobj.clear_field(field)
+        assert capsys.readouterr().out == "called StringVar.set with arg ''\n"
 
-    def test_clear_name_text(self, monkeypatch, capsys):
-        """unittest for AttributesDialog.clear_text
+    def test_accept(self, monkeypatch, capsys):
+        """unittest for AttributesDilaog.accept
         """
-        def mock_instate(arg):
-            print(f'called Button.instate with arg {arg}')
-            return False
-        def mock_instate2(arg):
-            print(f'called Button.instate with arg {arg}')
-            return True
+        def mock_set():
+            print('called ShowMods.root.focus_set')
+        def mock_destroy():
+            print('called AttributesDialog.destroy')
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.clear_name_button = mockttk.MockButton()
-        testobj.clear_name_button.instate = mock_instate
-        testobj.scrname = mockttk.MockStringVar()
-        assert capsys.readouterr().out == (
-                "called Button.__init__ with args NoneType () {}\n"
-                "called StringVar.__init__ with args ()\n")
-        testobj.clear_name_text()
-        assert capsys.readouterr().out == "called Button.instate with arg ['!disabled']\n"
-        testobj.clear_name_button.instate = mock_instate2
-        testobj.clear_name_text()
-        assert capsys.readouterr().out == ("called Button.instate with arg ['!disabled']\n"
-                                           "called StringVar.set with arg ''\n")
-
-    def test_clear_text_text(self, monkeypatch, capsys):
-        """unittest for AttributesDialog.clear_text
-        """
-        def mock_instate(arg):
-            print(f'called Button.instate with arg {arg}')
-            return False
-        def mock_instate2(arg):
-            print(f'called Button.instate with arg {arg}')
-            return True
-        testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.clear_text_button = mockttk.MockButton()
-        testobj.clear_text_button.instate = mock_instate
-        testobj.scrtext = mockttk.MockStringVar()
-        assert capsys.readouterr().out == (
-                "called Button.__init__ with args NoneType () {}\n"
-                "called StringVar.__init__ with args ()\n")
-        testobj.clear_text_text()
-        assert capsys.readouterr().out == "called Button.instate with arg ['!disabled']\n"
-        testobj.clear_text_button.instate = mock_instate2
-        testobj.clear_text_text()
-        assert capsys.readouterr().out == ("called Button.instate with arg ['!disabled']\n"
-                                           "called StringVar.set with arg ''\n")
-
-    def test_view_components(self, monkeypatch, capsys):
-        """unittest for AttributesDialog.view_components
-        """
-        def mock_instate(arg):
-            print(f'called Button.instate with arg {arg}')
-            return False
-        def mock_instate2(arg):
-            print(f'called Button.instate with arg {arg}')
-            return True
-        def mock_get(name):
-            "stub"
-            print(f"called Manager.get_mod_components with arg '{name}'")
-            return 'xxx'
-        monkeypatch.setattr(testee.MessageBox, 'showinfo', mockttk.mock_show_info)
-        testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.comps_button = mockttk.MockButton()
-        testobj.comps_button.instate = mock_instate
-        assert capsys.readouterr().out == (
-                "called Button.__init__ with args NoneType () {}\n")
-        testobj.parent = types.SimpleNamespace(
-                master=types.SimpleNamespace(get_mod_components=mock_get))
-        testobj.choice = 'xxx'
-        testobj.modnames = {'xxx': {'aaa'}}
-        testobj.view_components()
-        assert capsys.readouterr().out == "called Button.instate with arg ['!disabled']\n"
-        testobj.comps_button.instate = mock_instate2
-        testobj.view_components()
-        assert capsys.readouterr().out == (
-                "called Button.instate with arg ['!disabled']\n"
-                "called Manager.get_mod_components with arg '{'aaa'}'\n"
-                f"called MessageBox.showinfo with args () {{'parent': {testobj!r},"
-                " 'message': 'xxx'}\n")
-
-    def test_view_dependencies(self, monkeypatch, capsys):
-        """unittest for AttributesDialog.view_dependencies
-        """
-        def mock_instate(arg):
-            print(f'called Button.instate with arg {arg}')
-            return False
-        def mock_instate2(arg):
-            print(f'called Button.instate with arg {arg}')
-            return True
-        def mock_get(name):
-            "stub"
-            print(f"called Manager.get_mod_dependencies with arg '{name}'")
-            return 'xxx'
-        monkeypatch.setattr(testee.MessageBox, 'showinfo', mockttk.mock_show_info)
-        testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.deps_button = mockttk.MockButton()
-        testobj.deps_button.instate = mock_instate
-        testobj.parent = types.SimpleNamespace(
-                master=types.SimpleNamespace(get_mod_dependencies=mock_get))
-        assert capsys.readouterr().out == (
-                "called Button.__init__ with args NoneType () {}\n")
-        testobj.choice = 'xxx'
-        testobj.modnames = {'xxx': {'aaa'}}
-        testobj.view_dependencies()
-        assert capsys.readouterr().out == "called Button.instate with arg ['!disabled']\n"
-        testobj.deps_button.instate = mock_instate2
-        testobj.view_dependencies()
-        assert capsys.readouterr().out == (
-                "called Button.instate with arg ['!disabled']\n"
-                "called Manager.get_mod_dependencies with arg '{'aaa'}'\n"
-                f"called MessageBox.showinfo with args () {{'parent': {testobj!r},"
-                " 'message': 'xxx'}\n")
-
-    def test_update(self, monkeypatch, capsys):
-        """unittest for AttributesDialog.update
-        """
-        def mock_instate(arg):
-            print(f'called Button.instate with arg {arg}')
-            return True
-        def mock_instate2(arg):
-            print(f'called Button.instate with arg {arg}')
-            return False
-        def mock_update(*args):
-            print('called Manager.update_attributes with args', args)
-            return False, 'xxxx'
-        def mock_update_2(*args):
-            print('called Manager.update_attributes with args', args)
-            return True, ''
-        monkeypatch.setattr(testee.MessageBox, 'showinfo', mockttk.mock_show_info)
-        testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.parent = types.SimpleNamespace(
-                master=types.SimpleNamespace(
-                    # screeninfo={'current text': {'txt': 'xxx', 'sel': True, 'pos': '2x2'}},
-                    # attr_changes=[],
-                    update_attributes=mock_update))
-                # refresh_widgets=mock_refresh,
-                # build_screen_text=mock_build)
-        testobj.scrname = mockttk.MockStringVar()
-        testobj.scrname.set('current text')
-        testobj.clear_name_button = mockttk.MockButton()
-        testobj.scrtext = mockttk.MockStringVar()
-        testobj.scrname.set('')
-        testobj.clear_text_button = mockttk.MockButton()
-        testobj.activate_button = mockttk.MockCheckBox()
-        testobj.exempt_button = mockttk.MockCheckBox()
-        testobj.change_button = mockttk.MockButton()
-        testobj.change_button.instate = mock_instate
-        assert capsys.readouterr().out == (
-                "called StringVar.__init__ with args ()\n"
-                "called StringVar.set with arg 'current text'\n"
-                "called Button.__init__ with args NoneType () {}\n"
-                "called StringVar.__init__ with args ()\n"
-                "called StringVar.set with arg ''\n"
-                "called Button.__init__ with args NoneType () {}\n"
-                "called CheckBox.__init__ with args NoneType () {}\n"
-                "called StringVar.__init__ with args ()\n"
-                "called CheckBox.__init__ with args NoneType () {}\n"
-                "called StringVar.__init__ with args ()\n"
-                "called Button.__init__ with args NoneType () {}\n")
-        testobj.choice = 'current text'
-        testobj.update()
-        assert capsys.readouterr().out == "called Button.instate with arg ['disabled']\n"
-        testobj.change_button.instate = mock_instate2
-        testobj.update()
-        # assert testobj.parent.master.screeninfo == {'current text': {'txt': '', 'sel': False,
-        #                                                              'opt': False, 'pos': '2x2'}}
-        # assert testobj.parent.master.attr_changes == [('current text', '')]
-        assert capsys.readouterr().out == (
-                "called Button.instate with arg ['disabled']\n"
-                "called Button.state with args (['disabled'],)\n"
-                "called Button.state with args (['disabled'],)\n"
-                "called CheckBox.instate with args (['selected'],)\n"
-                "called StringVar.get\n"
-                "called StringVar.get\n"
-                "called CheckBox.instate with args (['selected'],)\n"
-                "called Manager.update_attributes with args"
-                " (None, '', 'current text', None, None)\n"
-                f"called MessageBox.showinfo with args () {{'parent': {testobj!r},"
-                " 'message': 'xxxx'}\n")
-        testobj.parent.master.update_attributes = mock_update_2
-        testobj.update()
-        assert capsys.readouterr().out == (
-                "called Button.instate with arg ['disabled']\n"
-                "called Button.state with args (['disabled'],)\n"
-                "called Button.state with args (['disabled'],)\n"
-                "called CheckBox.instate with args (['selected'],)\n"
-                "called StringVar.get\n"
-                "called StringVar.get\n"
-                "called CheckBox.instate with args (['selected'],)\n"
-                "called Manager.update_attributes with args"
-                " (None, '', 'current text', None, None)\n"
-                "called Button.state with args (['disabled'],)\n")
+        testobj.destroy = mock_destroy
+        testobj.parent = None
+        testobj.accept()
+        assert capsys.readouterr().out == "called AttributesDialog.destroy\n"
+        testobj.parent = types.SimpleNamespace(root=types.SimpleNamespace(focus_set=mock_set))
+        testobj.accept()
+        assert capsys.readouterr().out == ("called ShowMods.root.focus_set\n"
+                                           "called AttributesDialog.destroy\n")
 
     def test_close(self, monkeypatch, capsys):
-        """unittest for AttributesDialog.close
+        """unittest for AttributesDilaog.close
         """
         def mock_set():
             print('called ShowMods.root.focus_set')
@@ -1683,11 +1731,207 @@ class TestAttributesDialog:
                                            "called AttributesDialog.destroy\n")
 
 
-class TestSaveGamesDialog:
-    """unittests for tkgui.SaveGamesDialog
+class TestDependencyDialogGui:
+    """unittests for qtgui.DependencyDialogGui
     """
     def setup_testobj(self, monkeypatch, capsys):
-        """stub for tkgui.SaveGamesDialog object
+        """stub for qtgui.DependencyDialogGui object
+
+        create the object skipping the normal initialization
+        intercept messages during creation
+        return the object so that other methods can be monkeypatched in the caller
+        """
+        old_init = testee.tk.Toplevel.__init__
+        def mock_init(self, *args, **kwargs):
+            print('called DependencyDialogGui.__init__ with args', args)
+            old_init(self, *args, **kwargs)
+        monkeypatch.setattr(testee.DependencyDialogGui, '__init__', mock_init)
+        testobj = testee.DependencyDialogGui()
+        assert capsys.readouterr().out == 'called DependencyDialogGui.__init__ with args ()\n'
+        return testobj
+
+    def test_init(self, monkeypatch, capsys):
+        """unittest for DeleteDialog.__init__
+        """
+        # old_init = testee.tk.Toplevel.__init__
+        def mock_init(self, *args, **kwargs):
+            print('called Toplevel.__init__ with args', args, kwargs)
+        monkeypatch.setattr(testee.tk.Toplevel, '__init__', mock_init)
+        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
+        maingui = types.SimpleNamespace()
+        parent = types.SimpleNamespace(root='root')
+        testobj = testee.DependencyDialogGui(maingui, parent)
+        assert testobj.maingui == maingui
+        assert testobj.parent == parent
+        assert isinstance(testobj.frm, testee.ttk.Frame)
+        assert testobj.row == 0
+        assert capsys.readouterr().out == (
+                "called Toplevel.__init__ with args (namespace(root='root'),) {}\n"
+                "called Frame.__init__ with args DependencyDialogGui () {'padding': 10}\n"
+                "called Frame.grid with args ()"
+                " {'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}\n")
+
+    def test_add_label(self, monkeypatch, capsys):
+        """unittest for DependencyDialogGui.add_label
+        """
+        monkeypatch.setattr(testee.ttk, 'Label', mockttk.MockLabel)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.row = 0
+        testobj.add_label('xxx')
+        assert capsys.readouterr().out == (
+                "called Label.__init__ with args MockFrame () {'text': 'xxx'}\n"
+                "called Label.grid with args () "
+                "{'row': 1, 'column': 0, 'sticky': 'w'}\n")
+
+    def test_add_combobox(self, monkeypatch, capsys):
+        """unittest for DependencyDialogGui.add_combobox
+        """
+        def callback():
+            """empty stub for callback function
+            """
+        monkeypatch.setattr(testee.tk, 'StringVar', mockttk.MockStringVar)
+        monkeypatch.setattr(testee.ttk, 'Combobox', mockttk.MockComboBox)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.row = 0
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.textvars = {}
+        result = testobj.add_combobox(['x', 'y'], callback)
+        assert isinstance(result, testee.ttk.Combobox)
+        assert testobj.row == 1
+        assert testobj.textvars[result] == result.getvar(result.cget('textvariable'))
+        assert capsys.readouterr().out == (
+                "called StringVar.__init__ with args ()\n"
+                "called StringVar.set with arg 'x'\n"
+                "called ComboBox.__init__ with args MockFrame ()"
+                f" {{'values': ['y'], 'textvariable': {result.cget('textvariable')}}}\n"
+                "called ComboBox.state with args (['!readonly', '!disabled'],)\n"
+                f"called ComboBox.bind with args ('<<ComboboxSelected>>', {callback})\n"
+                "called ComboBox.grid with args () {'row': 1, 'column': 0,"
+                " 'sticky': ('n', 'e', 's', 'w')}\n")
+        result = testobj.add_combobox(['x', 'y'], callback, False, False)
+        assert isinstance(result, testee.ttk.Combobox)
+        assert testobj.row == 2
+        assert testobj.textvars[result] == result.getvar(result.cget('textvariable'))
+        assert capsys.readouterr().out == (
+                "called StringVar.__init__ with args ()\n"
+                "called StringVar.set with arg 'x'\n"
+                "called ComboBox.__init__ with args MockFrame ()"
+                f" {{'values': ['y'], 'textvariable': {result.cget('textvariable')}}}\n"
+                "called ComboBox.state with args (['readonly', 'disabled'],)\n"
+                f"called ComboBox.bind with args ('<<ComboboxSelected>>', {callback})\n"
+                "called ComboBox.grid with args () {'row': 2, 'column': 0,"
+                " 'sticky': ('n', 'e', 's', 'w')}\n")
+
+    def test_set_field_enabled(self, monkeypatch, capsys):
+        """unittest for DependencyDialogGui.set_field_enabled
+        """
+        button = mockttk.MockButton()
+        assert capsys.readouterr().out == "called Button.__init__ with args NoneType () {}\n"
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.set_field_enabled(button, False)
+        assert capsys.readouterr().out == "called Button.state with args (['disabled'],)\n"
+        testobj.set_field_enabled(button, True)
+        assert capsys.readouterr().out == "called Button.state with args (['!disabled'],)\n"
+
+    def test_add_buttonbox(self, monkeypatch, capsys):
+        """unittest for DependencyDialogGui.add_buttonbox
+        """
+        def mock_get_info(text):
+            "stub"
+            return 0, text, 'q'
+        def callback():
+            """empty stub for callback function
+            """
+        def mock_bind(*args):
+            print('called DependencyDialogGui.bind with args', args)
+        monkeypatch.setattr(testee, 'get_shortcut_info', mock_get_info)
+        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
+        monkeypatch.setattr(testee.ttk, 'Button', mockttk.MockButton)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.row = 0
+        testobj.bind = mock_bind
+        testobj.add_buttonbox([('xxx', callback())])
+        assert capsys.readouterr().out == (
+                "called Frame.__init__ with args DependencyDialogGui () {'padding': 10}\n"
+                "called Frame.grid with args () {'row': 1, 'column': 0}\n"
+                "called Button.__init__ with args MockFrame ()"
+                " {'text': 'xxx', 'underline': 0, 'command': None}\n"
+                "called Button.grid with args () {'row': 0, 'column': 0}\n"
+                "called DependencyDialogGui.bind with args ('<Alt-q>', None)\n"
+                f"called DependencyDialogGui.bind with args ('<Escape>', {testobj.confirm})\n")
+
+    def test_set_focus(self, monkeypatch, capsys):
+        """unittest for DependencyDialogGui.set_focus
+        """
+        wvar = mockttk.MockStringVar()
+        widget = mockttk.MockEntry(textvariable=wvar)
+        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+                                           "called Entry.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.set_focus(widget)
+        assert capsys.readouterr().out == ("called Entry.focus_set\n")
+
+    def test_get_combobox_value(self, monkeypatch, capsys):
+        """unittest for DependencyDialogGui.get_combobox_value
+        """
+        wvar = mockttk.MockStringVar()
+        widget = mockttk.MockComboBox(textvariable=wvar)
+        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+                                           "called ComboBox.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.textvars = {widget: wvar}
+        testobj.get_combobox_value(widget)
+        assert capsys.readouterr().out == ("called StringVar.get\n")
+
+    def test_reject(self, monkeypatch, capsys):
+        """unittest for DependencyDialogGui.confirm
+        """
+        def mock_focus():
+            print('called ShowMods.focus_set')
+        def mock_destroy():
+            print('called DeleteDialogGui.destroy')
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.destroy = mock_destroy
+        testobj.parent = types.SimpleNamespace(focus_set=mock_focus)
+        testobj.reject()
+        assert capsys.readouterr().out == ("called ShowMods.focus_set\n"
+                                           "called DeleteDialogGui.destroy\n")
+        testobj.parent = None
+        testobj.reject()
+        assert capsys.readouterr().out == "called DeleteDialogGui.destroy\n"
+
+    def test_confirm(self, monkeypatch, capsys):
+        """unittest for DependencyDialogGui.confirm
+        """
+        def mock_focus():
+            print('called ShowMods.focus_set')
+        def mock_destroy():
+            print('called DeleteDialogGui.destroy')
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.destroy = mock_destroy
+        testobj.parent = types.SimpleNamespace(focus_set=mock_focus)
+        testobj.confirm()
+        assert capsys.readouterr().out == ("called ShowMods.focus_set\n"
+                                           "called DeleteDialogGui.destroy\n")
+        testobj.parent = None
+        testobj.confirm()
+        assert capsys.readouterr().out == "called DeleteDialogGui.destroy\n"
+
+
+class TestSaveGamesDialogGui:
+    """unittests for tkgui.SaveGamesDialogGui
+    """
+    def setup_testobj(self, monkeypatch, capsys):
+        """stub for tkgui.SaveGamesDialogGui object
 
         create the object skipping the normal initialization
         intercept messages during creation
@@ -1697,494 +1941,359 @@ class TestSaveGamesDialog:
         def mock_init(self, *args, **kwargs):
             """stub
             """
-            print('called SaveGamesDialog.__init__ with args', args)
+            print('called SaveGamesDialogGui.__init__ with args', args)
             old_init(self, *args, **kwargs)
-        monkeypatch.setattr(testee.SaveGamesDialog, '__init__', mock_init)
-        testobj = testee.SaveGamesDialog()
-        assert capsys.readouterr().out == 'called SaveGamesDialog.__init__ with args ()\n'
+        monkeypatch.setattr(testee.SaveGamesDialogGui, '__init__', mock_init)
+        testobj = testee.SaveGamesDialogGui()
+        assert capsys.readouterr().out == 'called SaveGamesDialogGui.__init__ with args ()\n'
         return testobj
 
-    def test_init(self, monkeypatch, capsys, expected_output):
+    def test_init(self, monkeypatch, capsys):
         """unittest for SaveGamesDialog.__init__
         """
         old_init = testee.tk.Toplevel.__init__
         def mock_init(self, *args, **kwargs):
             print('called Toplevel.__init__ with args', args, kwargs)
             old_init(self, *kwargs, **kwargs)
-        def mock_add(self):
-            print('called SaveGamesDialog.add_modselector')
         monkeypatch.setattr(testee.tk.Toplevel, '__init__', mock_init)
-        monkeypatch.setattr(testee.tk.Toplevel, 'bind', mockttk.MockDialog.bind)
+        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
+        maingui = types.SimpleNamespace()
+        parent = types.SimpleNamespace(root='root')
+        testobj = testee.SaveGamesDialogGui(maingui, parent)
+        assert testobj.maingui == maingui
+        assert testobj.parent == parent
+        assert isinstance(testobj.frm, testee.ttk.Frame)
+        assert capsys.readouterr().out == (
+                "called Toplevel.__init__ with args ('root',) {}\n"
+                "called Frame.__init__ with args SaveGamesDialogGui () {'padding': 10}\n"
+                "called Frame.grid with args ()"
+                " {'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}\n")
+
+    def test_add_combobox(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialogGui.add_combobox
+        """
+        def callback():
+            """empty stub for callback function
+            """
+        monkeypatch.setattr(testee.tk, 'StringVar', mockttk.MockStringVar)
+        monkeypatch.setattr(testee.ttk, 'Combobox', mockttk.MockComboBox)
+        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.row = 0
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.msrow = 1
+        testobj.msfrm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.textvars = {}
+        result = testobj.add_combobox(['x', 'y'], callback)
+        assert isinstance(result, testee.ttk.Combobox)
+        assert testobj.row == 0
+        assert testobj.textvars[result] == result.getvar(result.cget('textvariable'))
+        assert capsys.readouterr().out == (
+                "called StringVar.__init__ with args ()\n"
+                "called StringVar.set with arg 'x'\n"
+                "called ComboBox.__init__ with args MockFrame ()"
+                f" {{'values': ['y'], 'textvariable': {result.cget('textvariable')}}}\n"
+                "called ComboBox.state with args (['!readonly', '!disabled'],)\n"
+                "called ComboBox.grid with args ()"
+                " {'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}\n"
+                f"called ComboBox.bind with args ('<<ComboboxSelected>>', {callback})\n")
+        result = testobj.add_combobox(['x', 'y'], None, False)
+        assert isinstance(result, testee.ttk.Combobox)
+        assert testobj.row == 0
+        assert testobj.textvars[result] == result.getvar(result.cget('textvariable'))
+        testobj.textvars = {}
+        assert capsys.readouterr().out == (
+                "called Frame.__init__ with args MockFrame () {'padding': 10}\n"
+                "called Frame.grid with args () {'row': 1, 'column': 0,"
+                " 'sticky': ('n', 'e', 's', 'w')}\n"
+                'called Frame.columnconfigure with args (0,)\n'
+                "called StringVar.__init__ with args ()\n"
+                "called StringVar.set with arg 'select a mod'\n"
+                "called ComboBox.__init__ with args MockFrame ()"
+                f" {{'values': ['x', 'y'], 'textvariable': {result.cget('textvariable')}}}\n"
+                "called ComboBox.state with args (['readonly', '!disabled'],)\n"
+                "called ComboBox.grid with args ()"
+                " {'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}\n")
+
+    def test_get_combobox_value(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialogGui.get_combobox_value
+        """
+        wvar = mockttk.MockStringVar()
+        widget = mockttk.MockComboBox(textvariable=wvar)
+        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+                                           "called ComboBox.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.textvars = {widget: wvar}
+        testobj.get_combobox_value(widget)
+        assert capsys.readouterr().out == "called StringVar.get\n"
+
+    def test_set_combobox_value(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialogGui.set_combobox_value
+        """
+        def mock_process(*args):
+            print('called SaveGamesDialog.process_mod with args', args)
+        wvar = mockttk.MockStringVar()
+        widget = mockttk.MockComboBox(textvariable=wvar)
+        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+                                           "called ComboBox.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.maingui = types.SimpleNamespace(process_mod=mock_process)
+        testobj.textvars = {widget: wvar}
+        testobj.set_combobox_value(widget, 'xxx')
+        assert capsys.readouterr().out == (
+                "called StringVar.set with arg 'xxx'\n"
+                f"called SaveGamesDialog.process_mod with args ({widget}, 'xxx')\n"
+                "called ComboBox.state with args (['!disabled'],)\n")
+
+    def test_add_label(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialogGui.add_label
+        """
         monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
         monkeypatch.setattr(testee.ttk, 'Label', mockttk.MockLabel)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.row = 0
+        testobj.add_label('xxx')
+        assert isinstance(testobj.hfrm, mockttk.MockFrame)
+        assert testobj.hrow == 0
+        assert capsys.readouterr().out == (
+                "called Frame.__init__ with args MockFrame () {}\n"
+                "called Frame.grid with args ()"
+                " {'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
+                "called Frame.columnconfigure with args (1,)\n"
+                "called Label.__init__ with args MockFrame () {'text': 'xxx'}\n"
+                "called Label.grid with args () {'row': 0, 'column': 0}\n")
+        testobj.row = 0
+        testobj.add_label('xxx')
+        assert capsys.readouterr().out == (
+                "called Label.__init__ with args MockFrame () {'text': 'xxx'}\n"
+                "called Label.grid with args () {'row': 0, 'column': 0}\n")
+
+    def test_add_line_entry(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialogGui.add_line_entry
+        """
+        monkeypatch.setattr(testee.tk, 'StringVar', mockttk.MockStringVar)
         monkeypatch.setattr(testee.ttk, 'Entry', mockttk.MockEntry)
-        monkeypatch.setattr(testee.ttk, 'Combobox', mockttk.MockComboBox)
-        # monkeypatch.setattr(testee.ttk, 'QCheckBox', mockttk.MockCheckBox)
-        # monkeypatch.setattr(testee.qgui, 'QIcon', mockttk.MockIcon)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.hfrm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.hrow = 0
+        testobj.textvars = {}
+        result = testobj.add_line_entry('xxx')
+        assert isinstance(result, testee.ttk.Entry)
+        assert testobj.textvars[result] == result.getvar(result.cget('textvariable'))
+        assert capsys.readouterr().out == (
+                "called StringVar.__init__ with args ()\n"
+                "called StringVar.set with arg 'xxx'\n"
+                f"called StringVar.trace_add with args ('write', {testobj.monitor_textvar})\n"
+                "called Entry.__init__ with args MockFrame ()"
+                f" {{'textvariable': {result.getvar(result.cget('textvariable'))}}}\n"
+                "called Entry.grid with args () {'row': 0, 'column': 1}\n")
+
+    def test_get_field_text(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialogGui.get_field_text
+        """
+        wvar = mockttk.MockStringVar()
+        widget = mockttk.MockEntry(textvariable=wvar)
+        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+                                           "called Entry.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        # breakpoint()
+        testobj.textvars = {widget: wvar}
+        testobj.get_field_text(widget)
+        assert capsys.readouterr().out == "called StringVar.get\n"
+
+    def test_set_field_text(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialogGui.set_field_text
+        """
+        wvar = mockttk.MockStringVar()
+        widget = mockttk.MockEntry(textvariable=wvar)
+        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+                                           "called Entry.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.textvars = {widget: wvar}
+        testobj.set_field_text(widget, 'xxx')
+        assert capsys.readouterr().out == "called StringVar.set with arg 'xxx'\n"
+
+    def test_add_buttonbox(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialogGui.add_buttonbox
+        """
+        def mock_get_info(text):
+            "stub"
+            return 0, text, 'q'
+        def callback():
+            """empty stub for callback function
+            """
+        monkeypatch.setattr(testee, 'get_shortcut_info', mock_get_info)
+        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
         monkeypatch.setattr(testee.ttk, 'Button', mockttk.MockButton)
-        monkeypatch.setattr(testee.SaveGamesDialog, 'confirm', lambda: 'dummy')
-        monkeypatch.setattr(testee.SaveGamesDialog, 'update', lambda: 'dummy')
-        monkeypatch.setattr(testee.SaveGamesDialog, 'add_modselector', mock_add)
-        parent = types.SimpleNamespace(root='root')
-        conf = MockConf()
-        testobj = testee.SaveGamesDialog(parent, conf)
-        assert testobj.parent == parent
-        assert testobj.conf == conf
-        assert testobj.savenames == ['qqq', 'rrr']
-        assert testobj.modnames == {'xxx_name': 'xxx', 'yyy_name': 'yyy'}
-        assert isinstance(testobj.savegame_selector, testee.ttk.Combobox)
-        assert isinstance(testobj.pname, testee.ttk.Entry)
-        assert isinstance(testobj.fname, testee.ttk.Entry)
-        assert isinstance(testobj.gdate, testee.ttk.Entry)
-        assert isinstance(testobj.update_button, testee.ttk.Button)
-        assert isinstance(testobj.confirm_button, testee.ttk.Button)
-        assert isinstance(testobj.close_button, testee.ttk.Button)
-        assert testobj.oldsavename == ''
-        assert testobj.widgets == []
-        assert isinstance(testobj.hfrm, testee.ttk.Frame)
-        assert testobj.hfrmlen == 0
-        assert capsys.readouterr().out == expected_output['saves'].format(testobj=testobj)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.row = 0
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        result = testobj.add_buttonbox([('xxx', callback, True), ('yyy', callback, False)])
+        assert isinstance(result[0], testee.ttk.Button)
+        assert isinstance(result[1], testee.ttk.Button)
+        assert capsys.readouterr().out == (
+                "called Frame.__init__ with args MockFrame () {}\n"
+                "called Frame.grid with args ()"
+                " {'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
+                "called Button.__init__ with args MockFrame ()"
+                f" {{'text': 'xxx', 'underline': 0, 'command': {callback}}}\n"
+                "called Button.state with args (['!disabled'],)\n"
+                "called Button.grid with args () {'row': 0, 'column': 0, 'sticky': ('e', 'w')}\n"
+                # "called SettingsDialogGui.bind_all with args ('<Alt-q>', None)\n"
+                "called Frame.columnconfigure with args (0,)\n"
+                "called Button.__init__ with args MockFrame ()"
+                f" {{'text': 'yyy', 'underline': 0, 'command': {callback}}}\n"
+                "called Button.state with args (['disabled'],)\n"
+                "called Button.grid with args () {'row': 0, 'column': 1, 'sticky': ('e', 'w')}\n"
+                # "called SettingsDialogGui.bind_all with args ('<Alt-q>', None)\n"
+                "called Frame.columnconfigure with args (1,)\n")
+
+    def test_set_focus(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialogGui.set_focus
+        """
+        wvar = mockttk.MockStringVar()
+        widget = mockttk.MockEntry(textvariable=wvar)
+        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+                                           "called Entry.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.set_focus(widget)
+        assert capsys.readouterr().out == ("called Entry.focus_set\n")
+
+    def test_start_modselect_block(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialogGui.start_modselect_block
+        """
+        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
+        monkeypatch.setattr(testee.ttk, 'Label', mockttk.MockLabel)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.row = 0
+        testobj.start_modselect_block('xxx')
+        assert testobj.row == 2
+        assert isinstance(testobj.msfrm, testee.ttk.Frame)
+        assert testobj.msrow == 0
+        assert capsys.readouterr().out == (
+                "called Label.__init__ with args MockFrame () {'text': 'xxx'}\n"
+                "called Label.grid with args () {'row': 1, 'column': 0, 'sticky': 'w'}\n"
+                "called Frame.__init__ with args MockFrame () {}\n"
+                "called Frame.grid with args ()"
+                " {'row': 2, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
+                "called Frame.columnconfigure with args (0,)\n")
+
+    def test_add_clear_button(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialogGui.add_clear_button
+        """
+        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
+        monkeypatch.setattr(testee.ttk, 'Button', mockttk.MockButton)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.hmsfrm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.parent = types.SimpleNamespace(ecimage='ecimage')
+        testobj.msrow = 0
+        result = testobj.add_clear_button(True)
+        assert isinstance(result[0], testee.ttk.Button)
+        assert isinstance(result[1], testee.ttk.Frame)
+        assert testobj.msrow == 1
+        assert capsys.readouterr().out == (
+                "called Button.__init__ with args MockFrame () {'image': 'ecimage'}\n"
+                "called Button.state with args (['!disabled'],)\n"
+                "called Button.grid with args () {'row': 0, 'column': 1}\n")
+        result = testobj.add_clear_button(False)
+        assert isinstance(result[0], testee.ttk.Button)
+        assert isinstance(result[1], testee.ttk.Frame)
+        assert testobj.msrow == 2
+        assert capsys.readouterr().out == (
+                "called Button.__init__ with args MockFrame () {'image': 'ecimage'}\n"
+                "called Button.state with args (['disabled'],)\n"
+                "called Button.grid with args () {'row': 0, 'column': 1}\n")
+        assert testobj.msrow == 2
+
+    def test_set_callbacks(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialogGui.set_callbacks
+        """
+        def callback1():
+            """empty stub for callback function
+            """
+        def callback2():
+            """empty stub for callback function
+            """
+        widgets = (mockttk.MockComboBox(), mockttk.MockButton(), mockttk.MockFrame())
+        assert capsys.readouterr().out == ("called ComboBox.__init__ with args NoneType () {}\n"
+                                           "called StringVar.__init__ with args ()\n"
+                                           "called Button.__init__ with args NoneType () {}\n"
+                                           "called Frame.__init__ with args NoneType () {}\n")
+        callbacks = (callback1, callback2)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.set_callbacks(widgets, callbacks)
+        assert capsys.readouterr().out == (
+                f"called ComboBox.bind with args ('<<ComboboxSelected>>', {callback1})\n"
+                f"called Button.bind with args ('<Return>', {callback2})\n")
 
     def test_monitor_textvar(self, monkeypatch, capsys):
-        """unittest for sDialog.monitor_textvar
+        """unittest for SaveGamesDialogGui.monitor_textvar
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.update_button = mockttk.MockButton()
-        assert capsys.readouterr().out == (
-                "called Button.__init__ with args NoneType () {}\n")
+        testobj.maingui = types.SimpleNamespace(update_button=mockttk.MockButton())
+        assert capsys.readouterr().out == "called Button.__init__ with args NoneType () {}\n"
         testobj.monitor_textvar()
         assert capsys.readouterr().out == "called Button.state with args (['!disabled'],)\n"
 
-    def test_add_modselector(self, monkeypatch, capsys):
-        """unittest for SaveGamesDialog.add_modselector
+    def test_enable_widget(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialogGui.enable_widget
         """
-        def mock_init(self, master, *args, **kwargs):
-            kwargs['textvariable'] = f"{type(kwargs['textvariable']).__name__}"
-            print('called ComboBox.__init__ with args', type(master).__name__, args, kwargs)
-        def mock_bind(self, *args):
-            args = (args[0], f"item of type {type(args[1])}")
-            print('called ComboBox.bind with args', args)
-        def mock_configure(self, **kwargs):
-            kwargs['command'] = f"item of type {type(kwargs['command'])}"
-            print('called Button.configure with args', kwargs)
-
-        monkeypatch.setattr(mockttk.MockComboBox, '__init__', mock_init)
-        monkeypatch.setattr(mockttk.MockComboBox, 'bind', mock_bind)
-        monkeypatch.setattr(mockttk.MockButton, 'configure', mock_configure)
-        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
-        monkeypatch.setattr(testee.ttk, 'Combobox', mockttk.MockComboBox)
-        monkeypatch.setattr(testee.ttk, 'Button', mockttk.MockButton)
-        testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.parent = types.SimpleNamespace(ecimage='ecimage')
-        testobj.hfrm = mockttk.MockFrame()
-        assert capsys.readouterr().out == (
-                "called Frame.__init__ with args NoneType () {}\n")
-        testobj.hfrmlen = 0
-        testobj.modnames = ['yyy', 'xxx']
-        testobj.widgets = []
-        testobj.add_modselector()
-        assert len(testobj.widgets) == 1
-        assert isinstance(testobj.widgets[0][0], testee.ttk.Button)
-        assert isinstance(testobj.widgets[0][1], testee.ttk.Combobox)
-        assert isinstance(testobj.widgets[0][2], testee.ttk.Frame)
-        assert isinstance(testobj.widgets[0][3], testee.tk.StringVar)
-        assert capsys.readouterr().out == (
-            "called Frame.__init__ with args MockFrame () {}\n"
-            "called Frame.grid with args ()"
-            " {'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
-            "called ComboBox.__init__ with args MockFrame ()"
-            f" {{'values': ['xxx', 'yyy'], 'textvariable': 'StringVar'}}\n"
-            "called ComboBox.state with args (['readonly'],)\n"
-            f"called ComboBox.bind with args ('<<ComboboxSelected>>',"
-            " \"item of type <class 'functools.partial'>\")\n"
-            "called ComboBox.grid with args ()"
-            " {'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}\n"
-            "called Frame.columnconfigure with args (0,)\n"
-            "called Button.__init__ with args MockFrame ()"
-            f" {{'image': '{testobj.parent.ecimage}'}}\n"
-            "called Button.configure with args"
-            " {'command': \"item of type <class 'functools.partial'>\"}\n"
-            "called Button.state with args (['disabled'],)\n"
-            "called Button.grid with args () {'row': 0, 'column': 1}\n")
-
-    def test_process_mod(self, monkeypatch, capsys):
-        """unittest for SaveGamesDialog.process_mod
-        """
-        def mock_add():
-            print('called SaveGamesDialog.add_modselector')
-        testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.add_modselector = mock_add
-        testobj.update_button = mockttk.MockButton()
-        lbox = mockttk.MockComboBox()
         btn = mockttk.MockButton()
-        lboxvar = mockttk.MockStringVar()
-        lboxvar.set('select a mod')
-        assert capsys.readouterr().out == (
-                "called Button.__init__ with args NoneType () {}\n"
-                "called ComboBox.__init__ with args NoneType () {}\n"
-                "called StringVar.__init__ with args ()\n"
-                "called Button.__init__ with args NoneType () {}\n"
-                "called StringVar.__init__ with args ()\n"
-                "called StringVar.set with arg 'select a mod'\n")
-        testobj.widgets = []
-        testobj.process_mod(lbox)
-        assert capsys.readouterr().out == ""
-        testobj.widgets = [[btn, lbox, 'frm', lboxvar]]
-        testobj.process_mod(lbox)
-        assert capsys.readouterr().out == "called StringVar.get\n"
-        lboxvar.set('any value')
-        assert capsys.readouterr().out == "called StringVar.set with arg 'any value'\n"
-        testobj.process_mod(lbox)
-        assert capsys.readouterr().out == ("called StringVar.get\n"
-                                           "called Button.state with args (['!disabled'],)\n"
-                                           "called Button.state with args (['!disabled'],)\n"
-                                           "called SaveGamesDialog.add_modselector\n")
-        lbox2 = mockttk.MockComboBox()
-        btn2 = mockttk.MockButton()
-        lbox2var = mockttk.MockStringVar()
-        lbox2var.set('xxx')
-        assert capsys.readouterr().out == (
-                "called ComboBox.__init__ with args NoneType () {}\n"
-                "called StringVar.__init__ with args ()\n"
-                "called Button.__init__ with args NoneType () {}\n"
-                "called StringVar.__init__ with args ()\n"
-                "called StringVar.set with arg 'xxx'\n")
-        testobj.widgets.append([btn2, lbox2, 'frm', lbox2var])
-        testobj.process_mod(lbox)
-        assert capsys.readouterr().out == ("called StringVar.get\n"
-                                           "called Button.state with args (['!disabled'],)\n"
-                                           "called Button.state with args (['!disabled'],)\n")
-        testobj.widgets[0], testobj.widgets[1] = testobj.widgets[1], testobj.widgets[0]
-        testobj.process_mod(lbox)
-        assert capsys.readouterr().out == ("called StringVar.get\n"
-                                           "called Button.state with args (['!disabled'],)\n"
-                                           "called Button.state with args (['!disabled'],)\n"
-                                           "called SaveGamesDialog.add_modselector\n")
-
-    def test_remove_mod(self, monkeypatch, capsys):
-        """unittest for SaveGamesDialog.remove_mod
-        """
+        assert capsys.readouterr().out == "called Button.__init__ with args NoneType () {}\n"
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.widgets = []
-        lbox = mockttk.MockComboBox()
-        btn = mockttk.MockButton()
-        hbox = mockttk.MockFrame()
-        # testobj.vbox2 = mockttk.MockFrame()
-        assert capsys.readouterr().out == (
-                "called ComboBox.__init__ with args NoneType () {}\n"
-                "called StringVar.__init__ with args ()\n"
-                "called Button.__init__ with args NoneType () {}\n"
-                "called Frame.__init__ with args NoneType () {}\n")
-                # "called VBox.__init__\n")
-        testobj.remove_mod(btn)
-        assert not testobj.widgets
-        assert capsys.readouterr().out == ""
-        testobj.widgets = [('x', 'y', 'z')]
-        testobj.remove_mod(btn)
-        assert len(testobj.widgets) == 1
-        assert capsys.readouterr().out == ""
-        testobj.widgets = [(btn, lbox, hbox)]
-        testobj.remove_mod(btn)
-        assert not testobj.widgets
-        assert capsys.readouterr().out == ("called Button.forget\n"
-                                           "called Button.destroy\n"
-                                           "called ComboBox.forget\n"
+        testobj.enable_widget(btn, True)
+        assert capsys.readouterr().out == "called Button.state with args (['!disabled'],)\n"
+        testobj.enable_widget(btn, False)
+        assert capsys.readouterr().out == "called Button.state with args (['disabled'],)\n"
+
+    def test_remove_modselector(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialogGui.remove_modselector
+        """
+        widgets = (mockttk.MockComboBox(), mockttk.MockButton(), mockttk.MockFrame())
+        assert capsys.readouterr().out == ("called ComboBox.__init__ with args NoneType () {}\n"
+                                           "called StringVar.__init__ with args ()\n"
+                                           "called Button.__init__ with args NoneType () {}\n"
+                                           "called Frame.__init__ with args NoneType () {}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.textvars = {widgets[1]: 'xxx'}
+        testobj.remove_modselector(widgets)
+        assert testobj.textvars == {}
+        assert capsys.readouterr().out == ("called ComboBox.forget\n"
                                            "called ComboBox.destroy\n"
+                                           "called Button.forget\n"
+                                           "called Button.destroy\n"
                                            "called Frame.forget\n"
                                            "called Frame.destroy\n")
 
-    def test_confirm(self, monkeypatch, capsys):
-        """unittest for SaveGamesDialog.confirm
+    def test_accept(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialogGui.accept
         """
-        def mock_list_dirs():
-            print('called Conf.list_all_mod_dirs')
-            return []
-        def mock_list_comps(arg):
-            print(f"called Conf.list_components_for_dir with arg '{arg}'")
-            return []
-        def mock_get_diritem_data(*args):
-            print("called Conf.get_diritem_data with args", args)
-            if args == ('xxx', '_DoNotTouch'):
-                return False
-            if args == ('yyy', '_DoNotTouch'):
-                return True
-            if args == ('zzz', '_DoNotTouch'):
-                return True
-        def mock_get_component_data(*args):
-            print("called Conf.get_component_data with args", args)
-            if args[0] == 'xxx':
-                return 'aaa'
-            if args[0] == 'yyy':
-                return '.bbb'
-        def mock_get_mods(name):
-            print(f"called Conf.get_mods_for_saveitem with arg {name}")
-            return ['qqq', 'rrr']
-        def mock_select(self, names):
-            print(f'called Manager.select_activations with arg {names}')
-            self.directories = []
-        def mock_refresh():
-            print('called ShowMods.refresh_widget_data')
-        def mock_exists(*args):
-            print('called os.path.exists with args', args)
-            return False
-        def mock_exists_2(*args):
-            print('called os.path.exists with args', args)
-            return True
-        monkeypatch.setattr(testee.MessageBox, 'showinfo', mockttk.mock_show_info)
-        monkeypatch.setattr(testee.os.path, 'exists', mock_exists)
-        testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.conf = MockConf()
-        testobj.conf.get_diritem_data = mock_get_diritem_data
-        testobj.conf.get_component_data = mock_get_component_data
-        testobj.conf.get_mods_for_saveitem = mock_get_mods
-        testobj.parent = types.SimpleNamespace()
-        testobj.parent.refresh_widget_data = mock_refresh
-        testobj.parent.master = MockManager()
-        # testobj.savegame_selector = mockttk.MockComboBox()
-        # testobj.savegame_selector.setCurrentText('ppp')
-        testobj.savegame_selector_text = mockttk.MockStringVar()
-        testobj.savegame_selector_text.set('ppp')
-        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
-                                           "called StringVar.set with arg 'ppp'\n")
-        testobj.confirm()
-        assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called Conf.get_mods_for_saveitem with arg ppp\n"
-                "called Conf.list_all_mod_dirs\n"
-                "called Conf.get_diritem_data with args ('xxx', '_DoNotTouch')\n"
-                "called Conf.get_diritem_data with args ('yyy', '_DoNotTouch')\n"
-                "called os.path.exists with args ('modbase/yyy',)\n"
-                "called Manager.select_activations with arg ['qqq', 'rrr']\n"
-                "called Manager.activate\n"
-                "called ShowMods.refresh_widget_data\n"
-                "called MessageBox.showinfo with args ()"
-                f" {{'parent': {testobj!r}, 'message': 'wijzigingen zijn doorgevoerd'}}\n")
-
-        monkeypatch.setattr(MockManager, 'select_activations', mock_select)
-        monkeypatch.setattr(testee.os.path, 'exists', mock_exists_2)
-        testobj.conf.list_components_for_dir = mock_list_comps
-        testobj.parent.master.directories = ['sss', 'ttt']
-        testobj.confirm()
-        assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called Conf.get_mods_for_saveitem with arg ppp\n"
-                "called Conf.list_all_mod_dirs\n"
-                "called Conf.get_diritem_data with args ('xxx', '_DoNotTouch')\n"
-                "called Conf.get_diritem_data with args ('yyy', '_DoNotTouch')\n"
-                "called os.path.exists with args ('modbase/yyy',)\n"
-                "called Conf.get_diritem_data with args ('yyy', 'SCRNAM')\n"
-                "called Manager.select_activations with arg ['qqq', 'rrr', 'yyy']\n"
-                "called ShowMods.refresh_widget_data\n"
-                "called MessageBox.showinfo with args ()"
-                f" {{'parent': {testobj!r}, 'message': 'wijzigingen zijn doorgevoerd'}}\n")
-
-        testobj.conf.list_all_mod_dirs = mock_list_dirs
-        testobj.parent.master.directories = ['sss', 'ttt']
-        testobj.confirm()
-        assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called Conf.get_mods_for_saveitem with arg ppp\n"
-                "called Conf.list_all_mod_dirs\n"
-                "called Manager.select_activations with arg ['qqq', 'rrr']\n"
-                "called ShowMods.refresh_widget_data\n"
-                "called MessageBox.showinfo with args ()"
-                f" {{'parent': {testobj!r}, 'message': 'wijzigingen zijn doorgevoerd'}}\n")
-
-    def test_update(self, monkeypatch, capsys):
-        """unittest for SaveGamesDialog.update
-        """
-        def mock_update(arg):
-            print(f"called SaveGameDialog.update_conf with arg '{arg}'")
-        testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.update_conf = mock_update
-        # testobj.conf = MockConf()
-        testobj.savegame_selector_text = mockttk.MockStringVar()
-        testobj.savegame_selector_text.set('current text')
-        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
-                                           "called StringVar.set with arg 'current text'\n")
-        testobj.update()
-        assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called SaveGameDialog.update_conf with arg 'current text'\n")
-
-    def test_update_conf(self, monkeypatch, capsys):
-        """unittest for SaveGamesDialog.update
-        """
-        testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.pname_text = mockttk.MockStringVar()
-        testobj.pname_text.set('xxx')
-        testobj.fname_text = mockttk.MockStringVar()
-        testobj.fname_text.set('yyy')
-        testobj.gdate_text = mockttk.MockStringVar()
-        testobj.gdate_text.set('zzz')
-        testobj.update_button = mockttk.MockButton()
-        testobj.conf = MockConf()
-        testobj.widgets = []
-        lbox = mockttk.MockComboBox()
-        testobj.old_pname = 'xxx'
-        testobj.old_fname = 'yyy'
-        testobj.old_gdate = 'zzz'
-        testobj.oldmods = []
-        assert capsys.readouterr().out == (
-                "called StringVar.__init__ with args ()\ncalled StringVar.set with arg 'xxx'\n"
-                "called StringVar.__init__ with args ()\ncalled StringVar.set with arg 'yyy'\n"
-                "called StringVar.__init__ with args ()\ncalled StringVar.set with arg 'zzz'\n"
-                "called Button.__init__ with args NoneType () {}\n"
-                "called ComboBox.__init__ with args NoneType () {}\n"
-                "called StringVar.__init__ with args ()\n")
-        testobj.update_conf('save_name')
-        assert capsys.readouterr().out == ("called StringVar.get\n"
-                                           "called StringVar.get\n"
-                                           "called StringVar.get\n"
-                                           "called Conf.save\n"
-                                           "called Button.state with args (['disabled'],)\n")
-        testobj.widgets = [lbox]
-        testobj.oldmods = ['current text']
-        testobj.update_conf('save_name')
-        assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called StringVar.get\n"
-                "called StringVar.get\n"
-                "called Conf.update_saveitem_data with args ('save_name', 'Mods', [])\n"
-                "called Conf.save\n"
-                "called Button.state with args (['disabled'],)\n")
-
-        testobj.old_pname = 'aaa'
-        testobj.old_fname = 'bbb'
-        testobj.old_gdate = 'ccc'
-        testobj.oldmods = ['qqq']
-        testobj.update_conf('save_name')
-        assert capsys.readouterr().out == (
-                "called StringVar.get\n"
-                "called Conf.update_saveitem_data with args ('save_name', 'Pname', 'xxx')\n"
-                "called StringVar.get\n"
-                "called Conf.update_saveitem_data with args ('save_name', 'Fname', 'yyy')\n"
-                "called StringVar.get\n"
-                "called Conf.update_saveitem_data with args ('save_name', 'Gdate', 'zzz')\n"
-                "called Conf.update_saveitem_data with args ('save_name', 'Mods', [])\n"
-                "called Conf.save\n"
-                "called Button.state with args (['disabled'],)\n")
-
-    def test_get_savedata(self, monkeypatch, capsys):
-        """unittest for SaveGamesDialog.get_savedata
-        """
-        def mock_update(name):
-            print(f'called SaveGamesDialog with arg {name}')
-        def mock_add(self):
-            print('called SaveGamesDialog.add_modselector')
-            self.widgets = [[btn, lbox, hbox, lvar]]
-        def mock_get_attrs(value):
-            "stub"
-            print(f"called Conf.get_saveitem_attrs with arg {value}")
-            return ('oldpname', 'oldfname', 'oldgdate'), True
-        def mock_get_attrs_2(value):
-            "stub"
-            print(f"called Conf.get_saveitem_attrs with arg {value}")
-            return ('oldpname', 'oldfname', 'oldgdate'), False
-        def mock_get_mods(name):
-            "stub"
-            print(f"called Conf.get_mods_for_saveitem with arg {name}")
-            return ['newmodname']
-        testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.conf = MockConf()
-        testobj.update_conf = mock_update
-        monkeypatch.setattr(testee.SaveGamesDialog, 'add_modselector', mock_add)
-        testobj.savegame_selector_text = mockttk.MockStringVar()
-        btn = mockttk.MockButton()
-        lbox = mockttk.MockComboBox()
-        hbox = mockttk.MockFrame()
-        lvar = mockttk.MockStringVar()
-        testobj.pname_text = mockttk.MockStringVar()
-        testobj.fname_text = mockttk.MockStringVar()
-        testobj.gdate_text = mockttk.MockStringVar()
-        testobj.update_button = mockttk.MockButton()
-        testobj.confirm_button = mockttk.MockButton()
-        assert capsys.readouterr().out == (
-                "called StringVar.__init__ with args ()\n"
-                "called Button.__init__ with args NoneType () {}\n"
-                "called ComboBox.__init__ with args NoneType () {}\n"
-                "called StringVar.__init__ with args ()\n"
-                "called Frame.__init__ with args NoneType () {}\n"
-                "called StringVar.__init__ with args ()\n"
-                "called StringVar.__init__ with args ()\n"
-                "called StringVar.__init__ with args ()\n"
-                "called StringVar.__init__ with args ()\n"
-                "called Button.__init__ with args NoneType () {}\n"
-                "called Button.__init__ with args NoneType () {}\n")
-        testobj.widgets = []
-
-        testobj.savegame_selector_text.set('select a saved game')
-        assert capsys.readouterr().out == "called StringVar.set with arg 'select a saved game'\n"
-        testobj.get_savedata()
-        assert capsys.readouterr().out == "called StringVar.get\n"
-
-        testobj.oldsavename = ''
-        testobj.savegame_selector_text.set('xxx')
-        assert capsys.readouterr().out == "called StringVar.set with arg 'xxx'\n"
-        testobj.get_savedata()
-        assert capsys.readouterr().out == ("called StringVar.get\n"
-                                           "called Conf.get_saveitem_attrs with arg xxx\n"
-                                           "called Button.state with args (['disabled'],)\n"
-                                           "called Button.state with args (['!disabled'],)\n")
-        testobj.oldsavename = 'yyy'
-        # testobj.savegame_selector_text.set('xxx')
-        testobj.get_savedata()
-        assert capsys.readouterr().out == ("called StringVar.get\n"
-                                           "called SaveGamesDialog with arg yyy\n"
-                                           "called SaveGamesDialog.add_modselector\n"
-                                           "called Conf.get_saveitem_attrs with arg xxx\n"
-                                           "called Button.state with args (['disabled'],)\n"
-                                           "called Button.state with args (['!disabled'],)\n")
-        testobj.widgets = [[btn, lbox, hbox]]
-        testobj.conf.get_saveitem_attrs = mock_get_attrs
-        testobj.conf.get_mods_for_saveitem = mock_get_mods
-        testobj.get_savedata('xxx')
-        assert capsys.readouterr().out == ("called StringVar.get\n"
-                                           "called SaveGamesDialog with arg xxx\n"
-                                           "called Button.destroy\n"
-                                           "called ComboBox.destroy\n"
-                                           "called Frame.destroy\n"
-                                           "called SaveGamesDialog.add_modselector\n"
-                                           "called Conf.get_saveitem_attrs with arg xxx\n"
-                                           "called StringVar.set with arg 'oldpname'\n"
-                                           "called StringVar.set with arg 'oldfname'\n"
-                                           "called StringVar.set with arg 'oldgdate'\n"
-                                           "called Conf.get_mods_for_saveitem with arg xxx\n"
-                                           "called StringVar.set with arg 'newmodname'\n"
-                                           "called SaveGamesDialog.add_modselector\n"
-                                           "called Button.state with args (['!disabled'],)\n"
-                                           "called Button.state with args (['!disabled'],)\n")
-        testobj.conf.get_saveitem_attrs = mock_get_attrs_2
-        testobj.get_savedata('xxx')
-        assert capsys.readouterr().out == ("called StringVar.get\n"
-                                           "called SaveGamesDialog with arg xxx\n"
-                                           "called Button.destroy\n"
-                                           "called ComboBox.destroy\n"
-                                           "called Frame.destroy\n"
-                                           "called SaveGamesDialog.add_modselector\n"
-                                           "called Conf.get_saveitem_attrs with arg xxx\n"
-                                           "called StringVar.set with arg 'oldpname'\n"
-                                           "called StringVar.set with arg 'oldfname'\n"
-                                           "called StringVar.set with arg 'oldgdate'\n"
-                                           "called Conf.get_mods_for_saveitem with arg xxx\n"
-                                           "called StringVar.set with arg 'newmodname'\n"
-                                           "called SaveGamesDialog.add_modselector\n"
-                                           "called Button.state with args (['disabled'],)\n"
-                                           "called Button.state with args (['!disabled'],)\n")
-
-    def test_close(self, monkeypatch, capsys):
-        """unittest for SettingsDialog.close
-        """
-        def mock_set():
-            print('called ShowMods.root.focus_set')
+        def mock_focus():
+            print('called ShowMods.focus_set')
         def mock_destroy():
-            print('called SaveGamesDialog.destroy')
+            print('called DeleteDialogGui.destroy')
         testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
         testobj.destroy = mock_destroy
+        testobj.parent = types.SimpleNamespace(root=types.SimpleNamespace(focus_set=mock_focus))
+        testobj.accept()
+        assert capsys.readouterr().out == ("called ShowMods.focus_set\n"
+                                           "called DeleteDialogGui.destroy\n")
         testobj.parent = None
-        testobj.close()
-        assert capsys.readouterr().out == "called SaveGamesDialog.destroy\n"
-        testobj.parent = types.SimpleNamespace(root=types.SimpleNamespace(focus_set=mock_set))
-        testobj.close()
-        assert capsys.readouterr().out == ("called ShowMods.root.focus_set\n"
-                                           "called SaveGamesDialog.destroy\n")
+        testobj.accept()
+        assert capsys.readouterr().out == "called DeleteDialogGui.destroy\n"

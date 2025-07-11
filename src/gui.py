@@ -2,8 +2,8 @@
 """
 from .toolkit import toolkit
 if toolkit == 'qt':
-    from .qtgui import (ShowMods, show_dialog, SettingsDialog, DeleteDialog, AttributesDialog,
-                        SaveGamesDialog)
+    from .qtgui import (ShowMods, show_message, show_dialog, SettingsDialogGui, DeleteDialogGui,
+                        AttributesDialogGui, DependencyDialogGui, SaveGamesDialogGui)
 elif toolkit == 'tk':
-    from .tkgui import (ShowMods, show_dialog, SettingsDialog, DeleteDialog, AttributesDialog,
-                        SaveGamesDialog)
+    from .tkgui import (ShowMods, show_message, show_dialog, SettingsDialogGui, DeleteDialogGui,
+                        AttributesDialogGui, DependencyDialogGui, SaveGamesDialogGui)

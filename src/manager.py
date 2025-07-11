@@ -8,7 +8,8 @@ import contextlib
 import shutil
 import zipfile
 import subprocess
-from src import gui
+import functools
+from src import gui as gui
 import src.jsonconfig as dmlj
 MODBASE, CONFIG, DOWNLOAD = dmlj.read_defaults()[:3]
 
@@ -100,6 +101,7 @@ class Manager:
         """
         # dit is waar ik de modname bij in wilthouden zodat ik ondanks schermmnaam wijzigen
         # toch bij de correcte mod kan uitkomen (issue #1106)
+        # breakpoint()
         if not CONFIG:
             return
         for dirname in self.conf.list_all_mod_dirs():
@@ -256,7 +258,7 @@ class Manager:
         also the possibility to view components and dependencies
         """
         self.attr_changes = []  # list of changed mods
-        gui.show_dialog(gui.AttributesDialog, self.doit, self.conf)
+        gui.show_dialog(AttributesDialog, self.doit, self.conf)
         # screeninfo is updated in the dialog, here we update the configuration
         # attr_changes is also changed in the dialog
         changes = False
@@ -373,7 +375,7 @@ class Manager:
     def manage_savefiles(self):
         "handle dialog for selecting a savefile to perform actions on"
         # changes = False
-        gui.show_dialog(gui.SaveGamesDialog, self.doit, self.conf)
+        gui.show_dialog(SaveGamesDialog, self.doit, self.conf)
         # if changes:
         #     self.conf.save()
 
@@ -536,14 +538,14 @@ class Manager:
         origdata = dmlj.read_defaults(bare=True)
         self.dialog_data = list(origdata)
         self.dialog_data[3] = self.maxcol
-        gui.show_dialog(gui.SettingsDialog, self.doit)
+        gui.show_dialog(SettingsDialog, self.doit)
         if self.dialog_data != origdata:
             dmlj.save_defaults(*self.dialog_data)
             self.maxcol = self.dialog_data[3]
 
     def manage_deletions(self):
         "call up a dialog to select mods to remove"
-        gui.show_dialog(gui.DeleteDialog, self.doit, self.conf)
+        gui.show_dialog(DeleteDialog, self.doit, self.conf)
 
     def remove_mod(self, modname):
         "remove a mod from the config"
@@ -562,6 +564,404 @@ class Manager:
             self.conf.remove_componentdata(comp)
         self.conf.remove_diritem(moddir)
         self.conf.save()
+
+
+class SettingsDialog:
+    """Dialog for changing some application defaults
+    """
+    def __init__(self, parent):
+        self.parent = parent
+        # breakpoint()
+        # data = self.parent.master.dialog_data
+        self.doit = gui.SettingsDialogGui(self, parent)
+        self.doit.add_label('Base location for mods:')
+        self.modbase_text = self.doit.add_line_entry(self.parent.master.dialog_data[0])
+        self.select_modbase_button = self.doit.add_browse_button(self.select_modbase)
+        self.doit.add_label('Configuration file name:')
+        self.config_text = self.doit.add_line_entry(self.parent.master.dialog_data[1])
+        self.doit.add_label('Location for downloads:')
+        self.download_text = self.doit.add_line_entry(self.parent.master.dialog_data[2])
+        self.select_download_button = self.doit.add_browse_button(self.select_download_path)
+        self.doit.add_label('Number of columns on screen:')
+        self.columns = self.doit.add_spinbox(self.parent.master.dialog_data[3])
+        self.doit.add_label('Location for save files:')
+        self.savepath_text = self.doit.add_line_entry(self.parent.master.dialog_data[4])
+        self.select_savepath_button = self.doit.add_browse_button(self.select_savepath)
+        self.doit.add_buttonbox([('&Save', self.update), ('&Close', self.doit.reject)])
+        self.doit.set_focus(self.modbase_text)
+
+    def select_modbase(self):
+        "define mod location"
+        oldmodbase = self.doit.get_widget_text(self.modbase_text) or '~'
+        filename = self.doit.select_directory("Where to install downloaded mods?",
+                                             os.path.expanduser(oldmodbase))
+        if filename:
+            self.doit.set_widget_text(self.modbase_text,
+                                     filename.replace(os.path.expanduser('~'), '~'))
+
+    def select_download_path(self):
+        "define download location"
+        olddownload = self.doit.get_widget_text(self.download_text) or '~'
+        filename = self.doit.select_directory("Where to download mods to?",
+                                              os.path.expanduser(olddownload))
+        if filename:
+            self.doit.set_widget_text(self.download_text,
+                                      filename.replace(os.path.expanduser('~'), '~'))
+
+    def select_savepath(self):
+        "define savefile location"
+        oldsavepath = self.doit.get_widget_text(self.savepath_text) or '~'
+        filename = self.doit.select_directory("Where are the saved games stored?",
+                                              os.path.expanduser(oldsavepath))
+        if filename:
+            self.doit.set_widget_text(self.savepath_text,
+                                     filename.replace(os.path.expanduser('~'), '~'))
+
+    def update(self):
+        "update settings and exit"
+        self.parent.master.dialog_data = (self.doit.get_widget_text(self.modbase_text),
+                                          self.doit.get_widget_text(self.config_text),
+                                          self.doit.get_widget_text(self.download_text),
+                                          int(self.doit.get_widget_text(self.columns)),
+                                          self.doit.get_widget_text(self.savepath_text))
+        self.doit.confirm()
+
+
+class DeleteDialog:
+    """Dialog for viewing and optionally changing a mod's properties
+    """
+    seltext = 'select a mod to remove from the config'
+
+    def __init__(self, parent, conf):
+        self.parent = parent
+        self.conf = conf
+        self.doit = gui.DeleteDialogGui(self, parent)
+        self.choice = ''
+        self.modnames = {}
+        for x in conf.list_all_mod_dirs():
+            name = conf.get_diritem_data(x, conf.SCRNAM) or x
+            self.modnames[name] = x
+        self.lbox = self.doit.add_combobox([self.seltext] + sorted(self.modnames), self.process,
+                                          editable=False)
+        self.change_button = self.doit.add_buttonbox([('&Remove', self.update, False),
+                                                     ('&Close', self.doit.accept, True)])[0]
+        self.doit.set_focus(self.lbox)
+
+    def process(self, *args):
+        "determine the selected mod"
+        self.choice = self.doit.get_combobox_entry(self.lbox)
+        self.doit.enable_button(self.change_button, self.choice != self.seltext)
+
+    def update(self):
+        "start the removal"
+        self.parent.master.remove_mod(self.choice)
+        gui.show_message(self.doit, f'{self.choice} has been removed')
+        self.doit.set_combobox_entry(self.lbox, 0)
+        self.doit.enable_button(self.change_button, False)
+        self.doit.confirm()
+
+
+class AttributesDialog:
+    """Dialog for viewing and optionally changing a mod's properties
+    """
+    seltext = 'select a mod to change the screen text etc.'
+
+    def __init__(self, parent, conf):
+        self.parent = parent
+        self.conf = conf
+        self.doit = gui.AttributesDialogGui(self, parent)
+        self.choice = ''
+        self.modnames = {}
+        for x in conf.list_all_mod_dirs():
+            name = conf.get_diritem_data(x, conf.SCRNAM) or x
+            self.modnames[name] = x
+
+        self.lbox = self.doit.add_combobox([self.seltext] + sorted(self.modnames), self.process,
+                                          editable=False)
+        self.doit.add_label('Screen Name:\n'
+                           '(the suggestions in the box below are taken from\n'
+                           'the mod components')
+        # self.name, self.clear_name_button = self.doit.add_with_clear_button(
+        #         self.doit.add_combobox([], self.enable_change, editable=True, enabled=False),
+        #         self.clear_name_text)
+        self.doit.start_line_with_clear_button()
+        self.name = self.doit.add_combobox([], self.enable_change, editable=True, enabled=False)
+        self.clear_name_button = self.doit.add_clear_button(self.clear_name_text)
+        self.doit.add_label('Screen Text:\n'
+                           '(to add some information e.q. if the mod is broken)')
+        # self.text, self.clear_text_button = self.doit.add_with_clear_button(
+        #         self.doit.add_line_entry('', self.enable_change, enabled=False),
+        #         self.clear_text_text)
+        self.doit.start_line_with_clear_button()
+        self.text = self.doit.add_line_entry('', self.enable_change, enabled=False)
+        self.clear_text_button = self.doit.add_clear_button(self.clear_text_text)
+        self.activate_button = self.doit.add_checkbox('This mod can be activated by itself',
+                                                      self.enable_change, enabled=False)
+        self.exempt_button = self.doit.add_checkbox('Do not touch when (de)activating for a save',
+                                                    self.enable_change, enabled=False)
+        self.comps_button = self.doit.add_button('View &Components', self.view_components,
+                                                 enabled=False)
+        self.deps_button = self.doit.add_button('View &Dependencies', self.view_dependencies,
+                                                enabled=False)
+        self.change_button, self.add_dep_button = self.doit.add_buttonbox([
+            ('&Update', self.update, False), ('&Add dependency', self.add_dep, False),
+            ('&Close', self.doit.accept, True)])[:-1]
+        self.doit.set_focus(self.lbox)
+
+    def enable_change(self):
+        "enable change button"
+        self.doit.enable_button(self.change_button, True)
+        self.doit.enable_button(self.add_dep_button, True)
+
+    def process(self, *args):
+        "get description if any"
+        # self.select_button.setDisabled(True)
+        self.choice = self.doit.get_combobox_value(self.lbox)
+        field_list = [self.name, self.clear_name_button, self.text, self.clear_text_button,
+                      self.activate_button, self.exempt_button, self.comps_button,
+                      self.deps_button, self.change_button]
+        if self.choice == self.seltext:
+            self.doit.reset_all_fields(field_list)
+            return
+        items = set()
+        for x in self.conf.list_components_for_dir(self.modnames[self.choice]):
+            items.add(self.conf.get_component_data(x, self.conf.NAME))
+        self.doit.activate_and_populate_fields(field_list, [self.choice] + sorted(list(items)),
+                                              self.parent.master.screeninfo[self.choice])
+
+    def clear_name_text(self):
+        "visually delete screen text"
+        self.doit.clear_field(self.name)
+
+    def clear_text_text(self):
+        "visually delete additional text if any"
+        self.doit.clear_field(self.text)
+
+    def view_components(self):
+        "list components for mod"
+        message = self.parent.master.get_mod_components(self.modnames[self.choice])
+        gui.show_message(self.doit, message, title='SDVMM mod info')
+
+    def view_dependencies(self):
+        "list dependencies for mod"
+        message = self.parent.master.get_mod_dependencies(self.modnames[self.choice])
+        gui.show_message(self.doit, message, title='SDVMM mod info')
+
+    def update(self):
+        "update screentext in dictionary"
+        # self.text.setReadOnly(True)
+        self.doit.enable_button(self.clear_name_button, False)
+        self.doit.enable_button(self.clear_text_button, False)
+        selectable = self.doit.get_checkbox_value(self.activate_button)
+        text = self.doit.get_field_text(self.text)
+        name = self.doit.get_combobox_value(self.name)
+        is_exempt = self.doit.get_checkbox_value(self.exempt_button)
+        ok, message = self.parent.master.update_attributes(selectable, name, self.choice,
+                                                           text, is_exempt)
+        if not ok:
+            gui.show_message(self.doit, message)
+        else:
+            self.doit.enable_button(self.change_button, False)
+
+    def add_dep(self):
+        """add dependency manually
+        """
+        gui.show_dialog(DependencyDialog, self.doit, self.conf)
+        # add new dependency immediately
+
+class DependencyDialog:
+    """Dialog for manually defining a new dependency
+    """
+    def __init__(self, parent, conf):
+        self.parent = parent
+        self.conf = conf
+        self.doit = gui.DependencyDialogGui(self, parent)
+        current_mod = self.parent.maingui.modnames[self.parent.maingui.choice]
+        self.modnames = {}
+        for x in conf.list_all_mod_dirs():
+            if x != current_mod:
+                self.modnames[conf.get_diritem_data(x, conf.SCRNAM)] = x
+        self.doit.add_label("Selecteer de toe te voegen dependency")
+        self.dependency_selector = self.doit.add_combobox(['select a mod'] + sorted(self.modnames),
+                                                         None, editable=False)
+        components = self.conf.list_components_for_dir(current_mod)
+        if len(components) == 1:
+            self.doit.add_label('De dependency wordt toegevoegd aan onderstaande component')
+            self.component_selector = self.doit.add_combobox(components, None, editable=False,
+                                                            enabled=False)
+        else:
+            self.doit.add_label('Selecteer een component om de dependency aan toe te voegen')
+            self.component_selector = self.doit.add_combobox(['select a component'] + components,
+                                                            None, editable=False, enabled=True)
+        self.doit.add_label("Bij Add wordt de dependency direct aan de configuratie toegevoegd")
+        self.doit.add_buttonbox([('&Add dependency', self.accept), ('&Close', self.doit.reject)])
+        self.doit.set_focus(self.dependency_selector)
+
+    def accept(self):
+        "add dependncy to configuration"
+        selected_dependency = self.doit.get_combobox_value(self.dependency_selector)
+        selected_component = self.doit.get_combobox_value(self.component_selector)
+        dependency_to_add = self.conf.list_components_for_dir(self.modnames[selected_dependency])[0]
+        deps = self.conf.get_component_data(selected_component, self.conf.DEPS)
+        deps.append(dependency_to_add)
+        self.conf.set_componentdata_value(selected_component, self.conf.DEPS, deps)
+        self.conf.save()
+        gui.show_message(self.doit, 'Add Dependency', 'Wijziging is doorgevoerd\n'
+                         'Vergeet niet om na updaten van de mod te controleren of'
+                         ' de dependency opnieuw moet worden toegevoegd')
+        self.doit.confirm()
+
+
+class SaveGamesDialog:
+    """Dialog for defining and viewing which mods are used for a (to be selected) savefile
+    and optionally activating them
+    """
+    def __init__(self, parent, conf):
+        self.parent = parent
+        self.conf = conf
+        self.doit = gui.SaveGamesDialogGui(self, parent)
+        self.savenames = conf.list_all_saveitems()
+        self.modnames = {}
+        for x in conf.list_all_mod_dirs():
+            self.modnames[conf.get_diritem_data(x, conf.SCRNAM)] = x
+        self.savegame_selector = self.doit.add_combobox(
+                ['select a saved game'] + sorted(self.savenames), self.get_savedata,
+                editable=False)
+        self.oldsavename = ''
+        self.doit.add_label('Player name:')
+        self.pname = self.doit.add_line_entry('')  # , self.doit.enable_change)
+        self.doit.add_label('Farm name:')
+        self.fname = self.doit.add_line_entry('')  # , self.doit.enable_change)
+        self.doit.add_label('In-game date:')
+        self.gdate = self.doit.add_line_entry('')  # , self.doit.enable_change)
+        self.widgets = []
+        self.doit.start_modselect_block('Uses:')
+        self.add_modselector(False)
+        self.update_button, self.confirm_button = self.doit.add_buttonbox([
+            ('&Update config', self.update, False), ('&Activate Mods', self.confirm, False),
+            ('&Close', self.doit.accept, True)])[:-1]
+        self.doit.set_focus(self.savegame_selector)
+
+    def add_modselector(self, enabled=True):
+        "add a selector to make an association between a mod and the save file"
+        # lbox, button, container = self.doit.add_with_clear_button(
+        #         self.doit.add_combobox(['select a mod'] + sorted(self.modnames), None,
+        #                               editable=True, enabled=False), bool(name))
+        # print('in add_modselector')
+        lbox = self.doit.add_combobox(['select a mod'] + sorted(self.modnames), None,
+                                      editable=True, enabled=enabled)
+        button, container = self.doit.add_clear_button(enabled)
+        self.doit.set_callbacks((lbox, button), (functools.partial(self.process_mod, lbox),
+                               functools.partial(self.remove_mod, button)))
+        self.widgets.append([button, lbox, container])
+        # print(f'  added {lbox=}, {button=} to {container=}')
+        # print(f'  {len(self.widgets)=}', flush=True)
+
+    def process_mod(self, lbox, newvalue):
+        """add or change an association between a mod and the save file
+
+        creates a new selector if changing the last one from empty to non-empty
+        """
+        # print(f'in process_mod, {lbox=}, {newvalue=}', flush=True)
+        if newvalue == 'select a mod':
+            return
+        for item in self.widgets:
+            if item[1] == lbox:
+                self.doit.enable_widget(item[0], True)
+        self.doit.enable_widget(self.update_button, True)
+        if lbox == self.widgets[-1][1]:  # and len(self.widgets) > len(self.prevmods):
+            self.add_modselector()
+
+    def remove_mod(self, btn):
+        "delete an association between a mod and the save file"
+        # print(f'in remove_mod, {btn=}', flush=True)
+        for item in self.widgets:
+            if item[0] == btn:
+                self.doit.remove_modselector(item)
+                self.widgets.remove(item)
+
+    def confirm(self):
+        "activate the mods belonging to this save file"
+        selected = self.doit.get_combobox_value(self.savegame_selector)
+        modnames = self.conf.get_mods_for_saveitem(selected)
+        # uitzetten gebeurt in activate(), hier moeten de mods die ongemoeid gelaten moeten worden
+        # en aanstaan, toegevoegd worden aan de selectie
+        for dirname in self.conf.list_all_mod_dirs():
+            if (self.conf.get_diritem_data(dirname, self.conf.OPTOUT)
+                    and os.path.exists(os.path.join(self.parent.master.modbase, dirname))):
+                modnames.append(self.conf.get_diritem_data(dirname, self.conf.SCRNAM) or dirname)
+        self.parent.master.select_activations(modnames)
+        if self.parent.master.directories:   # alleen leeg als er niks geselecteerd is
+            self.parent.master.activate()
+        self.parent.master.refresh_widget_data()
+        gui.show_message(self.doit, 'wijzigingen zijn doorgevoerd', title='Change Config')
+        self.doit.accept()
+
+    def update(self):
+        "callback for update button"
+        self.update_conf(self.doit.get_combobox_value(self.savegame_selector))
+
+    def update_conf(self, savename):
+        "save the mod associations in the config"
+        # print(f'in update_conf, {savename=}')
+        changes = False
+        new_pname = self.doit.get_field_text(self.pname)
+        if new_pname != self.old_pname:
+            self.conf.update_saveitem_data(savename, self.conf.PNAME, new_pname)
+            changes = True
+        new_fname = self.doit.get_field_text(self.fname)
+        if new_fname != self.old_fname:
+            self.conf.update_saveitem_data(savename, self.conf.FNAME, new_fname)
+            changes = True
+        new_gdate = self.doit.get_field_text(self.gdate)
+        if new_gdate != self.old_gdate:
+            self.conf.update_saveitem_data(savename, self.conf.GDATE, new_gdate)
+            changes = True
+        # dit lijkt nu niet meer goed te gaan want er komen steeds meer dubbele entries:
+        newmods = [self.doit.get_combobox_value(item[1]) for item in self.widgets[:-1]]
+        # print(f'  {newmods=}')
+        # print(f'  {self.widgets=}', flush=True)
+        if newmods != self.oldmods:
+            self.conf.update_saveitem_data(savename, self.conf.MODS, newmods)
+            changes = True
+        if changes:
+            # print('  there were changes')
+            self.conf.save()
+        self.doit.enable_widget(self.update_button, False)
+
+    def get_savedata(self, *args):
+        "find and show existing configuration data for this save file"
+        newvalue = self.doit.get_combobox_value(self.savegame_selector)
+        # print(f'in get_savedata, {newvalue=}')
+        if self.oldsavename:
+            self.update_conf(self.oldsavename)
+        for item in reversed(self.widgets):
+            # print(f'  removing modselector {item=}')
+            self.doit.remove_modselector(item)
+            self.widgets.remove(item)
+        self.add_modselector()
+        if newvalue == 'select a saved game':
+            self.oldsavename = ''
+            return
+        self.oldsavename = newvalue
+        self.oldmods = []
+        save_attrs, new_in_conf = self.conf.get_saveitem_attrs(newvalue)
+        if save_attrs:
+            self.old_pname, self.old_fname, self.old_gdate = save_attrs
+            self.doit.set_field_text(self.pname, self.old_pname)
+            self.doit.set_field_text(self.fname, self.old_fname)
+            self.doit.set_field_text(self.gdate, self.old_gdate)
+            self.oldmods = self.conf.get_mods_for_saveitem(newvalue)
+        # breakpoint()
+        for modname in self.oldmods:
+            # instellen van eem waarde veroorzaakt een nieuwe selector
+            self.doit.set_combobox_value(self.widgets[-1][1], modname)
+            # self.doit.enable_widget(self.widgets[-1][0], True)
+            # self.doit.enable_widget(self.widgets[-1][1], True)
+        # print(f'  {self.oldmods=}')
+        # print(f'  {self.widgets=}', flush=True)
+        self.doit.enable_widget(self.update_button, new_in_conf)
+        self.doit.enable_widget(self.confirm_button, True)
 
 
 def get_toplevel(dirname):

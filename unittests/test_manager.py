@@ -18,12 +18,29 @@ class MockManager:
         """
         print('called Manager.build_and_start_gui()')
 
+    def select_activations(self, *args):
+        "stub"
+        print('called Manager.select_activations with args', args)
+
+    def activate(self):
+        "stub"
+        print('called Manager.activate with args')
+
+    def refresh_widget_data(self):
+        "stub"
+        print('called Manager.refresh_widget_data')
+
 
 class MockConf:
-    """testdouble object mimicking configparser.ConfigParser class
+    """testdouble for jsonconfig.JsonConf object
+    object mimicking configparser.ConfigParser class
     """
-    SCRNAM, SEL, SCRPOS, NXSKEY, SCRTXT, DIR, DEPS, COMPS, NAME, VRS = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
-    OPTOUT = 10
+    SCRNAM, NAME, DEPS, COMPS, VRS = 'SCRNAM', 'Name', 'Deps', 'Comps', 'Version'
+    PNAME, FNAME, GDATE, MODS, NXSKEY = 'Pname', 'Fname', 'Gdate', 'Mods', '_NexusKey'
+    OPTOUT, DIR, SEL, SCRPOS, SCRTXT = '_DoNotTouch', 'dirname', 'Sel', 'ScrPos', 'ScrTxt'
+
+    # SCRNAM, SEL, SCRPOS, NXSKEY, SCRTXT, DIR, DEPS, COMPS, NAME, VRS = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+    # OPTOUT = 10
     def __init__(self, *args, **kwargs):
         print('called JsonConf.__init__ with args', args, kwargs)
     def load(self):
@@ -34,6 +51,14 @@ class MockConf:
         """stub
         """
         print("called JsonConf.save")
+    def list_all_saveitems(self):
+        "stub"
+        print('called Conf.list_all_mod_savetemitems')
+        return ['qqq', 'rrr']
+    def list_all_mod_dirs(self):
+        "stub"
+        print("called Conf.list_all_mod_dirs")
+        return ['xxx', 'yyy']
     def list_components_for_dir(self, name):
         "stub"
         print(f"called Conf.list_components_for_dir with arg '{name}'")
@@ -52,6 +77,20 @@ class MockConf:
         if args[1] == self.VRS:
             return f'{args[0]}_version'
         return f'{args[0]}_name'
+    def get_saveitem_attrs(self, value):
+        "stub"
+        print(f"called Conf.get_saveitem_attrs with arg {value}")
+        return [], False
+    def get_mods_for_saveitem(self, name):
+        "stub"
+        print(f"called Conf.get_mods_for_saveitem with arg {name}")
+        return []
+    def update_saveitem_data(self, *args):
+        "stub"
+        print('called Conf.update_saveitem_data with args', args)
+    def set_componentdata_value(self, *args):
+        "stub"
+        print('called Conf.set_componenentdata_value with args', args)
     def remove_componentdata(self, name):
         "stub"
         print(f"called Conf.remove_component with arg '{name}'")
@@ -731,13 +770,13 @@ class TestManager:
         testobj.manage_attributes()
         assert capsys.readouterr().out == (
                 f"called show_dialog with args AttributesDialog ({testobj.doit}, {testobj.conf})\n"
-                "called Conf.set_diritem_value with args ('xxx-dir', 0, 'xxx')\n"
-                "called Conf.set_diritem_value with args ('xxx-dir', 4, 'xxx-txt')\n"
-                "called Conf.set_diritem_value with args ('xxx-dir', 1, True)\n"
-                "called Conf.set_diritem_value with args ('xxx-dir', 10, False)\n"
-                "called Conf.set_diritem_value with args ('zzz-dir', 4, 'zzz-txt')\n"
-                "called Conf.set_diritem_value with args ('zzz-dir', 1, False)\n"
-                "called Conf.set_diritem_value with args ('zzz-dir', 10, True)\n"
+                "called Conf.set_diritem_value with args ('xxx-dir', 'SCRNAM', 'xxx')\n"
+                "called Conf.set_diritem_value with args ('xxx-dir', 'ScrTxt', 'xxx-txt')\n"
+                "called Conf.set_diritem_value with args ('xxx-dir', 'Sel', True)\n"
+                "called Conf.set_diritem_value with args ('xxx-dir', '_DoNotTouch', False)\n"
+                "called Conf.set_diritem_value with args ('zzz-dir', 'ScrTxt', 'zzz-txt')\n"
+                "called Conf.set_diritem_value with args ('zzz-dir', 'Sel', False)\n"
+                "called Conf.set_diritem_value with args ('zzz-dir', '_DoNotTouch', True)\n"
                 "called JsonConf.save\n")
 
     def test_get_mod_components(self, monkeypatch, capsys):
@@ -755,10 +794,10 @@ class TestManager:
                                                      "    (yyy)")
         assert capsys.readouterr().out == (
                 "called Conf.list_components_for_dir with arg 'aaa'\n"
-                "called Conf.get_component_data with args ('xxx', 8)\n"
-                "called Conf.get_component_data with args ('xxx', 9)\n"
-                "called Conf.get_component_data with args ('yyy', 8)\n"
-                "called Conf.get_component_data with args ('yyy', 9)\n")
+                "called Conf.get_component_data with args ('xxx', 'Name')\n"
+                "called Conf.get_component_data with args ('xxx', 'Version')\n"
+                "called Conf.get_component_data with args ('yyy', 'Name')\n"
+                "called Conf.get_component_data with args ('yyy', 'Version')\n")
         monkeypatch.setattr(MockConf, 'list_components_for_dir', mock_list)
         assert testobj.get_mod_components('aaa') == "Components for aaa:\n"
         assert capsys.readouterr().out == "called Conf.list_components_for_dir with arg 'aaa'\n"
@@ -791,20 +830,20 @@ class TestManager:
                                                        " unknown component: yyy_compname")
         assert capsys.readouterr().out == (
                 "called Conf.list_components_for_dir with arg 'aaa'\n"
-                "called Conf.get_component_data with args ('xxx', 6)\n"
-                "called Conf.get_component_data with args ('yyy', 6)\n"
-                "called Conf.get_component_data with args ('xxx_compname', 8)\n"
-                "called Conf.get_component_data with args ('yyy_compname', 8)\n")
+                "called Conf.get_component_data with args ('xxx', 'Deps')\n"
+                "called Conf.get_component_data with args ('yyy', 'Deps')\n"
+                "called Conf.get_component_data with args ('xxx_compname', 'Name')\n"
+                "called Conf.get_component_data with args ('yyy_compname', 'Name')\n")
         monkeypatch.setattr(MockConf, 'get_component_data', mock_get_2)
         assert testobj.get_mod_dependencies('aaa') == ("Dependencies for aaa:\n"
                                                        " xxx_depname_compname (xxx_depname)\n"
                                                        " yyy_depname_compname (yyy_depname)")
         assert capsys.readouterr().out == (
                 "called Conf.list_components_for_dir with arg 'aaa'\n"
-                "called Conf.get_component_data with args ('xxx', 6)\n"
-                "called Conf.get_component_data with args ('yyy', 6)\n"
-                "called Conf.get_component_data with args ('xxx_depname', 8)\n"
-                "called Conf.get_component_data with args ('yyy_depname', 8)\n")
+                "called Conf.get_component_data with args ('xxx', 'Deps')\n"
+                "called Conf.get_component_data with args ('yyy', 'Deps')\n"
+                "called Conf.get_component_data with args ('xxx_depname', 'Name')\n"
+                "called Conf.get_component_data with args ('yyy_depname', 'Name')\n")
         monkeypatch.setattr(MockConf, 'list_components_for_dir', mock_list)
         assert testobj.get_mod_dependencies('aaa') == ("Dependencies for aaa:\n"
                                                        " None ")
@@ -938,8 +977,8 @@ class TestManager:
                               'yyy': {'pos': '1x1', 'dir': 'y-dir'}}
         testobj.update_config_from_screenpos()
         assert capsys.readouterr().out == (
-                "called Conf.set_diritem_data with args ('x-dir', 2, '5x5')\n"
-                "called Conf.set_diritem_data with args ('y-dir', 2, '1x1')\n"
+                "called Conf.set_diritem_data with args ('x-dir', 'ScrPos', '5x5')\n"
+                "called Conf.set_diritem_data with args ('y-dir', 'ScrPos', '1x1')\n"
                 "called JsonConf.save\n")
 
     def test_update_mods(self, monkeypatch, capsys, tmp_path):
@@ -1317,14 +1356,14 @@ class TestManager:
         assert capsys.readouterr().out == ("called Conf.has_moddir with arg moddir\n"
                                            "called Conf.add_diritem with arg moddir\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.COMPS}, [])\n"
+                                           f" ('moddir', '{testobj.conf.COMPS}', [])\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.SCRNAM}, '(new mod)')\n"
+                                           f" ('moddir', '{testobj.conf.SCRNAM}', '(new mod)')\n"
                                            "called determine_update_id with arg set()\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.NXSKEY}, 'xx')\n"
+                                           f" ('moddir', '{testobj.conf.NXSKEY}', 'xx')\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.SEL}, False)\n")
+                                           f" ('moddir', '{testobj.conf.SEL}', False)\n")
 
         assert testobj.add_mod_to_config('moddir', {'unzipdir': {}}) == [
                 "  Screentext set to '(new mod)' ",
@@ -1333,14 +1372,14 @@ class TestManager:
         assert capsys.readouterr().out == ("called Conf.has_moddir with arg moddir\n"
                                            "called Conf.add_diritem with arg moddir\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.COMPS}, [])\n"
+                                           f" ('moddir', '{testobj.conf.COMPS}', [])\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.SCRNAM}, '(new mod)')\n"
+                                           f" ('moddir', '{testobj.conf.SCRNAM}', '(new mod)')\n"
                                            "called determine_update_id with arg set()\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.NXSKEY}, 'xx')\n"
+                                           f" ('moddir', '{testobj.conf.NXSKEY}', 'xx')\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.SEL}, False)\n")
+                                           f" ('moddir', '{testobj.conf.SEL}', False)\n")
 
         assert testobj.add_mod_to_config('moddir', {'unzipdir': {'component': {}}}) == [
                 "  Screentext set to '(new mod)' ",
@@ -1350,14 +1389,14 @@ class TestManager:
                                            "called Conf.add_diritem with arg moddir\n"
                                            "called Conf.add_component with arg component\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.COMPS}, ['component'])\n"
+                                           f" ('moddir', '{testobj.conf.COMPS}', ['component'])\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.SCRNAM}, '(new mod)')\n"
+                                           f" ('moddir', '{testobj.conf.SCRNAM}', '(new mod)')\n"
                                            "called determine_update_id with arg set()\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.NXSKEY}, 'xx')\n"
+                                           f" ('moddir', '{testobj.conf.NXSKEY}', 'xx')\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.SEL}, False)\n")
+                                           f" ('moddir', '{testobj.conf.SEL}', False)\n")
 
         result = testobj.add_mod_to_config('moddir',
                                            {'unzipdir': {'component': {testobj.conf.NAME: 'abcdef'},
@@ -1371,23 +1410,23 @@ class TestManager:
                                            "called Conf.add_diritem with arg moddir\n"
                                            "called Conf.add_component with arg component\n"
                                            "called Conf.set_component_value with args"
-                                           f" ('component', {testobj.conf.NAME}, 'abcdef')\n"
+                                           f" ('component', '{testobj.conf.NAME}', 'abcdef')\n"
                                            "called Conf.add_component with arg comp2\n"
                                            "called Conf.set_component_value with args"
-                                           f" ('comp2', {testobj.conf.NAME}, 'pqrst')\n"
+                                           f" ('comp2', '{testobj.conf.NAME}', 'pqrst')\n"
                                            "called Conf.add_component with arg comp3\n"
                                            "called Conf.set_component_value with args"
-                                           f" ('comp3', {testobj.conf.NAME}, 'abcdef')\n"
+                                           f" ('comp3', '{testobj.conf.NAME}', 'abcdef')\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.COMPS},"
+                                           f" ('moddir', '{testobj.conf.COMPS}',"
                                            " ['component', 'comp2', 'comp3'])\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.SCRNAM}, 'abcdef')\n"
+                                           f" ('moddir', '{testobj.conf.SCRNAM}', 'abcdef')\n"
                                            "called determine_update_id with arg set()\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.NXSKEY}, 'xx')\n"
+                                           f" ('moddir', '{testobj.conf.NXSKEY}', 'xx')\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.SEL}, False)\n")
+                                           f" ('moddir', '{testobj.conf.SEL}', False)\n")
 
         monkeypatch.setattr(testee, 'determine_update_id', mock_determine_2)
         result = testobj.add_mod_to_config('moddir',
@@ -1402,20 +1441,20 @@ class TestManager:
                                            "called Conf.add_diritem with arg moddir\n"
                                            "called Conf.add_component with arg component\n"
                                            "called Conf.set_component_value with args"
-                                           f" ('component', {testobj.conf.NAME}, 'abcdef')\n"
+                                           f" ('component', '{testobj.conf.NAME}', 'abcdef')\n"
                                            "called Conf.set_component_value with args"
-                                           f" ('component', {testobj.conf.NXSKEY}, '123')\n"
+                                           f" ('component', '{testobj.conf.NXSKEY}', '123')\n"
                                            "called Conf.set_component_value with args"
                                            f" ('component', 'xxx', 'yyy')\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.COMPS}, ['component'])\n"
+                                           f" ('moddir', '{testobj.conf.COMPS}', ['component'])\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.SCRNAM}, 'abcdef')\n"
+                                           f" ('moddir', '{testobj.conf.SCRNAM}', 'abcdef')\n"
                                            "called determine_update_id with arg {'123'}\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.NXSKEY}, 'xx')\n"
+                                           f" ('moddir', '{testobj.conf.NXSKEY}', 'xx')\n"
                                            "called Conf.set_diritem_value with args"
-                                           f" ('moddir', {testobj.conf.SEL}, False)\n")
+                                           f" ('moddir', '{testobj.conf.SEL}', False)\n")
 
     def test_update_mod_settings(self, monkeypatch, capsys):
         """unittest for Manager.update_mod_settings
@@ -1458,19 +1497,19 @@ class TestManager:
         assert testobj.update_mod_settings('moddir', {}) == ([], False)
         assert capsys.readouterr().out == (
                 "called Conf.has_moddir with arg moddir\n"
-                f"called Conf.get_diritem_data with args ('moddir', {testobj.conf.COMPS})\n")
+                f"called Conf.get_diritem_data with args ('moddir', '{testobj.conf.COMPS}')\n")
 
         assert testobj.update_mod_settings('moddir', {'config': {}}) == ([], False)
         assert capsys.readouterr().out == (
                 "called Conf.has_moddir with arg moddir\n"
-                f"called Conf.get_diritem_data with args ('moddir', {testobj.conf.COMPS})\n")
+                f"called Conf.get_diritem_data with args ('moddir', '{testobj.conf.COMPS}')\n")
 
         assert testobj.update_mod_settings('moddir', {'config': {'newcomp': {}}}) == (
                 ["  List of components changed from [] to ['newcomp']"], True)
         assert capsys.readouterr().out == (
                 "called Conf.has_moddir with arg moddir\n"
-                f"called Conf.get_diritem_data with args ('moddir', {testobj.conf.COMPS})\n"
-                f"called Conf.set_diritem_value with args ('moddir', {testobj.conf.COMPS},"
+                f"called Conf.get_diritem_data with args ('moddir', '{testobj.conf.COMPS}')\n"
+                f"called Conf.set_diritem_value with args ('moddir', '{testobj.conf.COMPS}',"
                 " ['newcomp'])\n"
                 "called Conf.get_component_data with arg newcomp\n"
                 "called Conf.update_componentdata with args ('newcomp', {})\n")
@@ -1484,16 +1523,16 @@ class TestManager:
                      "  newcomp: key aaa with value 'bbb' removed"], True)
         assert capsys.readouterr().out == (
                 "called Conf.has_moddir with arg moddir\n"
-                f"called Conf.get_diritem_data with args ('moddir', {testobj.conf.COMPS})\n"
+                f"called Conf.get_diritem_data with args ('moddir', '{testobj.conf.COMPS}')\n"
                 "called Conf.get_component_data with arg newcomp\n"
                 "called Conf.update_componentdata with args ('newcomp', {"
-                f"{testobj.conf.NAME}: 'xxx', {testobj.conf.VRS}: '2.0', 'ppp': 'qqq'}})\n")
+                f"'{testobj.conf.NAME}': 'xxx', '{testobj.conf.VRS}': '2.0', 'ppp': 'qqq'}})\n")
 
         assert testobj.update_mod_settings('moddir', {'config': {'newcomp': {
             testobj.conf.NAME: 'xxx', testobj.conf.VRS: '1.0', 'aaa': 'bbb'}}}) == ([], False)
         assert capsys.readouterr().out == (
                 "called Conf.has_moddir with arg moddir\n"
-                f"called Conf.get_diritem_data with args ('moddir', {testobj.conf.COMPS})\n"
+                f"called Conf.get_diritem_data with args ('moddir', '{testobj.conf.COMPS}')\n"
                 "called Conf.get_component_data with arg newcomp\n")
 
     def test_manage_defaults(self, monkeypatch, capsys):
@@ -1592,6 +1631,1250 @@ class TestManager:
                 "called Conf.remove_component with arg 'yyy'\n"
                 "called Conf.remove_diritem with arg 'stuff'\n"
                 "called JsonConf.save\n")
+
+
+class MockSettingsGui:
+    """teststub for gui.SettingsDialogGui object
+    """
+    def __init__(self, *args):
+        print('called SettingsDialogGui.__init__ with args', args)
+    def add_label(self, *args):
+        "stub"
+        print('called SettingsDialogGui.add_label with args', args)
+    def add_line_entry(self, *args):
+        "stub"
+        print('called SettingsDialogGui.add_line_entry with args', args)
+        return 'line_entry'
+    def add_browse_button(self, *args):
+        "stub"
+        print('called SettingsDialogGui.add_browse_button with args', args)
+        return 'browser'
+    def add_spinbox(self, *args):
+        "stub"
+        print('called SettingsDialogGui.add_spinbox with args', args)
+        return 'spinbox'
+    def add_buttonbox(self, *args):
+        "stub"
+        print('called SettingsDialogGui.add_buttonbox with args', args)
+    def set_focus(self, *args):
+        "stub"
+        print('called SettingsDialogGui.set_focus with args', args)
+    def get_widget_text(self, *args):
+        "stub"
+        print('called SettingsDialogGui.get_widget_text with args', args)
+        return ''
+    def set_widget_text(self, *args):
+        "stub"
+        print('called SettingsDialogGui.set_widget_text with args', args)
+    def select_directory(self, *args):
+        "stub"
+        print('called SettingsDialogGui.select_directory with args', args)
+        return ''
+    def reject(self):
+        "stub"
+        print('called SettingsDialogGui.reject')
+    def confirm(self):
+        "stub"
+        print('called SettingsDialogGui.confirm')
+
+
+class TestSettingsDialog:
+    """unittests for qtgui.SettingsDialog
+    """
+    def setup_testobj(self, monkeypatch, capsys):
+        """stub for qtgui.SettingsDialog object
+
+        create the object skipping the normal initialization
+        intercept messages during creation
+        return the object so that other methods can be monkeypatched in the caller
+        """
+        def mock_init(self, *args):
+            print('called SettingsDialog.__init__ with args', args)
+        monkeypatch.setattr(testee.SettingsDialog, '__init__', mock_init)
+        testobj = testee.SettingsDialog()
+        testobj.doit = MockSettingsGui()
+        assert capsys.readouterr().out == ('called SettingsDialog.__init__ with args ()\n'
+                                           'called SettingsDialogGui.__init__ with args ()\n')
+        return testobj
+
+    def test_init(self, monkeypatch, capsys, expected_output):
+        """unittest for SettingsDialog.__init__
+        """
+        monkeypatch.setattr(testee.gui, 'SettingsDialogGui', MockSettingsGui)
+        parent = MockManager()
+        parent.master = types.SimpleNamespace(dialog_data=('xxx', 'yyy', 'zzz', 'qqq', 'rrr'))
+        testobj = testee.SettingsDialog(parent)
+        assert testobj.parent == parent
+        assert testobj.modbase_text == 'line_entry'
+        assert testobj.select_modbase_button == 'browser'
+        assert testobj.config_text == 'line_entry'
+        assert testobj.download_text == 'line_entry'
+        assert testobj.select_download_button == 'browser'
+        assert testobj.columns == 'spinbox'
+        assert testobj.savepath_text == 'line_entry'
+        assert testobj.select_savepath_button == 'browser'
+        assert capsys.readouterr().out == expected_output['settings'].format(testobj=testobj)
+
+    def test_select_modbase(self, monkeypatch, capsys):
+        """unittest for SettingsDialog.select_modbase
+        """
+        def mock_get(*args):
+            print('called SettingsDialogGui.get_widget_text with args', args)
+            return 'widget-text'
+        def mock_select(*args):
+            print('called SettingsDialogGui.select_directory with args', args)
+            return 'test'
+        def mock_select_2(*args):
+            print('called SettingsDialogGui.select_directory with args', args)
+            return testee.os.path.expanduser('~/hello')
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.modbase_text = 'modbase_text'
+        testobj.select_modbase()
+        assert capsys.readouterr().out == (
+                "called SettingsDialogGui.get_widget_text with args ('modbase_text',)\n"
+                "called SettingsDialogGui.select_directory with args"
+                f" ('Where to install downloaded mods?', '{testee.os.path.expanduser("~")}')\n")
+        testobj.doit.get_widget_text = mock_get
+        testobj.doit.select_directory = mock_select
+        testobj.select_modbase()
+        assert capsys.readouterr().out == (
+                "called SettingsDialogGui.get_widget_text with args ('modbase_text',)\n"
+                "called SettingsDialogGui.select_directory with args"
+                " ('Where to install downloaded mods?', 'widget-text')\n"
+                "called SettingsDialogGui.set_widget_text with args ('modbase_text', 'test')\n")
+        testobj.doit.select_directory = mock_select_2
+        testobj.select_modbase()
+        assert capsys.readouterr().out == (
+                "called SettingsDialogGui.get_widget_text with args ('modbase_text',)\n"
+                "called SettingsDialogGui.select_directory with args"
+                " ('Where to install downloaded mods?', 'widget-text')\n"
+                "called SettingsDialogGui.set_widget_text with args ('modbase_text', '~/hello')\n")
+
+    def test_select_download_path(self, monkeypatch, capsys):
+        """unittest for SettingsDialog.select_modbase
+        """
+        def mock_get(*args):
+            print('called SettingsDialogGui.get_widget_text with args', args)
+            return 'widget-text'
+        def mock_select(*args):
+            print('called SettingsDialogGui.select_directory with args', args)
+            return 'test'
+        def mock_select_2(*args):
+            print('called SettingsDialogGui.select_directory with args', args)
+            return testee.os.path.expanduser('~/hello')
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.download_text = 'download_text'
+        testobj.select_download_path()
+        assert capsys.readouterr().out == (
+                "called SettingsDialogGui.get_widget_text with args ('download_text',)\n"
+                "called SettingsDialogGui.select_directory with args"
+                f" ('Where to download mods to?', '{testee.os.path.expanduser("~")}')\n")
+        testobj.doit.get_widget_text = mock_get
+        testobj.doit.select_directory = mock_select
+        testobj.select_download_path()
+        assert capsys.readouterr().out == (
+                "called SettingsDialogGui.get_widget_text with args ('download_text',)\n"
+                "called SettingsDialogGui.select_directory with args"
+                " ('Where to download mods to?', 'widget-text')\n"
+                "called SettingsDialogGui.set_widget_text with args ('download_text', 'test')\n")
+        testobj.doit.select_directory = mock_select_2
+        testobj.select_download_path()
+        assert capsys.readouterr().out == (
+                "called SettingsDialogGui.get_widget_text with args ('download_text',)\n"
+                "called SettingsDialogGui.select_directory with args"
+                " ('Where to download mods to?', 'widget-text')\n"
+                "called SettingsDialogGui.set_widget_text with args ('download_text', '~/hello')\n")
+
+    def test_select_savepath(self, monkeypatch, capsys):
+        """unittest for SettingsDialog.select_modbase
+        """
+        def mock_get(*args):
+            print('called SettingsDialogGui.get_widget_text with args', args)
+            return 'widget-text'
+        def mock_select(*args):
+            print('called SettingsDialogGui.select_directory with args', args)
+            return 'test'
+        def mock_select_2(*args):
+            print('called SettingsDialogGui.select_directory with args', args)
+            return testee.os.path.expanduser('~/hello')
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.savepath_text = 'savepath_text'
+        testobj.select_savepath()
+        assert capsys.readouterr().out == (
+                "called SettingsDialogGui.get_widget_text with args ('savepath_text',)\n"
+                "called SettingsDialogGui.select_directory with args"
+                f" ('Where are the saved games stored?', '{testee.os.path.expanduser("~")}')\n")
+        testobj.doit.get_widget_text = mock_get
+        testobj.doit.select_directory = mock_select
+        testobj.select_savepath()
+        assert capsys.readouterr().out == (
+                "called SettingsDialogGui.get_widget_text with args ('savepath_text',)\n"
+                "called SettingsDialogGui.select_directory with args"
+                " ('Where are the saved games stored?', 'widget-text')\n"
+                "called SettingsDialogGui.set_widget_text with args ('savepath_text', 'test')\n")
+        testobj.doit.select_directory = mock_select_2
+        testobj.select_savepath()
+        assert capsys.readouterr().out == (
+                "called SettingsDialogGui.get_widget_text with args ('savepath_text',)\n"
+                "called SettingsDialogGui.select_directory with args"
+                " ('Where are the saved games stored?', 'widget-text')\n"
+                "called SettingsDialogGui.set_widget_text with args ('savepath_text', '~/hello')\n")
+
+    def test_update(self, monkeypatch, capsys):
+        """unittest for SettingsDialog.update
+        """
+        def mock_get(*args):
+            print('called SettingsDialogGui.get_widget_text with args', args)
+            return args[0]
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.doit.get_widget_text = mock_get
+        testobj.parent = types.SimpleNamespace(master=types.SimpleNamespace())
+        testobj.modbase_text = 'modbase_text'
+        testobj.config_text = 'config_text'
+        testobj.download_text = 'download_text'
+        testobj.columns = '11'
+        testobj.savepath_text = 'savepath_text'
+        testobj.update()
+        assert testobj.parent.master.dialog_data == ('modbase_text', 'config_text',
+                                                     'download_text', 11, 'savepath_text')
+        assert capsys.readouterr().out == (
+                "called SettingsDialogGui.get_widget_text with args ('modbase_text',)\n"
+                "called SettingsDialogGui.get_widget_text with args ('config_text',)\n"
+                "called SettingsDialogGui.get_widget_text with args ('download_text',)\n"
+                "called SettingsDialogGui.get_widget_text with args ('11',)\n"
+                "called SettingsDialogGui.get_widget_text with args ('savepath_text',)\n"
+                "called SettingsDialogGui.confirm\n")
+
+
+class MockDeleteGui:
+    """teststub for gui.DeleteDialogGui object
+    """
+    def __init__(self, *args):
+        print('called DeleteDialogGui.__init__ with args', args)
+    def add_label(self, *args):
+        "stub"
+        print('called DeleteDialogGui.add_label with args', args)
+    def add_line_entry(self, *args):
+        "stub"
+        print('called DeleteDialogGui.add_line_entry with args', args)
+        return 'line_entry'
+    def add_browse_button(self, *args):
+        "stub"
+        print('called DeleteDialogGui.add_browse_button with args', args)
+        return 'browser'
+    def add_spinbox(self, *args):
+        "stub"
+        print('called DeleteDialogGui.add_spinbox with args', args)
+        return 'spinbox'
+    def add_combobox(self, *args, **kwargs):
+        "stub"
+        print('called DeleteDialogGui.add_combobox with args', args, kwargs)
+        return 'combobox'
+    def add_buttonbox(self, *args):
+        "stub"
+        print('called DeleteDialogGui.add_buttonbox with args', args)
+        result = [f'button{i}' for i in range(len(args[0]))]
+        return result
+    def set_focus(self, *args):
+        "stub"
+        print('called DeleteDialogGui.set_focus with args', args)
+    def enable_button(self, *args):
+        "stub"
+        print('called DeleteDialogGui.enable_button with args', args)
+    def get_widget_text(self, *args):
+        "stub"
+        print('called DeleteDialogGui.get_widget_text with args', args)
+        return ''
+    def get_combobox_entry(self, *args):
+        "stub"
+        print('called DeleteDialogGui.get_combobox_entry with args', args)
+        return ''
+    def set_combobox_entry(self, *args):
+        "stub"
+        print('called DeleteDialogGui.set_combobox_entry with args', args)
+    def select_directory(self, *args):
+        "stub"
+        print('called DeleteDialogGui.select_directory with args', args)
+        return ''
+    def accept(self):
+        "stub"
+        print('called DeleteDialogGui.accept')
+    def reject(self):
+        "stub"
+        print('called DeleteDialogGui.reject')
+    def confirm(self):
+        "stub"
+        print('called DeleteDialogGui.confirm')
+
+
+class TestDeleteDialog:
+    """unittests for qtgui.DeleteDialog
+    """
+    def setup_testobj(self, monkeypatch, capsys):
+        """stub for qtgui.DeleteDialog object
+
+        create the object skipping the normal initialization
+        intercept messages during creation
+        return the object so that other methods can be monkeypatched in the caller
+        """
+        def mock_init(self, *args):
+            print('called DeleteDialog.__init__ with args', args)
+        monkeypatch.setattr(testee.DeleteDialog, '__init__', mock_init)
+        testobj = testee.DeleteDialog()
+        testobj.doit = MockDeleteGui()
+        assert capsys.readouterr().out == ('called DeleteDialog.__init__ with args ()\n'
+                                           'called DeleteDialogGui.__init__ with args ()\n')
+        return testobj
+
+    def test_init(self, monkeypatch, capsys, expected_output):
+        """unittest for DeleteDialog.__init__
+        """
+        monkeypatch.setattr(testee.gui, 'DeleteDialogGui', MockDeleteGui)
+        parent = MockManager()
+        conf = MockConf()
+        testobj = testee.DeleteDialog(parent, conf)
+        assert testobj.parent == parent
+        assert testobj.conf == conf
+        assert testobj.modnames == {'xxx_name': 'xxx', 'yyy_name': 'yyy'}
+        assert testobj.lbox == 'combobox'
+        assert testobj.change_button == 'button0'
+        assert capsys.readouterr().out == expected_output['delete'].format(testobj=testobj)
+
+    def test_process(self, monkeypatch, capsys):
+        """unittest for DeleteDialog.process
+        """
+        def mock_get(*args):
+            print('called DeleteDialogGui.get_combobox_entry with args', args)
+            return testee.DeleteDialog.seltext
+        def mock_get_2(*args):
+            print('called DeleteDialogGui.get_combobox_entry with args', args)
+            return 'xxx'
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.lbox = 'checkbox'
+        testobj.change_button = 'change_button'
+        testobj.doit.get_combobox_entry = mock_get
+        testobj.process()
+        assert testobj.choice == testee.DeleteDialog.seltext
+        assert capsys.readouterr().out == (
+                "called DeleteDialogGui.get_combobox_entry with args ('checkbox',)\n"
+                "called DeleteDialogGui.enable_button with args ('change_button', False)\n")
+        testobj.choice = 'xxxx'
+        testobj.doit.get_combobox_entry = mock_get_2
+        testobj.process()
+        assert testobj.choice == 'xxx'
+        assert capsys.readouterr().out == (
+                "called DeleteDialogGui.get_combobox_entry with args ('checkbox',)\n"
+                "called DeleteDialogGui.enable_button with args ('change_button', True)\n")
+
+    def test_update(self, monkeypatch, capsys):
+        """unittest for DeleteDialog.update
+        """
+        def mock_remove(*args):
+            print('called Manager.remove_mod with args')
+        def mock_show(*args):
+            print('called gui.show_message with args', args)
+        monkeypatch.setattr(testee.gui, 'show_message', mock_show)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.parent = types.SimpleNamespace(
+                master=types.SimpleNamespace(remove_mod=mock_remove))
+        testobj.lbox = 'combobox'
+        testobj.choice = 'combochoice'
+        testobj.change_button = 'change_button'
+        testobj.update()
+        assert capsys.readouterr().out == (
+                "called Manager.remove_mod with args\n"
+                f"called gui.show_message with args ({testobj.doit}, 'combochoice has been removed')\n"
+                "called DeleteDialogGui.set_combobox_entry with args ('combobox', 0)\n"
+                "called DeleteDialogGui.enable_button with args ('change_button', False)\n"
+                "called DeleteDialogGui.confirm\n")
+
+
+class MockAttributesGui:
+    """teststub for gui.AttributesDialogGui object
+    """
+    def __init__(self, *args):
+        print('called AttributesDialogGui.__init__ with args', args)
+    def add_label(self, *args):
+        "stub"
+        print('called AttributesDialogGui.add_label with args', args)
+    def add_line_entry(self, *args, **kwargs):
+        "stub"
+        print('called AttributesDialogGui.add_line_entry with args', args, kwargs)
+        return 'line_entry'
+    def add_browse_button(self, *args):
+        "stub"
+        print('called AttributesDialogGui.add_browse_button with args', args)
+        return 'browser'
+    def add_spinbox(self, *args):
+        "stub"
+        print('called AttributesDialogGui.add_spinbox with args', args)
+        return 'spinbox'
+    def add_combobox(self, *args, **kwargs):
+        "stub"
+        print('called AttributesDialogGui.add_combobox with args', args, kwargs)
+        return 'combobox'
+    def add_checkbox(self, *args, **kwargs):
+        "stub"
+        print('called AttributesDialogGui.add_checkbox with args', args, kwargs)
+        return 'checkbox'
+    def start_line_with_clear_button(self):
+        "stub"
+        print('called AttributesDialogGui.start_line_with_clear_button')
+    def add_clear_button(self, *args, **kwargs):
+        "stub"
+        print('called AttributesDialogGui.add_clear_button with args', args, kwargs)
+        return 'clear_button'
+    def add_button(self, *args, **kwargs):
+        "stub"
+        print('called AttributesDialogGui.add_button with args', args, kwargs)
+        return 'button'
+    def add_buttonbox(self, *args):
+        "stub"
+        print('called AttributesDialogGui.add_buttonbox with args', args)
+        result = [f'button{i}' for i in range(len(args[0]))]
+        return result
+    def set_focus(self, *args):
+        "stub"
+        print('called AttributesDialogGui.set_focus with args', args)
+    def enable_button(self, *args):
+        "stub"
+        print('called AttributesDialogGui.enable_button with args', args)
+    def get_field_text(self, *args):
+        "stub"
+        print('called AttributesDialogGui.get_field_text with args', args)
+        return args[0]
+    def get_combobox_value(self, *args):
+        "stub"
+        print('called AttributeDialogGui.get_combobox_value with args', args)
+        return ''
+    def set_combobox_entry(self, *args):
+        "stub"
+        print('called AttributeDialogGui.set_combobox_entry with args', args)
+    def get_checkbox_value(self, *args):
+        "stub"
+        print('called AttributeDialogGui.get_checkbox_value with args', args)
+        return args[0]  # eigenlijk True of False maar is hier niet belangrijk
+    def clear_field(self, *args):
+        "stub"
+        print('called AttributeDialogGui.clear_field with args', args)
+    def reset_all_fields(self, *args):
+        "stub"
+        print('called AttributeDialogGui.reset_all_fields with args', args)
+    def activate_and_populate_fields(self, *args):
+        "stub"
+        print('called AttributeDialogGui.activate_and_populate_fields with args', args)
+    def accept(self):
+        "stub"
+        print('called AttributeDialogGui.accept')
+    def reject(self):
+        "stub"
+        print('called AttributeDialogGui.reject')
+    def confirm(self):
+        "stub"
+        print('called AttributeDialogGui.confirm')
+
+
+class TestAttributesDialog:
+    """unittests for qtgui.AttributesDialog
+    """
+    def setup_testobj(self, monkeypatch, capsys):
+        """stub for qtgui.AttributesDialog object
+
+        create the object skipping the normal initialization
+        intercept messages during creation
+        return the object so that other methods can be monkeypatched in the caller
+        """
+        def mock_init(self, *args):
+            print('called AttributesDialog.__init__ with args', args)
+        monkeypatch.setattr(testee.AttributesDialog, '__init__', mock_init)
+        testobj = testee.AttributesDialog()
+        testobj.doit = MockAttributesGui()
+        assert capsys.readouterr().out == ('called AttributesDialog.__init__ with args ()\n'
+                                           'called AttributesDialogGui.__init__ with args ()\n')
+        return testobj
+
+    def test_init(self, monkeypatch, capsys, expected_output):
+        """unittest for AttributesDialog.__init__
+        """
+        monkeypatch.setattr(testee.gui, 'AttributesDialogGui', MockAttributesGui)
+        parent = MockManager()
+        conf = MockConf()
+        testobj = testee.AttributesDialog(parent, conf)
+        assert testobj.parent == parent
+        assert testobj.conf == conf
+        assert testobj.choice == ''
+        assert testobj.modnames == {'xxx_name': 'xxx', 'yyy_name': 'yyy'}
+        assert testobj.lbox == 'combobox'
+        assert testobj.name == 'combobox'
+        assert testobj.clear_name_button == 'clear_button'
+        assert testobj.text == 'line_entry'
+        assert testobj.clear_text_button == 'clear_button'
+        assert testobj.activate_button == 'checkbox'
+        assert testobj.exempt_button == 'checkbox'
+        assert testobj.comps_button == 'button'
+        assert testobj.deps_button == 'button'
+        assert testobj.change_button == 'button0'
+        assert testobj.add_dep_button == 'button1'
+        assert capsys.readouterr().out == expected_output['attrs'].format(testobj=testobj)
+
+    def test_enable_change(self, monkeypatch, capsys):
+        """unittest for AttributesDialog.enable_change
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.change_button = 'change_button'
+        testobj.add_dep_button = 'add_dep_button'
+        testobj.enable_change()
+        assert capsys.readouterr().out == (
+                "called AttributesDialogGui.enable_button with args ('change_button', True)\n"
+                "called AttributesDialogGui.enable_button with args ('add_dep_button', True)\n")
+
+    def test_process(self, monkeypatch, capsys):
+        """unittest for AttributesDialog.process
+        """
+        def mock_get(*args):
+            print('called AttributesDialogGui.get_combobox_value with args', args)
+            return testee.AttributesDialog.seltext
+        def mock_get_2(*args):
+            print('called AttributesDialogGui.get_combobox_value with args', args)
+            return 'xxx'
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.conf = MockConf()
+        assert capsys.readouterr().out == "called JsonConf.__init__ with args () {}\n"
+        testobj.parent = types.SimpleNamespace(
+                master=types.SimpleNamespace(
+                    screeninfo={'xxx': {'txt': 'Xxx', 'sel': True, 'opt': False}}))
+        testobj.lbox = 'combobox'
+        testobj.name = 'combobox'
+        testobj.clear_name_button = 'clear_button'
+        testobj.text = 'line_entry'
+        testobj.clear_text_button = 'clear_button'
+        testobj.activate_button = 'checkbox'
+        testobj.exempt_button = 'checkbox'
+        testobj.comps_button = 'button'
+        testobj.deps_button = 'button'
+        testobj.change_button = 'change_button'
+        testobj.modnames = {'xxx': {'aaa'}}
+        testobj.doit.get_combobox_value = mock_get
+        testobj.process()
+        assert testobj.choice == testee.AttributesDialog.seltext
+        assert capsys.readouterr().out == (
+                "called AttributesDialogGui.get_combobox_value with args ('combobox',)\n"
+                "called AttributeDialogGui.reset_all_fields with args"
+                " (['combobox', 'clear_button', 'line_entry', 'clear_button',"
+                " 'checkbox', 'checkbox', 'button', 'button', 'change_button'],)\n")
+        testobj.doit.get_combobox_value = mock_get_2
+        testobj.process()
+        assert testobj.choice == 'xxx'
+        assert capsys.readouterr().out == (
+                "called AttributesDialogGui.get_combobox_value with args ('combobox',)\n"
+                "called Conf.list_components_for_dir with arg '{'aaa'}'\n"
+                "called Conf.get_component_data with args ('xxx', 'Name')\n"
+                "called Conf.get_component_data with args ('yyy', 'Name')\n"
+                "called AttributeDialogGui.activate_and_populate_fields with args"
+                " (['combobox', 'clear_button', 'line_entry', 'clear_button',"
+                " 'checkbox', 'checkbox', 'button', 'button', 'change_button'],"
+                " ['xxx', 'xxx_compname', 'yyy_compname'],"
+                " {'txt': 'Xxx', 'sel': True, 'opt': False})\n")
+
+    def test_clear_name_text(self, monkeypatch, capsys):
+        """unittest for AttributesDialog.clear_text
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.name = 'screenname_field'
+        testobj.clear_name_text()
+        assert capsys.readouterr().out == (
+            "called AttributeDialogGui.clear_field with args ('screenname_field',)\n")
+
+    def test_clear_text_text(self, monkeypatch, capsys):
+        """unittest for AttributesDialog.clear_text
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.text = 'screentext_field'
+        testobj.clear_text_text()
+        assert capsys.readouterr().out == (
+            "called AttributeDialogGui.clear_field with args ('screentext_field',)\n")
+
+    def test_view_components(self, monkeypatch, capsys):
+        """unittest for AttributesDialog.view_components
+        """
+        def mock_get(*args):
+            print('called ShowMods.get_mod_components with args', args)
+            return 'xxx'
+        def mock_show(*args, **kwargs):
+            print('called gui.show_message with args', args, kwargs)
+        monkeypatch.setattr(testee.gui, 'show_message', mock_show)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.parent = types.SimpleNamespace(
+                master=types.SimpleNamespace(get_mod_components=mock_get))
+        # testobj.conf = MockConf()
+        testobj.choice = 'xxx'
+        testobj.modnames = {'xxx': {'aaa'}}
+        testobj.view_components()
+        assert capsys.readouterr().out == (
+                "called ShowMods.get_mod_components with args ({'aaa'},)\n"
+                f"called gui.show_message with args ({testobj.doit}, 'xxx')"
+                " {'title': 'SDVMM mod info'}\n")
+
+    def test_view_dependencies(self, monkeypatch, capsys):
+        """unittest for AttributesDialog.view_dependencies
+        """
+        def mock_get(*args):
+            print('called ShowMods.get_mod_dependencies with args', args)
+            return 'xxx'
+        def mock_show(*args, **kwargs):
+            print('called gui.show_message with args', args, kwargs)
+        monkeypatch.setattr(testee.gui, 'show_message', mock_show)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.parent = types.SimpleNamespace(
+                master=types.SimpleNamespace(get_mod_dependencies=mock_get))
+        # testobj.conf = MockConf()
+        testobj.choice = 'xxx'
+        testobj.modnames = {'xxx': {'aaa'}}
+        testobj.view_dependencies()
+        assert capsys.readouterr().out == (
+                "called ShowMods.get_mod_dependencies with args ({'aaa'},)\n"
+                f"called gui.show_message with args ({testobj.doit}, 'xxx')"
+                " {'title': 'SDVMM mod info'}\n")
+
+    def test_update(self, monkeypatch, capsys):
+        """unittest for AttributesDialog.update
+        """
+        def mock_update(*args):
+            print("called ShowMods.update_attributes with args", args)
+            return False, 'A message'
+        def mock_update2(*args):
+            print("called ShowMods.update_attributes with args", args)
+            return True, ''
+        def mock_show(*args, **kwargs):
+            print('called gui.show_message with args', args, kwargs)
+        monkeypatch.setattr(testee.gui, 'show_message', mock_show)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.parent = types.SimpleNamespace(
+                master=types.SimpleNamespace(update_attributes=mock_update))
+        testobj.choice = 'xxx'
+        testobj.name = 'name_button'
+        testobj.text = 'text_button'
+        testobj.clear_name_button = 'clear_name_button'
+        testobj.clear_text_button = 'clear_text_button'
+        testobj.activate_button = 'activate_button'
+        testobj.exempt_button = 'exempt_button'
+        testobj.change_button = 'change_button'
+        testobj.update()
+        assert capsys.readouterr().out == (
+                "called AttributesDialogGui.enable_button with args ('clear_name_button', False)\n"
+                "called AttributesDialogGui.enable_button with args ('clear_text_button', False)\n"
+                "called AttributeDialogGui.get_checkbox_value with args ('activate_button',)\n"
+                "called AttributesDialogGui.get_field_text with args ('text_button',)\n"
+                "called AttributeDialogGui.get_combobox_value with args ('name_button',)\n"
+                "called AttributeDialogGui.get_checkbox_value with args ('exempt_button',)\n"
+                "called ShowMods.update_attributes with args"
+                " ('activate_button', '', 'xxx', 'text_button', 'exempt_button')\n"
+                f"called gui.show_message with args ({testobj.doit}, 'A message') {{}}\n")
+        testobj.parent.master.update_attributes = mock_update2
+        testobj.update()
+        assert capsys.readouterr().out == (
+                "called AttributesDialogGui.enable_button with args ('clear_name_button', False)\n"
+                "called AttributesDialogGui.enable_button with args ('clear_text_button', False)\n"
+                "called AttributeDialogGui.get_checkbox_value with args ('activate_button',)\n"
+                "called AttributesDialogGui.get_field_text with args ('text_button',)\n"
+                "called AttributeDialogGui.get_combobox_value with args ('name_button',)\n"
+                "called AttributeDialogGui.get_checkbox_value with args ('exempt_button',)\n"
+                "called ShowMods.update_attributes with args"
+                " ('activate_button', '', 'xxx', 'text_button', 'exempt_button')\n"
+                "called AttributesDialogGui.enable_button with args ('change_button', False)\n")
+
+    def test_add_dep(self, monkeypatch, capsys):
+        """unittest for AttributesDialog.add_dep
+        """
+        def mock_show(*args):
+            print('called show_dialog with args', args[0].__name__, args[1:])
+        monkeypatch.setattr(testee.gui, 'show_dialog', mock_show)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.conf = MockConf()
+        assert capsys.readouterr().out == "called JsonConf.__init__ with args () {}\n"
+        testobj.add_dep()
+        assert capsys.readouterr().out == (
+                f"called show_dialog with args DependencyDialog ({testobj.doit}, {testobj.conf})\n")
+
+
+class MockDependencyGui:
+    """teststub for gui.DependencyDialogGui object
+    """
+    def __init__(self, *args):
+        print('called DependencyDialogGui.__init__ with args', args)
+    def add_label(self, *args):
+        "stub"
+        print('called DependencyDialogGui.add_label with args', args)
+    def add_line_entry(self, *args):
+        "stub"
+        print('called DependencyDialogGui.add_line_entry with args', args)
+        return 'line_entry'
+    def add_browse_button(self, *args):
+        "stub"
+        print('called DependencyDialogGui.add_browse_button with args', args)
+        return 'browser'
+    def add_spinbox(self, *args):
+        "stub"
+        print('called DependencyDialogGui.add_spinbox with args', args)
+        return 'spinbox'
+    def add_combobox(self, *args, **kwargs):
+        "stub"
+        print('called DependencyDialogGui.add_combobox with args', args, kwargs)
+        return 'combobox'
+    def add_buttonbox(self, *args):
+        "stub"
+        print('called DependencyDialogGui.add_buttonbox with args', args)
+    def set_focus(self, *args):
+        "stub"
+        print('called DependencyDialogGui.set_focus with args', args)
+    def enable_button(self, *args):
+        "stub"
+        print('called DependencyDialogGui.enable_button with args', args)
+    def get_widget_text(self, *args):
+        "stub"
+        print('called DependencyDialogGui.get_widget_text with args', args)
+        return ''
+    def get_combobox_value(self, *args):
+        "stub"
+        print('called DependencyDialogGui.get_combobox_value with args', args)
+        return ''
+    def set_combobox_entry(self, *args):
+        "stub"
+        print('called DependencyDialogGui.set_combobox_entry with args', args)
+    def select_directory(self, *args):
+        "stub"
+        print('called DependencyDialogGui.select_directory with args', args)
+        return ''
+    def accept(self):
+        "stub"
+        print('called DependencyDialogGui.accept')
+    def reject(self):
+        "stub"
+        print('called DependencyDialogGui.reject')
+    def confirm(self):
+        "stub"
+        print('called DependencyDialogGui.confirm')
+
+
+class TestDependencyDialog:
+    """unittests for manager.SavegamesDialog
+    """
+    def setup_testobj(self, monkeypatch, capsys):
+        """stub for qtgui.SaveGamesDialog object
+
+        create the object skipping the normal initialization
+        intercept messages during creation
+        return the object so that other methods can be monkeypatched in the caller
+        """
+        def mock_init(self, *args):
+            print('called DependencyDialog.__init__ with args', args)
+        monkeypatch.setattr(testee.DependencyDialog, '__init__', mock_init)
+        testobj = testee.DependencyDialog()
+        testobj.doit = MockDependencyGui()
+        assert capsys.readouterr().out == ('called DependencyDialog.__init__ with args ()\n'
+                                           'called DependencyDialogGui.__init__ with args ()\n')
+        return testobj
+
+    def test_init(self, monkeypatch, capsys, expected_output):
+        """unittest for DependencyDialog.__init__
+        """
+        def mock_list():
+            print('called Conf.list_all_mod_dirs')
+            return ['Xxx']
+        def mock_listc(name):
+            print(f"called Conf.list_components_for_dir with arg '{name}'")
+            return ['yyy']
+        monkeypatch.setattr(testee.gui, 'DependencyDialogGui', MockDependencyGui)
+        parent = types.SimpleNamespace(
+                maingui=types.SimpleNamespace(modnames={'xxx': 'Xxx'}, choice='xxx'))
+        conf = MockConf()
+        assert capsys.readouterr().out == "called JsonConf.__init__ with args () {}\n"
+        testobj = testee.DependencyDialog(parent, conf)
+        assert testobj.parent == parent
+        assert testobj.conf == conf
+        assert testobj.modnames == {'xxx_name': 'xxx', 'yyy_name': 'yyy'}
+        assert capsys.readouterr().out == expected_output['deps'].format(testobj=testobj)
+
+        conf.list_all_mod_dirs = mock_list
+        conf.list_components_for_dir = mock_listc
+        testobj = testee.DependencyDialog(parent, conf)
+        assert testobj.parent == parent
+        assert testobj.conf == conf
+        assert testobj.modnames == {}
+        assert capsys.readouterr().out == expected_output['deps2'].format(testobj=testobj)
+
+    def test_accept(self, monkeypatch, capsys):
+        """unittest for DependencyDialog.accept
+        """
+        def mock_get(*args):
+            print('called DependencyDialogGui.get_combobox_value with args', args)
+            return args[0]
+        def mock_show(*args, **kwargs):
+            print('called gui.show_message with args', args, kwargs)
+        monkeypatch.setattr(testee.gui, 'show_message', mock_show)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.doit.get_combobox_value = mock_get
+        testobj.conf = MockConf()
+        assert capsys.readouterr().out == "called JsonConf.__init__ with args () {}\n"
+        testobj.modnames = {'depsel': 'qqq'}
+        testobj.dependency_selector = 'depsel'
+        testobj.component_selector = 'compsel'
+        testobj.accept()
+        assert capsys.readouterr().out == (
+                "called DependencyDialogGui.get_combobox_value with args ('depsel',)\n"
+                "called DependencyDialogGui.get_combobox_value with args ('compsel',)\n"
+                "called Conf.list_components_for_dir with arg 'qqq'\n"
+                "called Conf.get_component_data with args ('compsel', 'Deps')\n"
+                "called Conf.set_componenentdata_value with args"
+                f" ('compsel', 'Deps', ['compsel_depname', 'xxx'])\n"
+                "called JsonConf.save\n"
+                f"called gui.show_message with args ({testobj.doit}, 'Add Dependency',"
+                " 'Wijziging is doorgevoerd\\nVergeet niet om na updaten van de mod"
+                " te controleren of de dependency opnieuw moet worden toegevoegd') {}\n"
+                "called DependencyDialogGui.confirm\n")
+
+
+class MockSaveGamesGui:
+    """teststub for gui.SaveGamesDialogGui object
+    """
+    def __init__(self, *args):
+        print('called SaveGamesDialogGui.__init__ with args', args)
+    def add_label(self, *args):
+        "stub"
+        print('called SaveGamesDialogGui.add_label with args', args)
+    def add_line_entry(self, *args):
+        "stub"
+        print('called SaveGamesDialogGui.add_line_entry with args', args)
+        return 'line_entry'
+    def add_browse_button(self, *args):
+        "stub"
+        print('called SaveGamesDialogGui.add_browse_button with args', args)
+        return 'browser'
+    def add_spinbox(self, *args):
+        "stub"
+        print('called SaveGamesDialogGui.add_spinbox with args', args)
+        return 'spinbox'
+    def add_combobox(self, *args, **kwargs):
+        "stub"
+        print('called SaveGamesDialogGui.add_combobox with args', args, kwargs)
+        return 'combobox'
+    def add_buttonbox(self, *args):
+        "stub"
+        print('called SaveGamesDialogGui.add_buttonbox with args', args)
+        result = [f'button{i}' for i in range(len(args[0]))]
+        return result
+    def start_modselect_block(self, *args):
+        "stub"
+        print('called SaveGamesDialogGui.start_modselect_block with args', args)
+    def add_clear_button(self, *args, **kwargs):
+        "stub"
+        print('called AttributesDialogGui.add_clear_button with args', args, kwargs)
+        return 'clear_button', 'container'
+    def set_callbacks(self, *args):
+        "stub"
+        print('called SaveGamesDialogGui.set_callbacks with args', args)
+    def set_focus(self, *args):
+        "stub"
+        print('called SaveGamesDialogGui.set_focus with args', args)
+    def enable_change(self, *args):
+        "stub"
+        print('called SaveGamesDialogGui.enable_change with args', args)
+    def enable_widget(self, *args):
+        "stub"
+        print('called SaveGamesDialogGui.enable_widget with args', args)
+    def set_field_text(self, *args):
+        "stub"
+        print('called AttributesDialogGui.set_field_text with args', args)
+    def get_field_text(self, *args):
+        "stub"
+        print('called AttributesDialogGui.get_field_text with args', args)
+        return args[0]
+    def get_widget_text(self, *args):
+        "stub"
+        print('called SaveGamesDialogGui.get_widget_text with args', args)
+        return ''
+    def get_combobox_value(self, *args):
+        "stub"
+        print('called SaveGamesDialogGui.get_combobox_value with args', args)
+        return ''
+    def set_combobox_value(self, *args):
+        "stub"
+        print('called SaveGamesDialogGui.set_combobox_value with args', args)
+    def select_directory(self, *args):
+        "stub"
+        print('called SaveGamesDialogGui.select_directory with args', args)
+        return ''
+    def remove_modselector(self, *args):
+        "stub"
+        print('called SaveGamesDialogGui.remove_modselector with args', args)
+    def accept(self):
+        "stub"
+        print('called SaveGamesDialogGui.accept')
+    def reject(self):
+        "stub"
+        print('called SaveGamesDialogGui.reject')
+    def confirm(self):
+        "stub"
+        print('called SaveGamesDialogGui.confirm')
+
+
+class TestSaveGamesDialog:
+    """unittests for qtgui.SaveGamesDialog
+    """
+    def setup_testobj(self, monkeypatch, capsys):
+        """stub for qtgui.SaveGamesDialog object
+
+        create the object skipping the normal initialization
+        intercept messages during creation
+        return the object so that other methods can be monkeypatched in the caller
+        """
+        def mock_init(self, *args):
+            print('called SaveGamesDialog.__init__ with args', args)
+        monkeypatch.setattr(testee.SaveGamesDialog, '__init__', mock_init)
+        testobj = testee.SaveGamesDialog()
+        testobj.doit = MockSaveGamesGui()
+        assert capsys.readouterr().out == ('called SaveGamesDialog.__init__ with args ()\n'
+                                           'called SaveGamesDialogGui.__init__ with args ()\n')
+        return testobj
+
+    def test_init(self, monkeypatch, capsys, expected_output):
+        """unittest for SaveGamesDialog.__init__
+        """
+        def mock_add(self, *args):
+            print('called SaveGamesDialog.add_modselector')
+        parent = MockManager()
+        conf = MockConf()
+        assert capsys.readouterr().out == ("called Manager.__init__\n"
+                                           "called JsonConf.__init__ with args () {}\n")
+        monkeypatch.setattr(testee.gui, 'SaveGamesDialogGui', MockSaveGamesGui)
+        monkeypatch.setattr(testee.SaveGamesDialog, 'add_modselector', mock_add)
+        testobj = testee.SaveGamesDialog(parent, conf)
+        assert testobj.parent == parent
+        assert testobj.conf == conf
+        assert testobj.savenames == ['qqq', 'rrr']
+        assert testobj.modnames == {'xxx_name': 'xxx', 'yyy_name': 'yyy'}
+        assert testobj.savegame_selector == 'combobox'
+        assert testobj.oldsavename == ''
+        assert testobj.pname == 'line_entry'
+        assert testobj.fname == 'line_entry'
+        assert testobj.gdate == 'line_entry'
+        assert testobj.widgets == []
+        assert testobj.update_button == 'button0'
+        assert testobj.confirm_button == 'button1'
+        assert capsys.readouterr().out == expected_output['saves'].format(testobj=testobj)
+
+    def test_add_modselector(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialog.add_modselector
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.modnames = ['yyy', 'xxx']
+        testobj.widgets = []
+        testobj.add_modselector()
+        assert testobj.widgets == [['clear_button', 'combobox', 'container']]
+        assert capsys.readouterr().out == (
+            "called SaveGamesDialogGui.add_combobox with args"
+            " (['select a mod', 'xxx', 'yyy'], None) {'editable': True, 'enabled': True}\n"
+            "called AttributesDialogGui.add_clear_button with args (True,) {}\n"
+            "called SaveGamesDialogGui.set_callbacks with args (('combobox', 'clear_button'),"
+            f" (functools.partial({testobj.process_mod}, 'combobox'),"
+            f" functools.partial({testobj.remove_mod}, 'clear_button')))\n")
+        testobj.widgets = []
+        testobj.add_modselector(False)
+        assert testobj.widgets == [['clear_button', 'combobox', 'container']]
+        assert capsys.readouterr().out == (
+            "called SaveGamesDialogGui.add_combobox with args"
+            " (['select a mod', 'xxx', 'yyy'], None) {'editable': True, 'enabled': False}\n"
+            "called AttributesDialogGui.add_clear_button with args (False,) {}\n"
+            "called SaveGamesDialogGui.set_callbacks with args (('combobox', 'clear_button'),"
+            f" (functools.partial({testobj.process_mod}, 'combobox'),"
+            f" functools.partial({testobj.remove_mod}, 'clear_button')))\n")
+
+    def test_process_mod(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialog.process_mod
+        """
+        def mock_add():
+            print('called SaveGamesDialog.add_modselector')
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.add_modselector = mock_add
+        testobj.update_button = 'update_button'
+        testobj.widgets = [('button0', 'lbox0'), ('button1', 'lbox1')]
+        testobj.process_mod('lbox', 'select a mod')
+        assert capsys.readouterr().out == ""
+        testobj.process_mod('lbox0', 'item0')
+        assert capsys.readouterr().out == (
+                "called SaveGamesDialogGui.enable_widget with args ('button0', True)\n"
+                "called SaveGamesDialogGui.enable_widget with args ('update_button', True)\n")
+        testobj.process_mod('lbox1', 'item1')
+        assert capsys.readouterr().out == (
+                "called SaveGamesDialogGui.enable_widget with args ('button1', True)\n"
+                "called SaveGamesDialogGui.enable_widget with args ('update_button', True)\n"
+                "called SaveGamesDialog.add_modselector\n")
+
+    def test_remove_mod(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialog.remove_mod
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.widgets = []
+        testobj.remove_mod('btn')
+        assert not testobj.widgets
+        assert capsys.readouterr().out == ""
+        testobj.widgets = [('button', 'checkbox')]
+        testobj.remove_mod('btn')
+        assert testobj.widgets == [('button', 'checkbox')]
+        assert capsys.readouterr().out == ""
+        testobj.widgets = [('btn', 'cbox')]
+        testobj.remove_mod('btn')
+        assert not testobj.widgets
+        assert capsys.readouterr().out == (
+                "called SaveGamesDialogGui.remove_modselector with args (('btn', 'cbox'),)\n")
+
+    def test_confirm(self, monkeypatch, capsys, tmp_path):
+        """unittest for SaveGamesDialog.confirm
+        """
+        def mock_get_value(*args):
+            print('called SaveGamesDialogGui.get_combobox_value with args', args)
+            return 'aaa'
+        def mock_get_diritem_data(*args):
+            print("called Conf.get_diritem_data with args", args)
+            if args == ('xxx', '_DoNotTouch'):
+                return False
+            if args == ('yyy', '_DoNotTouch'):
+                return True
+            if args == ('zzz', '_DoNotTouch'):
+                return True
+        def mock_get_component_data(*args):
+            print("called Conf.get_component_data with args", args)
+            if args[0] == 'xxx':
+                return 'aaa'
+            if args[0] == 'yyy':
+                return '.bbb'
+        def mock_get_mods(name):
+            print(f"called Conf.get_mods_for_saveitem with arg {name}")
+            return ['qqq', 'rrr']
+        def mock_select(self, names):
+            print(f'called Manager.select_activations with arg {names}')
+            self.directories = ['sss', 'ttt']
+        def mock_list_dirs():
+            print('called Conf.list_all_mod_dirs')
+            return []
+        def mock_show(*args, **kwargs):
+            print('called gui.show_message with args', args, kwargs)
+        # monkeypatch.setattr(testee.os.path, 'exists', mock_exists)
+        monkeypatch.setattr(testee.gui, 'show_message', mock_show)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.parent = types.SimpleNamespace(master=MockManager())
+        testobj.conf = MockConf()
+        assert capsys.readouterr().out == ('called Manager.__init__\n'
+                                           'called JsonConf.__init__ with args () {}\n')
+        testobj.savegame_selector = 'combobox'
+        testobj.parent.master.modbase = tmp_path
+        testobj.doit.get_combobox_value = mock_get_value
+
+        testobj.conf.get_diritem_data = mock_get_diritem_data
+        testobj.conf.get_component_data = mock_get_component_data
+        testobj.conf.get_mods_for_saveitem = mock_get_mods
+        testobj.confirm()
+        assert capsys.readouterr().out == (
+                "called SaveGamesDialogGui.get_combobox_value with args ('combobox',)\n"
+                "called Conf.get_mods_for_saveitem with arg aaa\n"
+                "called Conf.list_all_mod_dirs\n"
+                "called Conf.get_diritem_data with args ('xxx', '_DoNotTouch')\n"
+                "called Conf.get_diritem_data with args ('yyy', '_DoNotTouch')\n"
+                "called Manager.select_activations with args (['qqq', 'rrr'],)\n"
+                "called Manager.refresh_widget_data\n"
+                "called gui.show_message with args"
+                f" ({testobj.doit}, 'wijzigingen zijn doorgevoerd') {{'title': 'Change Config'}}\n"
+                "called SaveGamesDialogGui.accept\n")
+
+        monkeypatch.setattr(MockManager, 'select_activations', mock_select)
+        # monkeypatch.setattr(testee.os.path, 'exists', mock_exists_2)
+        # testobj.conf.list_components_for_dir = mock_list_comps
+        (tmp_path / 'yyy').touch()
+        testobj.confirm()
+        assert capsys.readouterr().out == (
+                "called SaveGamesDialogGui.get_combobox_value with args ('combobox',)\n"
+                "called Conf.get_mods_for_saveitem with arg aaa\n"
+                "called Conf.list_all_mod_dirs\n"
+                "called Conf.get_diritem_data with args ('xxx', '_DoNotTouch')\n"
+                "called Conf.get_diritem_data with args ('yyy', '_DoNotTouch')\n"
+                "called Conf.get_diritem_data with args ('yyy', 'SCRNAM')\n"
+                "called Manager.select_activations with arg ['qqq', 'rrr', 'yyy']\n"
+                "called Manager.activate with args\n"
+                "called Manager.refresh_widget_data\n"
+                "called gui.show_message with args"
+                f" ({testobj.doit}, 'wijzigingen zijn doorgevoerd') {{'title': 'Change Config'}}\n"
+                "called SaveGamesDialogGui.accept\n")
+
+    def test_update(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialog.update
+        """
+        def mock_get_value(*args):
+            print('called SaveGamesDialogGui.get_combobox_value with args', args)
+            return 'aaa'
+        def mock_update(arg):
+            print(f"called SaveGameDialog.update_conf with arg '{arg}'")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.doit.get_combobox_value = mock_get_value
+        testobj.update_conf = mock_update
+        testobj.savegame_selector = 'combobox'
+        testobj.update()
+        assert capsys.readouterr().out == (
+                "called SaveGamesDialogGui.get_combobox_value with args ('combobox',)\n"
+                "called SaveGameDialog.update_conf with arg 'aaa'\n")
+
+    def test_update_conf(self, monkeypatch, capsys):
+        """unittest for SaveGamesDialog.update
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.pname = 'pname'
+        testobj.fname = 'fname'
+        testobj.gdate = 'gdate'
+        testobj.update_button = 'update_button'
+        testobj.conf = MockConf()
+        assert capsys.readouterr().out == "called JsonConf.__init__ with args () {}\n"
+        testobj.widgets = []
+        lbox = 'checkbox'
+        testobj.old_pname = 'pname'
+        testobj.old_fname = 'fname'
+        testobj.old_gdate = 'gdate'
+        testobj.oldmods = []
+        testobj.update_conf('save_name')
+        assert capsys.readouterr().out == (
+                "called AttributesDialogGui.get_field_text with args ('pname',)\n"
+                "called AttributesDialogGui.get_field_text with args ('fname',)\n"
+                "called AttributesDialogGui.get_field_text with args ('gdate',)\n"
+                # "called JsonConf.save\n"
+                "called SaveGamesDialogGui.enable_widget with args ('update_button', False)\n")
+        testobj.widgets = [lbox]
+        testobj.oldmods = ['current text']
+        testobj.update_conf('save_name')
+        assert capsys.readouterr().out == (
+                "called AttributesDialogGui.get_field_text with args ('pname',)\n"
+                "called AttributesDialogGui.get_field_text with args ('fname',)\n"
+                "called AttributesDialogGui.get_field_text with args ('gdate',)\n"
+                "called Conf.update_saveitem_data with args ('save_name', 'Mods', [])\n"
+                "called JsonConf.save\n"
+                "called SaveGamesDialogGui.enable_widget with args ('update_button', False)\n")
+
+        testobj.old_pname = 'aaa'
+        testobj.old_fname = 'bbb'
+        testobj.old_gdate = 'ccc'
+        testobj.oldmods = ['qqq']
+        testobj.update_conf('save_name')
+        assert capsys.readouterr().out == (
+                "called AttributesDialogGui.get_field_text with args ('pname',)\n"
+                "called Conf.update_saveitem_data with args ('save_name', 'Pname', 'pname')\n"
+                "called AttributesDialogGui.get_field_text with args ('fname',)\n"
+                "called Conf.update_saveitem_data with args ('save_name', 'Fname', 'fname')\n"
+                "called AttributesDialogGui.get_field_text with args ('gdate',)\n"
+                "called Conf.update_saveitem_data with args ('save_name', 'Gdate', 'gdate')\n"
+                "called Conf.update_saveitem_data with args ('save_name', 'Mods', [])\n"
+                "called JsonConf.save\n"
+                "called SaveGamesDialogGui.enable_widget with args ('update_button', False)\n")
+
+    def test_get_savedata(self, monkeypatch, capsys):  # 907-932
+        """unittest for SaveGamesDialog.get_savedata
+        """
+        def mock_update(name):
+            print(f'called SaveGamesDialog with arg {name}')
+        def mock_add(self):
+            print('called SaveGamesDialog.add_modselector')
+            self.widgets = [['button', 'combobox', 'container']]
+        def mock_get(arg):
+            print(f'called SaveGavesDialogGui.get_combobox_value with arg {arg}')
+            return combobox_value
+        def mock_get_attrs(value):
+            "stub"
+            print(f"called Conf.get_saveitem_attrs with arg {value}")
+            return ('oldpname', 'oldfname', 'oldgdate'), True
+        def mock_get_attrs_2(value):
+            "stub"
+            print(f"called Conf.get_saveitem_attrs with arg {value}")
+            return ('oldpname', 'oldfname', 'oldgdate'), False
+        def mock_get_mods(name):
+            "stub"
+            print(f"called Conf.get_mods_for_saveitem with arg {name}")
+            return ['newmodname']
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.conf = MockConf()
+        assert capsys.readouterr().out == "called JsonConf.__init__ with args () {}\n"
+        testobj.update_conf = mock_update
+        monkeypatch.setattr(testee.SaveGamesDialog, 'add_modselector', mock_add)
+        # testobj.vbox2 = mockqtw.MockVBoxLayout()
+        testobj.savegame_selector = 'savegame_selector'
+        testobj.oldsavename = ''
+        testobj.pname = 'pname'
+        testobj.fname = 'fname'
+        testobj.gdate = 'gdate'
+        testobj.update_button = 'update_button'
+        testobj.confirm_button = 'confirm_button'
+        testobj.widgets = []
+        testobj.doit.get_combobox_value = mock_get
+
+        combobox_value = 'select a saved game'
+        testobj.get_savedata()
+        assert capsys.readouterr().out == (
+                "called SaveGavesDialogGui.get_combobox_value with arg savegame_selector\n"
+                "called SaveGamesDialog.add_modselector\n")
+
+        testobj.oldsavename = ''
+        combobox_value = 'xxx'
+        testobj.get_savedata()
+        assert capsys.readouterr().out == (
+                "called SaveGavesDialogGui.get_combobox_value with arg savegame_selector\n"
+                "called SaveGamesDialogGui.remove_modselector with args"
+                " (['button', 'combobox', 'container'],)\n"
+                "called SaveGamesDialog.add_modselector\n"
+                "called Conf.get_saveitem_attrs with arg xxx\n"
+                "called SaveGamesDialogGui.enable_widget with args ('update_button', False)\n"
+                "called SaveGamesDialogGui.enable_widget with args ('confirm_button', True)\n")
+        testobj.oldsavename = 'yyy'
+        testobj.get_savedata()
+        assert capsys.readouterr().out == (
+                "called SaveGavesDialogGui.get_combobox_value with arg savegame_selector\n"
+                "called SaveGamesDialog with arg yyy\n"
+                "called SaveGamesDialogGui.remove_modselector with args"
+                " (['button', 'combobox', 'container'],)\n"
+                "called SaveGamesDialog.add_modselector\n"
+                "called Conf.get_saveitem_attrs with arg xxx\n"
+                "called SaveGamesDialogGui.enable_widget with args ('update_button', False)\n"
+                "called SaveGamesDialogGui.enable_widget with args ('confirm_button', True)\n")
+        testobj.widgets = [['button', 'combobox', 'container']]
+        testobj.conf.get_saveitem_attrs = mock_get_attrs
+        testobj.conf.get_mods_for_saveitem = mock_get_mods
+        testobj.get_savedata()
+        assert capsys.readouterr().out == (
+                "called SaveGavesDialogGui.get_combobox_value with arg savegame_selector\n"
+                "called SaveGamesDialog with arg xxx\n"
+                "called SaveGamesDialogGui.remove_modselector with args"
+                " (['button', 'combobox', 'container'],)\n"
+                "called SaveGamesDialog.add_modselector\n"
+                "called Conf.get_saveitem_attrs with arg xxx\n"
+                "called AttributesDialogGui.set_field_text with args ('pname', 'oldpname')\n"
+                "called AttributesDialogGui.set_field_text with args ('fname', 'oldfname')\n"
+                "called AttributesDialogGui.set_field_text with args ('gdate', 'oldgdate')\n"
+                "called Conf.get_mods_for_saveitem with arg xxx\n"
+                "called SaveGamesDialogGui.set_combobox_value with args ('combobox', 'newmodname')\n"
+                "called SaveGamesDialogGui.enable_widget with args ('update_button', True)\n"
+                "called SaveGamesDialogGui.enable_widget with args ('confirm_button', True)\n")
+        # testobj.widgets = [['button', 'combobox', 'container']]
+        testobj.conf.get_saveitem_attrs = mock_get_attrs_2
+        testobj.conf.get_mods_for_saveitem = mock_get_mods
+        testobj.get_savedata()
+        assert capsys.readouterr().out == (
+                "called SaveGavesDialogGui.get_combobox_value with arg savegame_selector\n"
+                "called SaveGamesDialog with arg xxx\n"
+                "called SaveGamesDialogGui.remove_modselector with args"
+                " (['button', 'combobox', 'container'],)\n"
+                "called SaveGamesDialog.add_modselector\n"
+                "called Conf.get_saveitem_attrs with arg xxx\n"
+                "called AttributesDialogGui.set_field_text with args ('pname', 'oldpname')\n"
+                "called AttributesDialogGui.set_field_text with args ('fname', 'oldfname')\n"
+                "called AttributesDialogGui.set_field_text with args ('gdate', 'oldgdate')\n"
+                "called Conf.get_mods_for_saveitem with arg xxx\n"
+                "called SaveGamesDialogGui.set_combobox_value with args ('combobox', 'newmodname')\n"
+                "called SaveGamesDialogGui.enable_widget with args ('update_button', False)\n"
+                "called SaveGamesDialogGui.enable_widget with args ('confirm_button', True)\n")
 
 
 def test_get_toplevel():
@@ -1720,3 +3003,108 @@ def test_build_jsonconf(monkeypatch, capsys, tmp_path):
             "called json.dump with args ({'moddirs': {'a': 'b'}, 'components': ['q', 'r'],"
             " 'savedgames': {'x': 'z'}},"
             f" <_io.TextIOWrapper name='{tmp_path / 'qqq'}' mode='w' encoding='UTF-8'>)\n")
+
+
+settings_output = """\
+called Manager.__init__
+called SettingsDialogGui.__init__ with args ({testobj}, {testobj.parent})
+called SettingsDialogGui.add_label with args ('Base location for mods:',)
+called SettingsDialogGui.add_line_entry with args ('xxx',)
+called SettingsDialogGui.add_browse_button with args ({testobj.select_modbase},)
+called SettingsDialogGui.add_label with args ('Configuration file name:',)
+called SettingsDialogGui.add_line_entry with args ('yyy',)
+called SettingsDialogGui.add_label with args ('Location for downloads:',)
+called SettingsDialogGui.add_line_entry with args ('zzz',)
+called SettingsDialogGui.add_browse_button with args ({testobj.select_download_path},)
+called SettingsDialogGui.add_label with args ('Number of columns on screen:',)
+called SettingsDialogGui.add_spinbox with args ('qqq',)
+called SettingsDialogGui.add_label with args ('Location for save files:',)
+called SettingsDialogGui.add_line_entry with args ('rrr',)
+called SettingsDialogGui.add_browse_button with args ({testobj.select_savepath},)
+called SettingsDialogGui.add_buttonbox with args ([('&Save', {testobj.update}), ('&Close', {testobj.doit.reject})],)
+called SettingsDialogGui.set_focus with args ('line_entry',)
+"""
+delete_output = """\
+called Manager.__init__
+called JsonConf.__init__ with args () {{}}
+called DeleteDialogGui.__init__ with args ({testobj}, {testobj.parent})
+called Conf.list_all_mod_dirs
+called Conf.get_diritem_data with args ('xxx', 'SCRNAM')
+called Conf.get_diritem_data with args ('yyy', 'SCRNAM')
+called DeleteDialogGui.add_combobox with args (['select a mod to remove from the config', 'xxx_name', 'yyy_name'], {testobj.process}) {{'editable': False}}
+called DeleteDialogGui.add_buttonbox with args ([('&Remove', {testobj.update}, False), ('&Close', {testobj.doit.accept}, True)],)
+called DeleteDialogGui.set_focus with args ('combobox',)
+"""
+attributes_output = """\
+called Manager.__init__
+called JsonConf.__init__ with args () {{}}
+called AttributesDialogGui.__init__ with args ({testobj}, {testobj.parent})
+called Conf.list_all_mod_dirs
+called Conf.get_diritem_data with args ('xxx', 'SCRNAM')
+called Conf.get_diritem_data with args ('yyy', 'SCRNAM')
+called AttributesDialogGui.add_combobox with args (['select a mod to change the screen text etc.', 'xxx_name', 'yyy_name'], {testobj.process}) {{'editable': False}}
+called AttributesDialogGui.add_label with args ('Screen Name:\\n(the suggestions in the box below are taken from\\nthe mod components',)
+called AttributesDialogGui.start_line_with_clear_button
+called AttributesDialogGui.add_combobox with args ([], {testobj.enable_change}) {{'editable': True, 'enabled': False}}
+called AttributesDialogGui.add_clear_button with args ({testobj.clear_name_text},) {{}}
+called AttributesDialogGui.add_label with args ('Screen Text:\\n(to add some information e.q. if the mod is broken)',)
+called AttributesDialogGui.start_line_with_clear_button
+called AttributesDialogGui.add_line_entry with args ('', {testobj.enable_change}) {{'enabled': False}}
+called AttributesDialogGui.add_clear_button with args ({testobj.clear_text_text},) {{}}
+called AttributesDialogGui.add_checkbox with args ('This mod can be activated by itself', {testobj.enable_change}) {{'enabled': False}}
+called AttributesDialogGui.add_checkbox with args ('Do not touch when (de)activating for a save', {testobj.enable_change}) {{'enabled': False}}
+called AttributesDialogGui.add_button with args ('View &Components', {testobj.view_components}) {{'enabled': False}}
+called AttributesDialogGui.add_button with args ('View &Dependencies', {testobj.view_dependencies}) {{'enabled': False}}
+called AttributesDialogGui.add_buttonbox with args ([('&Update', {testobj.update}, False), ('&Add dependency', {testobj.add_dep}, False), ('&Close', {testobj.doit.accept}, True)],)
+called AttributesDialogGui.set_focus with args ('combobox',)
+"""
+dependency_output = """\
+called DependencyDialogGui.__init__ with args ({testobj}, namespace(maingui=namespace(modnames={{'xxx': 'Xxx'}}, choice='xxx')))
+called Conf.list_all_mod_dirs
+called Conf.get_diritem_data with args ('xxx', 'SCRNAM')
+called Conf.get_diritem_data with args ('yyy', 'SCRNAM')
+called DependencyDialogGui.add_label with args ('Selecteer de toe te voegen dependency',)
+called DependencyDialogGui.add_combobox with args (['select a mod', 'xxx_name', 'yyy_name'], None) {{'editable': False}}
+called Conf.list_components_for_dir with arg 'Xxx'
+called DependencyDialogGui.add_label with args ('Selecteer een component om de dependency aan toe te voegen',)
+called DependencyDialogGui.add_combobox with args (['select a component', 'xxx', 'yyy'], None) {{'editable': False, 'enabled': True}}
+called DependencyDialogGui.add_label with args ('Bij Add wordt de dependency direct aan de configuratie toegevoegd',)
+called DependencyDialogGui.add_buttonbox with args ([('&Add dependency', {testobj.accept}), ('&Close', {testobj.doit.reject})],)
+called DependencyDialogGui.set_focus with args ('combobox',)
+"""
+dependency_output_2 = """\
+called DependencyDialogGui.__init__ with args ({testobj}, namespace(maingui=namespace(modnames={{'xxx': 'Xxx'}}, choice='xxx')))
+called Conf.list_all_mod_dirs
+called DependencyDialogGui.add_label with args ('Selecteer de toe te voegen dependency',)
+called DependencyDialogGui.add_combobox with args (['select a mod'], None) {{'editable': False}}
+called Conf.list_components_for_dir with arg 'Xxx'
+called DependencyDialogGui.add_label with args ('De dependency wordt toegevoegd aan onderstaande component',)
+called DependencyDialogGui.add_combobox with args (['yyy'], None) {{'editable': False, 'enabled': False}}
+called DependencyDialogGui.add_label with args ('Bij Add wordt de dependency direct aan de configuratie toegevoegd',)
+called DependencyDialogGui.add_buttonbox with args ([('&Add dependency', {testobj.accept}), ('&Close', {testobj.doit.reject})],)
+called DependencyDialogGui.set_focus with args ('combobox',)
+"""
+savegames_output = """\
+called SaveGamesDialogGui.__init__ with args ({testobj}, {testobj.parent})
+called Conf.list_all_mod_savetemitems
+called Conf.list_all_mod_dirs
+called Conf.get_diritem_data with args ('xxx', 'SCRNAM')
+called Conf.get_diritem_data with args ('yyy', 'SCRNAM')
+called SaveGamesDialogGui.add_combobox with args (['select a saved game', 'qqq', 'rrr'], {testobj.get_savedata}) {{'editable': False}}
+called SaveGamesDialogGui.add_label with args ('Player name:',)
+called SaveGamesDialogGui.add_line_entry with args ('',)
+called SaveGamesDialogGui.add_label with args ('Farm name:',)
+called SaveGamesDialogGui.add_line_entry with args ('',)
+called SaveGamesDialogGui.add_label with args ('In-game date:',)
+called SaveGamesDialogGui.add_line_entry with args ('',)
+called SaveGamesDialogGui.start_modselect_block with args ('Uses:',)
+called SaveGamesDialog.add_modselector
+called SaveGamesDialogGui.add_buttonbox with args ([('&Update config', {testobj.update}, False), ('&Activate Mods', {testobj.confirm}, False), ('&Close', {testobj.doit.accept}, True)],)
+called SaveGamesDialogGui.set_focus with args ('combobox',)
+"""
+
+@pytest.fixture
+def expected_output():
+    "fixture giving output predictions"
+    return {'settings': settings_output, 'delete': delete_output, 'attrs': attributes_output,
+            'deps': dependency_output, 'deps2': dependency_output_2, 'saves': savegames_output}
