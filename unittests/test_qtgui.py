@@ -151,6 +151,10 @@ called PushButton.__init__ with args ('&Update',) {{}}
 called PushButton.setDisabled with arg `True`
 called Signal.connect with args ({testobj.update},)
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
+called PushButton.__init__ with args ('&Add dependency',) {{}}
+called PushButton.setDisabled with arg `True`
+called Signal.connect with args ({testobj.add_dep},)
+called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
 called PushButton.__init__ with args ('&Exit',) {{}}
 called Signal.connect with args ({testobj.accept},)
 called HBox.addWidget with arg of type <class 'mockgui.mockqtwidgets.MockPushButton'>
@@ -1163,9 +1167,12 @@ class TestAttributesDialog:
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.change_button = mockqtw.MockPushButton()
-        assert capsys.readouterr().out == "called PushButton.__init__ with args () {}\n"
+        testobj.add_dep_button = mockqtw.MockPushButton()
+        assert capsys.readouterr().out == ("called PushButton.__init__ with args () {}\n"
+                                           "called PushButton.__init__ with args () {}\n")
         testobj.enable_change()
-        assert capsys.readouterr().out == "called PushButton.setEnabled with arg `True`\n"
+        assert capsys.readouterr().out == ("called PushButton.setEnabled with arg `True`\n"
+                                           "called PushButton.setEnabled with arg `True`\n")
 
     def test_process(self, monkeypatch, capsys):
         """unittest for AttributesDialog.process
@@ -1799,7 +1806,11 @@ class TestSaveGamesDialog:
         testobj.conf.get_mods_for_saveitem = mock_get_mods
         testobj.get_savedata('xxx')
         assert capsys.readouterr().out == ("called SaveGamesDialog with arg xxx\n"
+                                           "called VBox.removeWidget with arg of type"
+                                           " <class 'mockgui.mockqtwidgets.MockPushButton'>\n"
                                            "called PushButton.close\n"
+                                           "called VBox.removeWidget with arg of type"
+                                           " <class 'mockgui.mockqtwidgets.MockComboBox'>\n"
                                            "called ComboBox.close\n"
                                            "called VBox.removeItem\n"
                                            "called SaveGamesDialog.add_modselector\n"
@@ -1816,7 +1827,11 @@ class TestSaveGamesDialog:
         testobj.conf.get_mods_for_saveitem = mock_get_mods
         testobj.get_savedata('xxx')
         assert capsys.readouterr().out == ("called SaveGamesDialog with arg xxx\n"
+                                           "called VBox.removeWidget with arg of type"
+                                           " <class 'mockgui.mockqtwidgets.MockPushButton'>\n"
                                            "called PushButton.close\n"
+                                           "called VBox.removeWidget with arg of type"
+                                           " <class 'mockgui.mockqtwidgets.MockComboBox'>\n"
                                            "called ComboBox.close\n"
                                            "called VBox.removeItem\n"
                                            "called SaveGamesDialog.add_modselector\n"

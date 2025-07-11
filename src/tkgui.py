@@ -67,7 +67,9 @@ class ShowMods():
                                                     command=bdef["callback"],
                                                     underline=underline_index)
             # self.buttons[key].setToolTip(bdef["tooltip"])
-            self.buttons[bdef["name"]].grid(column=pos, row=0)  # .pack(side=tk.LEFT)\
+            self.buttons[bdef["name"]].grid(column=pos, row=0)  # .pack(side=tk.LEFT)
+            if bdef['name'] == 'actv':
+                self.buttons[bdef["name"]].state(['disabled'])
             pos += 1
 
     def setup_actions(self):
@@ -224,6 +226,7 @@ class SettingsDialog(tk.Toplevel):
         self.modbase_text.set(origmodbase)
         modbase = ttk.Entry(frm, width=48, textvariable=self.modbase_text)
         modbase.grid(row=row, column=1)
+        modbase.textvar = self.modbase_text
         sel_modbase_button = ttk.Button(frm, text='Browse', command=self.select_modbase)
         sel_modbase_button.grid(row=row, column=2, sticky=tk.W)
         row += 1
@@ -527,9 +530,14 @@ class AttributesDialog(tk.Toplevel):
         self.change_button.state(['disabled'])
         self.change_button.grid(row=0, column=0, sticky=(tk.E, tk.W))
         hfrm.columnconfigure(0, weight=1)
-        close_button = ttk.Button(hfrm, text="Close", underline=2, command=self.close)
-        close_button.grid(row=0, column=1, sticky=(tk.E, tk.W))
+        self.add_dep_button = ttk.Button(hfrm, text="Add dependency", underline=0,
+                                         command=self.add_dep)
+        self.add_dep_button.state(['disabled'])
+        self.add_dep_button.grid(row=0, column=1, sticky=(tk.E, tk.W))
         hfrm.columnconfigure(1, weight=1)
+        close_button = ttk.Button(hfrm, text="Close", underline=2, command=self.close)
+        close_button.grid(row=0, column=2, sticky=(tk.E, tk.W))
+        hfrm.columnconfigure(2, weight=1)
         # self.bind('<Alt-a>', self.process)
         self.bind('<Alt-c>', self.view_components)
         self.bind('<Alt-d>', self.view_dependencies)
@@ -545,6 +553,7 @@ class AttributesDialog(tk.Toplevel):
     def enable_change(self, event=None):
         "enable change button"
         self.change_button.state(['!disabled'])
+        self.add_dep_button.state(['!disabled'])
 
     # def enable_select(self, event=None):
     #     """disable buttons after selecting another mod
@@ -630,6 +639,156 @@ class AttributesDialog(tk.Toplevel):
         if self.parent is not None:
             self.parent.root.focus_set()
         self.destroy()
+
+    def add_dep(self):
+        """add dependency manually
+        """
+        show_dialog(DependencyDialog, self, self.conf)
+        # add new dependency immediately
+
+
+class DependencyDialog(tk.Toplevel):
+    """Dialog for manually defining a new dependency
+    """
+    def __init__(self, parent, conf):
+        self.parent = parent
+        self.conf = conf
+        super().__init__(parent)
+        current_mod = self.parent.modnames[self.parent.choice]
+        self.modnames = {}
+        for x in conf.list_all_mod_dirs():
+            if x != current_mod:
+                self.modnames[conf.get_diritem_data(x, conf.SCRNAM)] = x
+        self.frm = ttk.Frame(self, padding=10)
+        self.frm.grid(row=0, column=0, sticky=(tk.N, tk.E, tk.S, tk.W))
+        self.frm.columnconfigure(0, weight=1)
+        self.row = 0
+        self.row += 1
+        labeltext = "Selecteer de toe te voegen dependency"
+        ttk.Label(self.frm, text=labeltext).grid(row=self.row, column=0, sticky=tk.W)
+        self.row += 1
+        items = sorted(self.modnames)
+        self.dep = tk.StringVar()
+        self.dependency_selector = ttk.Combobox(self.frm, values=items, textvariable=self.dep)
+        self.dep.set('select a mod')
+        self.dependency_selector.state(['readonly'])
+        self.dependency_selector.grid(row=self.row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W))
+
+        components = self.conf.list_components_for_dir(current_mod)
+        if len(components) == 1:
+            labeltext = 'De dependency wordt toegevoegd aan onderstaande component'
+        else:
+            labeltext = 'Selecteer een component om de dependency aan toe te voegen'
+        self.row += 1
+        ttk.Label(self.frm, text=labeltext).grid(row=self.row, column=0, sticky=tk.W)
+        self.row += 1
+        self.comp = tk.StringVar()
+        self.component_selector = ttk.Combobox(self.frm, values=components, textvariable=self.comp)
+        self.comp.set('select a component' if len(components) > 1 else components[0])
+        self.component_selector.state(['readonly', f'{"!" if len(components) > 1 else ""}disabled'])
+        self.component_selector.grid(row=self.row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W))
+
+        self.row += 1
+        labeltext = "Bij Add wordt de dependency direct aan de configuratie toegevoegd"
+        ttk.Label(self.frm, text=labeltext).grid(row=self.row, column=0, sticky=tk.W)
+        self.row += 1
+        bbox = ttk.Frame(self, padding=10)
+        bbox.grid(row=self.row, column=0)
+        btn = ttk.Button(bbox, text='Add dependency', underline=0, command=self.accept)
+        btn.grid(row=0, column=0)
+        self.bind(f'<Alt-a>', self.accept)
+        btn = ttk.Button(bbox, text='Close', underline=0, command=self.reject)
+        btn.grid(row=0, column=1)
+        self.bind(f'<Alt-c>', self.reject)
+        self.bind(f'<Escape>', self.reject)
+        self.dependency_selector.focus_set()
+
+    def accept(self):
+        "add dependncy to configuration"
+        selected_dependency = self.dependency_selector.getvar(field.cget('textvariable'))
+        selected_component = self.component_selector.getvar(field.cget('textvariable'))
+        dependency_to_add = self.conf.list_components_for_dir(self.modnames[selected_dependency])[0]
+        deps = self.conf.get_component_data(selected_component, self.conf.DEPS)
+        deps.append(dependency_to_add)
+        self.conf.set_componentdata_value(selected_component, self.conf.DEPS, deps)
+        self.conf.save()
+        gui.show_message(self.gui, 'Add Dependency',
+                                   'Wijziging is doorgevoerd\n'
+                                   'Vergeet niet om na updaten van de mod te controleren of'
+                                   ' de dependency opnieuw moet worden toegevoegd')
+        self.close()
+
+    def reject(self, event=None):
+        "cancel the dialog"
+        self.close()
+
+    def close(self):
+        "end the dialog"
+        # put focus back to the parent window
+        if self.parent is not None:
+            self.parent.focus_set()
+        self.destroy()
+
+
+# class DependencyDialogGui(tk.Toplevel):
+#     """Dialog for manually defining a new dependency
+#     """
+#     def __init__(self, maingui, parent):
+#         self.maingui = maingui
+#         self.parent = parent  # DialogGui heeft dezelfde parent als Dialog
+#         super().__init__(parent.root)
+#         self.frm = ttk.Frame(self, padding=10)
+#         self.frm.grid(row=0, column=0, sticky=(tk.N, tk.E, tk.S, tk.W))
+#         # self.frm.columnconfigure(0, weight=1)
+#         self.row = 0
+#
+#     def add_label(self, labeltext):
+#         "add a label to the next line"
+#         self.row += 1
+#         ttk.Label(self.frm, text=labeltext).grid(row=self.row, column=0, sticky=tk.W)
+#
+#     def add_combobox(self, items, callback, editable=True, enabled=True):
+#         "add a combobox to the next line"
+#         self.row += 1
+#         textvar = tk.StringVar()
+#         cb = ttk.Combobox(self.frm, values=items, textvariable=textvar)
+#         cb.state([f'{"!" if editable else ""}readonly', f'{"!" if enabled else ""}disabled'])
+#         cb.bind('<<ComboboxSelected>>', callback)
+#         cb.grid(row=self.row, column=0)
+#         return cb
+#
+#     def add_buttonbox(self, buttondefs):
+#         "add a row of buttons at the bottom of the page"
+#         self.row += 1
+#         bbox = ttk.Frame(self, padding=10)
+#         bbox.grid(row=self.row, column=0)
+#         for ix, bdef in enumerate(buttondefs):
+#             text, callback = bdef
+#             pos, text, char = get_shortcut_info(text)
+#             btn = ttk.Button(bbox, text=text, underline=pos, command=callback)
+#             btn.grid(row=0, column=ix)
+#             self.bind(f'<Alt-{char}>', callback)
+#         self.bind(f'<Escape>', self.confirm)
+#
+#     def set_focus(self, field):
+#         "set focus to field"
+#         field.focus_set()
+#
+#     def set_field_enabled(self, field, value):
+#         "make a fied usable"
+#         field.state([f'{"!" if value else ""}disabled'])
+#
+#     def get_combobox_value(self, field):
+#         "get the selected / entered value from a combobox"
+#         # return field['textvariable'].get()
+#         return field.getvar(field.cget('textvariable'))
+#
+#     def confirm(self, event=None):
+#         "close the dialog"
+#         # put focus back to the parent window
+#         if self.parent is not None:
+#             self.parent.root.focus_set()
+#         self.destroy()
 
 
 class SaveGamesDialog(tk.Toplevel):
@@ -765,8 +924,11 @@ class SaveGamesDialog(tk.Toplevel):
         "delete an association between a mod and the save file"
         for item in self.widgets:
             if item[0] == btn:
+                item[0].forget()
                 item[0].destroy()
+                item[1].forget()
                 item[1].destroy()
+                item[2].forget()
                 item[2].destroy()
                 self.widgets.remove(item)
 

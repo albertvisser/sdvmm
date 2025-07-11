@@ -414,6 +414,10 @@ class AttributesDialog(qtw.QDialog):
         self.change_button.setDisabled(True)
         self.change_button.clicked.connect(self.update)
         hbox.addWidget(self.change_button)
+        self.add_dep_button = qtw.QPushButton('&Add dependency')
+        self.add_dep_button.setDisabled(True)
+        self.add_dep_button.clicked.connect(self.add_dep)
+        hbox.addWidget(self.add_dep_button)
         close_button = qtw.QPushButton('&Exit')
         close_button.clicked.connect(self.accept)
         hbox.addWidget(close_button)
@@ -424,6 +428,7 @@ class AttributesDialog(qtw.QDialog):
     def enable_change(self):
         "enable change button"
         self.change_button.setEnabled(True)
+        self.add_dep_button.setEnabled(True)
 
     # def enable_select(self):
     #     """disable buttons after selecting another mod
@@ -502,6 +507,84 @@ class AttributesDialog(qtw.QDialog):
             qtw.QMessageBox.information(self, 'SDVMM', message)
         else:
             self.change_button.setDisabled(True)
+
+    def add_dep(self):
+        """add dependency manually
+        """
+        show_dialog(DependencyDialog, self, self.conf)
+        # add new dependency immediately
+
+
+class DependencyDialog(qtw.QDialog):
+    """Dialog for manually defining a new dependency
+    """
+    def __init__(self, parent, conf):
+        self.parent = parent
+        self.conf = conf
+        # self.gui = gui.DependencyDialogGui(self, parent)
+        super().__init__(parent)
+        self.vbox = qtw.QVBoxLayout()
+        self.setLayout(self.vbox)
+        current_mod = self.parent.modnames[self.parent.choice]
+        self.modnames = {}
+        for x in conf.list_all_mod_dirs():
+            if x != current_mod:
+                self.modnames[conf.get_diritem_data(x, conf.SCRNAM)] = x
+        # self.gui.add_label("Selecteer de toe te voegen dependency")
+        lbl = qtw.QLabel("Selecteer de toe te voegen dependency", self)
+        self.vbox.addWidget(lbl)
+        # self.dependency_selector = self.gui.add_combobox(['select a mod'] + sorted(self.modnames),
+        #                                                  None, editable=False)
+        self.dependency_selector = qtw.QComboBox(self)
+        self.dependency_selector.setEditable(False)
+        self.dependency_selector.addItems(['select a mod'] + sorted(self.modnames))
+        self.vbox.addWidget(self.dependency_selector)
+        components = self.conf.list_components_for_dir(current_mod)
+        if len(components) == 1:
+            # self.gui.add_label('De dependency wordt toegevoegd aan onderstaande component')
+            labeltext = 'De dependency wordt toegevoegd aan onderstaande component'
+            # self.component_selector = self.gui.add_combobox(components, None, editable=False,
+            #                                                 enabled=False)
+        else:
+            # self.gui.add_label('Selecteer een component om de dependency aan toe te voegen')
+            labeltext = 'Selecteer een component om de dependency aan toe te voegen'
+            # self.component_selector = self.gui.add_combobox(['select a component'] + components,
+            #                                                 None, editable=False, enabled=True)
+            components.insert(0, 'select a component')
+        lbl = qtw.QLabel(labeltext, self)
+        self.vbox.addWidget(lbl)
+        self.component_selector = qtw.QComboBox(self)
+        self.component_selector.setEditable(False)
+        self.component_selector.setEnabled(len(components) > 1)
+        self.component_selector.addItems(components)
+        self.vbox.addWidget(self.component_selector)
+        # self.gui.add_label("Bij Add wordt de dependency direct aan de configuratie toegevoegd")
+        lbl = qtw.QLabel("Bij Add wordt de dependency direct aan de configuratie toegevoegd", self)
+        self.vbox.addWidget(lbl)
+        # self.gui.add_buttonbox([('&Add dependency', self.accept), ('&Close', self.gui.reject)])
+        hbox = qtw.QHBoxLayout()
+        for text, callback in [('&Add dependency', self.accept), ('&Close', self.reject)]:
+            btn = qtw.QPushButton(text)
+            btn.clicked.connect(callback)
+            hbox.addWidget(btn)
+        self.vbox.addLayout(hbox)
+        # self.gui.set_focus(self.dependency_selector)
+        self.dependency_selector.setFocus()
+
+    def accept(self):
+        "add dependncy to configuration"
+        selected_dependency = self.dependency_selector.currentText()
+        selected_component = self.component_selector.currentText()
+        dependency_to_add = self.conf.list_components_for_dir(self.modnames[selected_dependency])[0]
+        deps = self.conf.get_component_data(selected_component, self.conf.DEPS)
+        deps.append(dependency_to_add)
+        self.conf.set_componentdata_value(selected_component, self.conf.DEPS, deps)
+        self.conf.save()
+        gui.show_message(self.gui, 'Add Dependency',
+                                   'Wijziging is doorgevoerd\n'
+                                   'Vergeet niet om na updaten van de mod te controleren of'
+                                   ' de dependency opnieuw moet worden toegevoegd')
+        super().accept()
 
 
 class SaveGamesDialog(qtw.QDialog):
@@ -668,11 +751,11 @@ class SaveGamesDialog(qtw.QDialog):
         if self.oldsavename:
             self.update_conf(self.oldsavename)
             for item in reversed(self.widgets):
-                btn = item.pop(0)
-                btn.close()
-                lbox = item.pop(0)
-                lbox.close()
-                self.vbox2.removeItem(item[0])
+                self.vbox2.removeWidget(item[0])
+                item[0].close()
+                self.vbox2.removeWidget(item[1])
+                item[1].close()
+                self.vbox2.removeItem(item[2])
                 self.widgets.remove(item)
             self.add_modselector()
         self.oldsavename = newvalue

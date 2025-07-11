@@ -7,75 +7,75 @@ from mockgui import mockttkwidgets as mockttk
 
 sett = """\
 called Toplevel.__init__ with args ('root',) {{}}
-called Frame.__init__ with args <class 'src.tkgui.SettingsDialog'> () {{'padding': 10}}
+called Frame.__init__ with args SettingsDialog () {{'padding': 10}}
 called Frame.grid with args () {{'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
 called Frame.columnconfigure with args (0,)
-called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Base location for mods:'}}
+called Label.__init__ with args MockFrame () {{'text': 'Base location for mods:'}}
 called Label.grid with args () {{'row': 0, 'column': 0, 'sticky': 'w'}}
 called StringVar.__init__ with args ()
 called StringVar.set with arg 'xxx'
-called Entry.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'width': 48, 'textvariable': {testobj.modbase_text}}}
+called Entry.__init__ with args MockFrame () {{'width': 48, 'textvariable': {testobj.modbase_text}}}
 called Entry.grid with args () {{'row': 0, 'column': 1}}
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Browse', 'command': {testobj.select_modbase}}}
+called Button.__init__ with args MockFrame () {{'text': 'Browse', 'command': {testobj.select_modbase}}}
 called Button.grid with args () {{'row': 0, 'column': 2, 'sticky': 'w'}}
-called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Name of configuration file:'}}
+called Label.__init__ with args MockFrame () {{'text': 'Name of configuration file:'}}
 called Label.grid with args () {{'row': 1, 'column': 0, 'sticky': 'w'}}
 called StringVar.__init__ with args ()
 called StringVar.set with arg 'yyy'
-called Entry.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'width': 48, 'textvariable': {testobj.config_text}}}
+called Entry.__init__ with args MockFrame () {{'width': 48, 'textvariable': {testobj.config_text}}}
 called Entry.grid with args () {{'row': 1, 'column': 1}}
-called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Location for downloads:'}}
+called Label.__init__ with args MockFrame () {{'text': 'Location for downloads:'}}
 called Label.grid with args () {{'row': 2, 'column': 0, 'sticky': 'w'}}
 called StringVar.__init__ with args ()
 called StringVar.set with arg 'zzz'
-called Entry.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'width': 48, 'textvariable': {testobj.download_text}}}
+called Entry.__init__ with args MockFrame () {{'width': 48, 'textvariable': {testobj.download_text}}}
 called Entry.grid with args () {{'row': 2, 'column': 1}}
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Browse', 'command': {testobj.select_download_path}}}
+called Button.__init__ with args MockFrame () {{'text': 'Browse', 'command': {testobj.select_download_path}}}
 called Button.grid with args () {{'row': 2, 'column': 2, 'sticky': 'w'}}
-called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Number of columns on screen:'}}
+called Label.__init__ with args MockFrame () {{'text': 'Number of columns on screen:'}}
 called Label.grid with args () {{'row': 3, 'column': 0, 'sticky': 'w'}}
 called IntVar.__init__ with args ()
 called IntVar.set with arg 1
-called SpinBox.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'width': 5, 'from_': 0, 'to': 5, 'textvariable': {testobj.columncount}}}
+called SpinBox.__init__ with args MockFrame () {{'width': 5, 'from_': 0, 'to': 5, 'textvariable': {testobj.columncount}}}
 called SpinBox.grid with args () {{'row': 3, 'column': 1, 'sticky': 'w'}}
-called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Location for save files:'}}
+called Label.__init__ with args MockFrame () {{'text': 'Location for save files:'}}
 called Label.grid with args () {{'row': 4, 'column': 0, 'sticky': 'w'}}
 called StringVar.__init__ with args ()
 called StringVar.set with arg 'qqq'
-called Entry.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'width': 48, 'textvariable': {testobj.savepath_text}}}
+called Entry.__init__ with args MockFrame () {{'width': 48, 'textvariable': {testobj.savepath_text}}}
 called Entry.grid with args () {{'row': 4, 'column': 1}}
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Browse', 'command': {testobj.select_savepath}}}
+called Button.__init__ with args MockFrame () {{'text': 'Browse', 'command': {testobj.select_savepath}}}
 called Button.grid with args () {{'row': 4, 'column': 2, 'sticky': 'w'}}
-called Frame.__init__ with args <class 'src.tkgui.SettingsDialog'> () {{'padding': 10}}
+called Frame.__init__ with args SettingsDialog () {{'padding': 10}}
 called Frame.grid with args () {{'row': 1, 'column': 0}}
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Save', 'underline': 0, 'command': {testobj.update}}}
+called Button.__init__ with args MockFrame () {{'text': 'Save', 'underline': 0, 'command': {testobj.update}}}
 called Button.grid with args () {{'row': 0, 'column': 0}}
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Cancel', 'underline': 0, 'command': {testobj.close}}}
+called Button.__init__ with args MockFrame () {{'text': 'Cancel', 'underline': 0, 'command': {testobj.close}}}
 called Button.grid with args () {{'row': 0, 'column': 1}}
-called Toplevel.bind_all with args ('<Alt-s>', <bound method TestSettingsDialog.test_init.<locals>.<lambda> of <src.tkgui.SettingsDialog object .!settingsdialog>>) {{}}
-called Toplevel.bind_all with args ('<Alt-c>', <bound method TestSettingsDialog.test_init.<locals>.<lambda> of <src.tkgui.SettingsDialog object .!settingsdialog>>) {{}}
-called Toplevel.bind_all with args ('<Escape>', <bound method TestSettingsDialog.test_init.<locals>.<lambda> of <src.tkgui.SettingsDialog object .!settingsdialog>>) {{}}
+called Toplevel.bind_all with args ('<Alt-s>', {testobj.update}) {{}}
+called Toplevel.bind_all with args ('<Alt-c>', {testobj.close}) {{}}
+called Toplevel.bind_all with args ('<Escape>', {testobj.close}) {{}}
 """
 choice = """\
 called Toplevel.__init__ with args ('root',) {{}}
-called Frame.__init__ with args <class 'src.tkgui.ChoiceDialog'> () {{'padding': 10}}
+called Frame.__init__ with args ChoiceDialog () {{'padding': 10}}
 called Frame.grid with args () {{'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
 called Frame.columnconfigure with args (0,)
-called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'a caption'}}
+called Label.__init__ with args MockFrame () {{'text': 'a caption'}}
 called Label.grid with args () {{'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
 called StringVar.__init__ with args ()
-called ComboBox.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'values': ['ons', 'op', 'ti'], 'textvariable': {testobj.dirname}}}
+called ComboBox.__init__ with args MockFrame () {{'values': ['ons', 'op', 'ti'], 'textvariable': {testobj.dirname}}}
 called StringVar.set with arg ''
 called ComboBox.state with args (['readonly'],)
 called ComboBox.bind with args ('<<ComboboxSelected>>', {testobj.enable_accept})
 called ComboBox.grid with args () {{'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
-called Frame.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{}}
+called Frame.__init__ with args MockFrame () {{}}
 called Frame.grid with args () {{'row': 2, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Ok', 'underline': 0, 'command': {testobj.accept}}}
+called Button.__init__ with args MockFrame () {{'text': 'Ok', 'underline': 0, 'command': {testobj.accept}}}
 called Button.state with args (['disabled'],)
 called Button.grid with args () {{'row': 0, 'column': 0, 'sticky': ('e', 'w')}}
 called Frame.columnconfigure with args (0,)
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Cancel', 'underline': 0, 'command': {testobj.close}}}
+called Button.__init__ with args MockFrame () {{'text': 'Cancel', 'underline': 0, 'command': {testobj.close}}}
 called Button.grid with args () {{'row': 0, 'column': 1, 'sticky': ('e', 'w')}}
 called Frame.columnconfigure with args (1,)
 called Toplevel.bind with args ('<Alt-o>', {testobj.accept})
@@ -91,21 +91,21 @@ called Conf.list_all_mod_dirs
 called Conf.get_diritem_data with args ('xxx', 'SCRNAM')
 called Conf.get_diritem_data with args ('yyy', 'SCRNAM')
 called Toplevel.__init__ with args ('root',) {{}}
-called Frame.__init__ with args <class 'src.tkgui.DeleteDialog'> () {{'padding': 10}}
+called Frame.__init__ with args DeleteDialog () {{'padding': 10}}
 called Frame.grid with args () {{'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
 called StringVar.__init__ with args ()
-called ComboBox.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'values': ['xxx_name', 'yyy_name'], 'textvariable': {testobj.modname}, 'width': 40}}
+called ComboBox.__init__ with args MockFrame () {{'values': ['xxx_name', 'yyy_name'], 'textvariable': {testobj.modname}, 'width': 40}}
 called StringVar.set with arg 'Select a mod to remove from the config'
 called ComboBox.state with args (['readonly'],)
 called ComboBox.bind with args ('<<ComboboxSelected>>', {testobj.process})
 called ComboBox.grid with args () {{'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
-called Frame.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{}}
+called Frame.__init__ with args MockFrame () {{}}
 called Frame.grid with args () {{'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Remove', 'underline': 0, 'command': {testobj.update}}}
+called Button.__init__ with args MockFrame () {{'text': 'Remove', 'underline': 0, 'command': {testobj.update}}}
 called Button.state with args (['disabled'],)
 called Button.grid with args () {{'row': 0, 'column': 0, 'sticky': ('e', 'w')}}
 called Frame.columnconfigure with args (0,)
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Close', 'underline': 2, 'command': {testobj.close}}}
+called Button.__init__ with args MockFrame () {{'text': 'Close', 'underline': 2, 'command': {testobj.close}}}
 called Button.grid with args () {{'row': 0, 'column': 1, 'sticky': ('e', 'w')}}
 called Frame.columnconfigure with args (1,)
 called ComboBox.focus_set
@@ -115,68 +115,72 @@ called Conf.list_all_mod_dirs
 called Conf.get_diritem_data with args ('xxx', 'SCRNAM')
 called Conf.get_diritem_data with args ('yyy', 'SCRNAM')
 called Toplevel.__init__ with args ('root',) {{}}
-called Frame.__init__ with args <class 'src.tkgui.AttributesDialog'> () {{'padding': 10}}
+called Frame.__init__ with args AttributesDialog () {{'padding': 10}}
 called Frame.grid with args () {{'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
 called StringVar.__init__ with args ()
-called ComboBox.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'values': ['xxx_name', 'yyy_name'], 'textvariable': {testobj.modname}}}
+called ComboBox.__init__ with args MockFrame () {{'values': ['xxx_name', 'yyy_name'], 'textvariable': {testobj.modname}}}
 called StringVar.set with arg 'Select a mod to change the screen text etc.'
 called ComboBox.state with args (['readonly'],)
 called ComboBox.bind with args ('<<ComboboxSelected>>', {testobj.process})
 called ComboBox.grid with args () {{'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
-called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Screen Name:\\n(the suggestions in the box below are taken from\\nthe mod components'}}
+called Label.__init__ with args MockFrame () {{'text': 'Screen Name:\\n(the suggestions in the box below are taken from\\nthe mod components'}}
 called Label.grid with args () {{'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
-called Frame.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{}}
+called Frame.__init__ with args MockFrame () {{}}
 called Frame.grid with args () {{'row': 2, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
 called StringVar.__init__ with args ()
 called StringVar.set with arg ''
-called StringVar.trace_add
-called ComboBox.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'textvariable': {testobj.scrname}}}
+called StringVar.trace_add with args ('write', {testobj.monitor_textvar})
+called ComboBox.__init__ with args MockFrame () {{'textvariable': {testobj.scrname}}}
 called ComboBox.state with args (['!readonly', 'disabled'],)
 called ComboBox.bind with args ('<<ComboboxSelected>>', {testobj.enable_change})
 called ComboBox.grid with args () {{'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
 called Frame.columnconfigure with args (0,)
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'image': 'ecimage', 'command': {testobj.clear_name_text}}}
+called Button.__init__ with args MockFrame () {{'image': 'ecimage', 'command': {testobj.clear_name_text}}}
 called Button.state with args (['disabled'],)
 called Button.grid with args () {{'row': 0, 'column': 1, 'sticky': 'w'}}
-called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Screen Text:\\n(to add some information e.q. if the mod is broken)'}}
+called Label.__init__ with args MockFrame () {{'text': 'Screen Text:\\n(to add some information e.q. if the mod is broken)'}}
 called Label.grid with args () {{'row': 3, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
-called Frame.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{}}
+called Frame.__init__ with args MockFrame () {{}}
 called Frame.grid with args () {{'row': 4, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
 called Frame.columnconfigure with args (0,)
 called StringVar.__init__ with args ()
 called StringVar.set with arg ''
-called StringVar.trace_add
-called Entry.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'textvariable': {testobj.scrtext}}}
+called StringVar.trace_add with args ('write', {testobj.monitor_textvar})
+called Entry.__init__ with args MockFrame () {{'textvariable': {testobj.scrtext}}}
 called Entry.grid with args () {{'row': 0, 'column': 0, 'sticky': ('e', 'w')}}
 called Entry.state with args (['disabled'],)
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'image': 'ecimage', 'command': {testobj.clear_text_text}}}
+called Button.__init__ with args MockFrame () {{'image': 'ecimage', 'command': {testobj.clear_text_text}}}
 called Button.state with args (['disabled'],)
 called Button.grid with args () {{'row': 0, 'column': 1, 'sticky': 'w'}}
 called IntVar.__init__ with args ()
 called IntVar.set with arg 0
-called CheckBox.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'This mod can be activated by itself', 'variable': {testobj.activate}, 'command': {testobj.enable_change}}}
+called CheckBox.__init__ with args MockFrame () {{'text': 'This mod can be activated by itself', 'variable': {testobj.activate}, 'command': {testobj.enable_change}}}
 called CheckBox.grid with args () {{'row': 5, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
 called CheckBox.state with args (['disabled'],)
 called IntVar.__init__ with args ()
 called IntVar.set with arg 0
-called CheckBox.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Do not touch when (de)activating for a save', 'variable': {testobj.exempt}, 'command': {testobj.enable_change}}}
+called CheckBox.__init__ with args MockFrame () {{'text': 'Do not touch when (de)activating for a save', 'variable': {testobj.exempt}, 'command': {testobj.enable_change}}}
 called CheckBox.grid with args () {{'row': 6, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
 called CheckBox.state with args (['disabled'],)
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'View Components', 'underline': 5, 'command': {testobj.view_components}}}
+called Button.__init__ with args MockFrame () {{'text': 'View Components', 'underline': 5, 'command': {testobj.view_components}}}
 called Button.grid with args () {{'row': 7, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
 called Button.state with args (['disabled'],)
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'View Dependencies', 'underline': 5, 'command': {testobj.view_dependencies}}}
+called Button.__init__ with args MockFrame () {{'text': 'View Dependencies', 'underline': 5, 'command': {testobj.view_dependencies}}}
 called Button.grid with args () {{'row': 8, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
 called Button.state with args (['disabled'],)
-called Frame.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{}}
+called Frame.__init__ with args MockFrame () {{}}
 called Frame.grid with args () {{'row': 9, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Update', 'underline': 0, 'command': {testobj.update}}}
+called Button.__init__ with args MockFrame () {{'text': 'Update', 'underline': 0, 'command': {testobj.update}}}
 called Button.state with args (['disabled'],)
 called Button.grid with args () {{'row': 0, 'column': 0, 'sticky': ('e', 'w')}}
 called Frame.columnconfigure with args (0,)
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Close', 'underline': 2, 'command': {testobj.close}}}
+called Button.__init__ with args MockFrame () {{'text': 'Add dependency', 'underline': 0, 'command': {testobj.add_dep}}}
+called Button.state with args (['disabled'],)
 called Button.grid with args () {{'row': 0, 'column': 1, 'sticky': ('e', 'w')}}
 called Frame.columnconfigure with args (1,)
+called Button.__init__ with args MockFrame () {{'text': 'Close', 'underline': 2, 'command': {testobj.close}}}
+called Button.grid with args () {{'row': 0, 'column': 2, 'sticky': ('e', 'w')}}
+called Frame.columnconfigure with args (2,)
 called ComboBox.focus_set
 """
 saves = """\
@@ -185,48 +189,48 @@ called Conf.list_all_mod_dirs
 called Conf.get_diritem_data with args ('xxx', 'SCRNAM')
 called Conf.get_diritem_data with args ('yyy', 'SCRNAM')
 called Toplevel.__init__ with args ('root',) {{}}
-called Frame.__init__ with args <class 'src.tkgui.SaveGamesDialog'> () {{'padding': 10}}
+called Frame.__init__ with args SaveGamesDialog () {{'padding': 10}}
 called Frame.grid with args () {{'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
-called ComboBox.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'values': ['qqq', 'rrr'], 'textvariable': {testobj.savegame_selector_text!r}}}
+called ComboBox.__init__ with args MockFrame () {{'values': ['qqq', 'rrr'], 'textvariable': {testobj.savegame_selector_text!r}}}
 called ComboBox.state with args (['readonly'],)
 called ComboBox.bind with args ('<<ComboboxSelected>>', {testobj.get_savedata})
 called ComboBox.grid with args () {{'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}}
-called Frame.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{}}
+called Frame.__init__ with args MockFrame () {{}}
 called Frame.grid with args () {{'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
 called Frame.columnconfigure with args (1,)
-called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Player name:'}}
+called Label.__init__ with args MockFrame () {{'text': 'Player name:'}}
 called Label.grid with args () {{'row': 0, 'column': 0}}
-called Entry.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'textvariable': {testobj.pname_text!r}}}
+called Entry.__init__ with args MockFrame () {{'textvariable': {testobj.pname_text!r}}}
 called Entry.grid with args () {{'row': 0, 'column': 1}}
-called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Farm name:'}}
+called Label.__init__ with args MockFrame () {{'text': 'Farm name:'}}
 called Label.grid with args () {{'row': 1, 'column': 0}}
-called Entry.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'textvariable': {testobj.fname_text!r}}}
+called Entry.__init__ with args MockFrame () {{'textvariable': {testobj.fname_text!r}}}
 called Entry.grid with args () {{'row': 1, 'column': 1}}
-called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'In-game date:'}}
+called Label.__init__ with args MockFrame () {{'text': 'In-game date:'}}
 called Label.grid with args () {{'row': 2, 'column': 0}}
-called Entry.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'textvariable': {testobj.gdate_text!r}}}
+called Entry.__init__ with args MockFrame () {{'textvariable': {testobj.gdate_text!r}}}
 called Entry.grid with args () {{'row': 2, 'column': 1}}
-called Frame.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{}}
+called Frame.__init__ with args MockFrame () {{}}
 called Frame.grid with args () {{'row': 2, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
-called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Uses:'}}
+called Label.__init__ with args MockFrame () {{'text': 'Uses:'}}
 called Label.grid with args () {{'row': 0, 'column': 0}}
-called Frame.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{}}
+called Frame.__init__ with args MockFrame () {{}}
 called Frame.grid with args () {{'row': 3, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
 called Frame.columnconfigure with args (0,)
 called SaveGamesDialog.add_modselector
-called Frame.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{}}
+called Frame.__init__ with args MockFrame () {{}}
 called Frame.grid with args () {{'row': 4, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}}
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Update config', 'underline': 0, 'command': {testobj.update}}}
+called Button.__init__ with args MockFrame () {{'text': 'Update config', 'underline': 0, 'command': {testobj.update}}}
 called Button.state with args (['disabled'],)
 called Button.grid with args () {{'row': 0, 'column': 0}}
 called Toplevel.bind with args ('<Alt-u>', {testobj.update})
 called Frame.columnconfigure with args (0,)
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Activate Mods', 'underline': 0, 'command': {testobj.confirm}}}
+called Button.__init__ with args MockFrame () {{'text': 'Activate Mods', 'underline': 0, 'command': {testobj.confirm}}}
 called Button.state with args (['disabled'],)
 called Button.grid with args () {{'row': 0, 'column': 1}}
 called Toplevel.bind with args ('<Alt-a>', {testobj.confirm})
 called Frame.columnconfigure with args (1,)
-called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {{'text': 'Close', 'underline': 0, 'command': {testobj.close}}}
+called Button.__init__ with args MockFrame () {{'text': 'Close', 'underline': 0, 'command': {testobj.close}}}
 called Button.grid with args () {{'row': 0, 'column': 2}}
 called Toplevel.bind with args ('<Alt-c>', {testobj.close})
 called Toplevel.bind with args ('<Escape>', {testobj.close})
@@ -407,7 +411,7 @@ class TestShowMods:
                 'called ShowMods.root.__init__\n'
                 "called PhotoImage.__init__ with args ('ecimage',)\n"
                 "called ShowMods.root.__title__ with args ('SDV Mod Manager',)\n"
-                "called Frame.__init__ with args <class 'tkinter.Tk'> () {}\n"
+                "called Frame.__init__ with args Tk () {}\n"
                 "called Frame.grid with args"
                 " () {'column': 0, 'row': 0, 'sticky': ('n', 'e', 's', 'w')}\n")
 
@@ -418,11 +422,10 @@ class TestShowMods:
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.main = mockttk.MockFrame()
         assert capsys.readouterr().out == (
-                "called Frame.__init__ with args <class 'NoneType'> () {}\n")
+                "called Frame.__init__ with args NoneType () {}\n")
         testobj.create_selectables_title('xxxx')
         assert capsys.readouterr().out == (
-                "called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'>"
-                " () {'text': 'xxxx', 'padding': 10}\n"
+                "called Label.__init__ with args MockFrame () {'text': 'xxxx', 'padding': 10}\n"
                 "called Label.grid with args () {'column': 0, 'row': 0, 'sticky': ('n', 'w')}\n")
 
     def test_create_selectables_grid(self, monkeypatch, capsys):
@@ -432,11 +435,10 @@ class TestShowMods:
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.main = mockttk.MockFrame()
         assert capsys.readouterr().out == (
-                "called Frame.__init__ with args <class 'NoneType'> () {}\n")
+                "called Frame.__init__ with args NoneType () {}\n")
         testobj.create_selectables_grid()
         assert capsys.readouterr().out == (
-                "called Frame.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'>"
-                " () {'padding': (10, 0)}\n"
+                "called Frame.__init__ with args MockFrame () {'padding': (10, 0)}\n"
                 "called Frame.grid with args () {'column': 0, 'row': 1}\n")
 
     def test_create_dependencies_title(self, monkeypatch, capsys):
@@ -446,10 +448,10 @@ class TestShowMods:
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.main = mockttk.MockFrame()
         assert capsys.readouterr().out == (
-                "called Frame.__init__ with args <class 'NoneType'> () {}\n")
+                "called Frame.__init__ with args NoneType () {}\n")
         testobj.create_dependencies_title('yyyy')
         assert capsys.readouterr().out == (
-                "called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'>"
+                "called Label.__init__ with args MockFrame"
                 " () {'text': 'yyyy', 'padding': 10}\n"
                 "called Label.grid with args () {'column': 0, 'row': 2, 'sticky': ('n', 'w')}\n")
 
@@ -460,10 +462,10 @@ class TestShowMods:
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.main = mockttk.MockFrame()
         assert capsys.readouterr().out == (
-                "called Frame.__init__ with args <class 'NoneType'> () {}\n")
+                "called Frame.__init__ with args NoneType () {}\n")
         testobj.create_dependencies_grid()
         assert capsys.readouterr().out == (
-                "called Frame.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'>"
+                "called Frame.__init__ with args MockFrame"
                 " () {'padding': (10, 0)}\n"
                 "called Frame.grid with args () {'column': 0, 'row': 3}\n")
 
@@ -479,7 +481,7 @@ class TestShowMods:
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.root = mockttk.MockFrame()
         assert capsys.readouterr().out == (
-                "called Frame.__init__ with args <class 'NoneType'> () {}\n")
+                "called Frame.__init__ with args NoneType () {}\n")
         testobj.buttons = {}
         testobj.refresh_widgets = mock_refresh
         callback1 = lambda: '0'
@@ -492,14 +494,15 @@ class TestShowMods:
         assert isinstance(testobj.buttons['actv'], mockttk.MockButton)
         assert capsys.readouterr().out == (
                 "called Frame.__init__ with args"
-                " <class 'mockgui.mockttkwidgets.MockFrame'> () {'padding': 10}\n"
+                " MockFrame () {'padding': 10}\n"
                 "called Frame.grid with args () {'column': 0, 'row': 3, 'sticky': 's'}\n"
-                "called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'>"
+                "called Button.__init__ with args MockFrame"
                 f" () {{'text': 'xxxxxx', 'command': {callback1}, 'underline': 0}}\n"
                 "called Button.grid with args () {'column': 0, 'row': 0}\n"
-                "called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'>"
+                "called Button.__init__ with args MockFrame"
                 f" () {{'text': 'yyyyyy', 'command': {callback2}, 'underline': 3}}\n"
-                "called Button.grid with args () {'column': 1, 'row': 0}\n")
+                "called Button.grid with args () {'column': 1, 'row': 0}\n"
+                "called Button.state with args (['disabled'],)\n")
 
     def test_setup_actions(self, monkeypatch, capsys):
         """unittest for ShowMods.setup_actions
@@ -518,6 +521,7 @@ class TestShowMods:
                 f"called ShowMods.root.bind with args ('<Control-Return>', {testobj.confirm})\n"
                 f"called ShowMods.root.bind with args ('<Alt-s>', {testobj.manage_savefiles})\n"
                 f"called ShowMods.root.bind with args ('<Alt-x>', {testobj.close})\n"
+                f"called ShowMods.root.bind with args ('<Alt-c>', {testobj.close})\n"
                 f"called ShowMods.root.bind with args ('<Control-q>', {testobj.close})\n")
 
     def test_show_screen(self, monkeypatch, capsys):
@@ -541,8 +545,8 @@ class TestShowMods:
         testobj.master = types.SimpleNamespace(screeninfo={}, order_widgets=mock_order)
         testobj.buttons = {"attr": mockttk.MockButton(), "sel": mockttk.MockButton()}
         assert capsys.readouterr().out == (
-                "called Button.__init__ with args <class 'NoneType'> () {}\n"
-                "called Button.__init__ with args <class 'NoneType'> () {}\n")
+                "called Button.__init__ with args NoneType () {}\n"
+                "called Button.__init__ with args NoneType () {}\n")
         testobj.refresh_widgets()
         assert capsys.readouterr().out == (
                 "called Button.state with args (['disabled'],)\n"
@@ -562,9 +566,10 @@ class TestShowMods:
         widgetlist = ['', mockttk.MockLabel(), mockttk.MockCheckBox()]
         container = mockttk.MockFrame()
         assert capsys.readouterr().out == (
-                "called Label.__init__ with args <class 'NoneType'> () {}\n"
-                "called CheckBox.__init__ with args <class 'NoneType'> () {}\n"
-                "called Frame.__init__ with args <class 'NoneType'> () {}\n")
+                "called Label.__init__ with args NoneType () {}\n"
+                "called CheckBox.__init__ with args NoneType () {}\n"
+                "called StringVar.__init__ with args ()\n"
+                "called Frame.__init__ with args NoneType () {}\n")
         testobj.remove_widgets(widgetlist, container, 1, 2)
         assert capsys.readouterr().out == ("called CheckBox.destroy\n"
                                            "called Label.destroy\n")
@@ -585,14 +590,14 @@ class TestShowMods:
         assert isinstance(widgetlist[3], testee.tk.StringVar)
         assert isinstance(widgetlist[4], testee.tk.IntVar)
         assert capsys.readouterr().out == (
-            "called Frame.__init__ with args <class 'str'> () {'padding': (5, 0, 5, 0)}\n"
+            "called Frame.__init__ with args str () {'padding': (5, 0, 5, 0)}\n"
             "called IntVar.__init__ with args ()\n"
-            "called CheckBox.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'>"
+            "called CheckBox.__init__ with args MockFrame"
             f" () {{'variable': {widgetlist[4]}, 'command': {testobj.enable_button}}}\n"
             "called CheckBox.state with args (['disabled', '!selected'],)\n"
             "called CheckBox.grid with args () {'column': 1, 'row': 0}\n"
             "called StringVar.__init__ with args ()\n"
-            "called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'>"
+            "called Label.__init__ with args MockFrame"
             f" () {{'textvariable': {widgetlist[3]}}}\n"
             "called Label.grid with args () {'column': 2, 'row': 0}\n"
             "called Frame.grid with args () {'row': 1, 'column': 2, 'sticky': 'w'}\n")
@@ -603,14 +608,14 @@ class TestShowMods:
         assert isinstance(widgetlist[3], testee.tk.StringVar)
         assert isinstance(widgetlist[4], testee.tk.IntVar)
         assert capsys.readouterr().out == (
-            "called Frame.__init__ with args <class 'str'> () {'padding': (5, 0, 5, 0)}\n"
+            "called Frame.__init__ with args str () {'padding': (5, 0, 5, 0)}\n"
             "called IntVar.__init__ with args ()\n"
-            "called CheckBox.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'>"
+            "called CheckBox.__init__ with args MockFrame"
             f" () {{'variable': {widgetlist[4]}, 'command': {testobj.enable_button}}}\n"
             "called CheckBox.state with args (['!disabled', '!selected'],)\n"
             "called CheckBox.grid with args () {'column': 1, 'row': 0}\n"
             "called StringVar.__init__ with args ()\n"
-            "called Label.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'>"
+            "called Label.__init__ with args MockFrame"
             f" () {{'textvariable': {widgetlist[3]}}}\n"
             "called Label.grid with args () {'column': 2, 'row': 0}\n"
             "called Frame.grid with args () {'row': 1, 'column': 2, 'sticky': 'w'}\n")
@@ -622,7 +627,7 @@ class TestShowMods:
         widgetlist = ['frame', mockttk.MockLabel(), 'check', mockttk.MockStringVar(), 'intvar']
         assert widgetlist[3].get() is None
         assert capsys.readouterr().out == (
-                "called Label.__init__ with args <class 'NoneType'> () {}\n"
+                "called Label.__init__ with args NoneType () {}\n"
                 "called StringVar.__init__ with args ()\n"
                 "called StringVar.get\n")
         testobj.set_label_text(widgetlist, 'xxxx', '', '')
@@ -702,7 +707,7 @@ class TestShowMods:
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.buttons = {'actv': mockttk.MockButton()}
         assert capsys.readouterr().out == (
-                "called Button.__init__ with args <class 'NoneType'> () {}\n")
+                "called Button.__init__ with args NoneType () {}\n")
         testobj.enable_button()
         assert capsys.readouterr().out == ("called Button.state with args (['!disabled'],)\n")
 
@@ -752,7 +757,7 @@ class TestShowMods:
         testobj.master = MockManager()
         testobj.buttons = {'actv': mockttk.MockButton()}
         assert capsys.readouterr().out == (
-                "called Button.__init__ with args <class 'NoneType'> () {}\n")
+                "called Button.__init__ with args NoneType () {}\n")
         testobj.confirm()
         assert capsys.readouterr().out == (
                 "called Manager.process_activations\n"
@@ -1127,7 +1132,7 @@ class TestChoiceDialog:
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.ok_button = mockttk.MockButton()
         assert capsys.readouterr().out == (
-                "called Button.__init__ with args <class 'NoneType'> () {}\n")
+                "called Button.__init__ with args NoneType () {}\n")
         testobj.enable_accept('buttonpressevent')
         assert capsys.readouterr().out == "called Button.state with args (['!disabled'],)\n"
 
@@ -1225,7 +1230,7 @@ class TestDeleteDialog:
         assert capsys.readouterr().out == (
                 "called StringVar.__init__ with args ()\n"
                 "called StringVar.set with arg 'current text'\n"
-                "called Button.__init__ with args <class 'NoneType'> () {}\n")
+                "called Button.__init__ with args NoneType () {}\n")
         testobj.process()
         assert testobj.choice == 'current text'
         assert capsys.readouterr().out == (
@@ -1256,7 +1261,7 @@ class TestDeleteDialog:
         testobj.change_button = mockttk.MockButton()
         testobj.change_button.instate = mock_instate
         assert capsys.readouterr().out == (
-                "called Button.__init__ with args <class 'NoneType'> () {}\n")
+                "called Button.__init__ with args NoneType () {}\n")
         testobj.choice = 'current text'
         testobj.update()
         assert capsys.readouterr().out == "called Button.instate with arg ['!disabled']\n"
@@ -1366,10 +1371,13 @@ class TestAttributesDialog:
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.change_button = mockttk.MockButton()
+        testobj.add_dep_button = mockttk.MockButton()
         assert capsys.readouterr().out == (
-                "called Button.__init__ with args <class 'NoneType'> () {}\n")
+                "called Button.__init__ with args NoneType () {}\n"
+                "called Button.__init__ with args NoneType () {}\n")
         testobj.enable_change()
-        assert capsys.readouterr().out == "called Button.state with args (['!disabled'],)\n"
+        assert capsys.readouterr().out == ("called Button.state with args (['!disabled'],)\n"
+                                           "called Button.state with args (['!disabled'],)\n")
 
     def test_process(self, monkeypatch, capsys):
         """unittest for AttributesDialog.process
@@ -1402,22 +1410,27 @@ class TestAttributesDialog:
         testobj.deps_button = mockttk.MockButton()
         testobj.change_button = mockttk.MockButton()
         assert capsys.readouterr().out == (
-                "called ComboBox.__init__ with args <class 'NoneType'> () {}\n"
+                "called ComboBox.__init__ with args NoneType () {}\n"
+                "called StringVar.__init__ with args ()\n"
                 "called StringVar.__init__ with args ()\n"
                 "called StringVar.set with arg 'current text'\n"
-                "called ComboBox.__init__ with args <class 'NoneType'> () {}\n"
+                "called ComboBox.__init__ with args NoneType () {}\n"
                 "called StringVar.__init__ with args ()\n"
-                "called Button.__init__ with args <class 'NoneType'> () {}\n"
-                "called Entry.__init__ with args <class 'NoneType'> () {}\n"
                 "called StringVar.__init__ with args ()\n"
-                "called Button.__init__ with args <class 'NoneType'> () {}\n"
-                "called CheckBox.__init__ with args <class 'NoneType'> () {}\n"
+                "called Button.__init__ with args NoneType () {}\n"
+                "called Entry.__init__ with args NoneType () {}\n"
+                "called StringVar.__init__ with args ()\n"
+                "called StringVar.__init__ with args ()\n"
+                "called Button.__init__ with args NoneType () {}\n"
+                "called CheckBox.__init__ with args NoneType () {}\n"
+                "called StringVar.__init__ with args ()\n"
                 "called IntVar.__init__ with args ()\n"
-                "called CheckBox.__init__ with args <class 'NoneType'> () {}\n"
+                "called CheckBox.__init__ with args NoneType () {}\n"
+                "called StringVar.__init__ with args ()\n"
                 "called IntVar.__init__ with args ()\n"
-                "called Button.__init__ with args <class 'NoneType'> () {}\n"
-                "called Button.__init__ with args <class 'NoneType'> () {}\n"
-                "called Button.__init__ with args <class 'NoneType'> () {}\n")
+                "called Button.__init__ with args NoneType () {}\n"
+                "called Button.__init__ with args NoneType () {}\n"
+                "called Button.__init__ with args NoneType () {}\n")
         testobj.process()
         assert testobj.choice == 'current text'
         assert capsys.readouterr().out == (
@@ -1474,7 +1487,7 @@ class TestAttributesDialog:
         testobj.clear_name_button.instate = mock_instate
         testobj.scrname = mockttk.MockStringVar()
         assert capsys.readouterr().out == (
-                "called Button.__init__ with args <class 'NoneType'> () {}\n"
+                "called Button.__init__ with args NoneType () {}\n"
                 "called StringVar.__init__ with args ()\n")
         testobj.clear_name_text()
         assert capsys.readouterr().out == "called Button.instate with arg ['!disabled']\n"
@@ -1497,7 +1510,7 @@ class TestAttributesDialog:
         testobj.clear_text_button.instate = mock_instate
         testobj.scrtext = mockttk.MockStringVar()
         assert capsys.readouterr().out == (
-                "called Button.__init__ with args <class 'NoneType'> () {}\n"
+                "called Button.__init__ with args NoneType () {}\n"
                 "called StringVar.__init__ with args ()\n")
         testobj.clear_text_text()
         assert capsys.readouterr().out == "called Button.instate with arg ['!disabled']\n"
@@ -1524,7 +1537,7 @@ class TestAttributesDialog:
         testobj.comps_button = mockttk.MockButton()
         testobj.comps_button.instate = mock_instate
         assert capsys.readouterr().out == (
-                "called Button.__init__ with args <class 'NoneType'> () {}\n")
+                "called Button.__init__ with args NoneType () {}\n")
         testobj.parent = types.SimpleNamespace(
                 master=types.SimpleNamespace(get_mod_components=mock_get))
         testobj.choice = 'xxx'
@@ -1559,7 +1572,7 @@ class TestAttributesDialog:
         testobj.parent = types.SimpleNamespace(
                 master=types.SimpleNamespace(get_mod_dependencies=mock_get))
         assert capsys.readouterr().out == (
-                "called Button.__init__ with args <class 'NoneType'> () {}\n")
+                "called Button.__init__ with args NoneType () {}\n")
         testobj.choice = 'xxx'
         testobj.modnames = {'xxx': {'aaa'}}
         testobj.view_dependencies()
@@ -1609,13 +1622,15 @@ class TestAttributesDialog:
         assert capsys.readouterr().out == (
                 "called StringVar.__init__ with args ()\n"
                 "called StringVar.set with arg 'current text'\n"
-                "called Button.__init__ with args <class 'NoneType'> () {}\n"
+                "called Button.__init__ with args NoneType () {}\n"
                 "called StringVar.__init__ with args ()\n"
                 "called StringVar.set with arg ''\n"
-                "called Button.__init__ with args <class 'NoneType'> () {}\n"
-                "called CheckBox.__init__ with args <class 'NoneType'> () {}\n"
-                "called CheckBox.__init__ with args <class 'NoneType'> () {}\n"
-                "called Button.__init__ with args <class 'NoneType'> () {}\n")
+                "called Button.__init__ with args NoneType () {}\n"
+                "called CheckBox.__init__ with args NoneType () {}\n"
+                "called StringVar.__init__ with args ()\n"
+                "called CheckBox.__init__ with args NoneType () {}\n"
+                "called StringVar.__init__ with args ()\n"
+                "called Button.__init__ with args NoneType () {}\n")
         testobj.choice = 'current text'
         testobj.update()
         assert capsys.readouterr().out == "called Button.instate with arg ['disabled']\n"
@@ -1736,7 +1751,7 @@ class TestSaveGamesDialog:
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.update_button = mockttk.MockButton()
         assert capsys.readouterr().out == (
-                "called Button.__init__ with args <class 'NoneType'> () {}\n")
+                "called Button.__init__ with args NoneType () {}\n")
         testobj.monitor_textvar()
         assert capsys.readouterr().out == "called Button.state with args (['!disabled'],)\n"
 
@@ -1744,8 +1759,8 @@ class TestSaveGamesDialog:
         """unittest for SaveGamesDialog.add_modselector
         """
         def mock_init(self, master, *args, **kwargs):
-            kwargs['textvariable'] = f"item of type {type(kwargs['textvariable'])}"
-            print('called ComboBox.__init__ with args', type(master), args, kwargs)
+            kwargs['textvariable'] = f"{type(kwargs['textvariable']).__name__}"
+            print('called ComboBox.__init__ with args', type(master).__name__, args, kwargs)
         def mock_bind(self, *args):
             args = (args[0], f"item of type {type(args[1])}")
             print('called ComboBox.bind with args', args)
@@ -1763,7 +1778,7 @@ class TestSaveGamesDialog:
         testobj.parent = types.SimpleNamespace(ecimage='ecimage')
         testobj.hfrm = mockttk.MockFrame()
         assert capsys.readouterr().out == (
-                "called Frame.__init__ with args <class 'NoneType'> () {}\n")
+                "called Frame.__init__ with args NoneType () {}\n")
         testobj.hfrmlen = 0
         testobj.modnames = ['yyy', 'xxx']
         testobj.widgets = []
@@ -1774,19 +1789,18 @@ class TestSaveGamesDialog:
         assert isinstance(testobj.widgets[0][2], testee.ttk.Frame)
         assert isinstance(testobj.widgets[0][3], testee.tk.StringVar)
         assert capsys.readouterr().out == (
-            "called Frame.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> () {}\n"
+            "called Frame.__init__ with args MockFrame () {}\n"
             "called Frame.grid with args ()"
             " {'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
-            "called ComboBox.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> ()"
-            f" {{'values': ['xxx', 'yyy'],"
-            " 'textvariable': \"item of type <class 'tkinter.StringVar'>\"}\n"
+            "called ComboBox.__init__ with args MockFrame ()"
+            f" {{'values': ['xxx', 'yyy'], 'textvariable': 'StringVar'}}\n"
             "called ComboBox.state with args (['readonly'],)\n"
             f"called ComboBox.bind with args ('<<ComboboxSelected>>',"
             " \"item of type <class 'functools.partial'>\")\n"
             "called ComboBox.grid with args ()"
             " {'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}\n"
             "called Frame.columnconfigure with args (0,)\n"
-            "called Button.__init__ with args <class 'mockgui.mockttkwidgets.MockFrame'> ()"
+            "called Button.__init__ with args MockFrame ()"
             f" {{'image': '{testobj.parent.ecimage}'}}\n"
             "called Button.configure with args"
             " {'command': \"item of type <class 'functools.partial'>\"}\n"
@@ -1806,9 +1820,10 @@ class TestSaveGamesDialog:
         lboxvar = mockttk.MockStringVar()
         lboxvar.set('select a mod')
         assert capsys.readouterr().out == (
-                "called Button.__init__ with args <class 'NoneType'> () {}\n"
-                "called ComboBox.__init__ with args <class 'NoneType'> () {}\n"
-                "called Button.__init__ with args <class 'NoneType'> () {}\n"
+                "called Button.__init__ with args NoneType () {}\n"
+                "called ComboBox.__init__ with args NoneType () {}\n"
+                "called StringVar.__init__ with args ()\n"
+                "called Button.__init__ with args NoneType () {}\n"
                 "called StringVar.__init__ with args ()\n"
                 "called StringVar.set with arg 'select a mod'\n")
         testobj.widgets = []
@@ -1829,8 +1844,9 @@ class TestSaveGamesDialog:
         lbox2var = mockttk.MockStringVar()
         lbox2var.set('xxx')
         assert capsys.readouterr().out == (
-                "called ComboBox.__init__ with args <class 'NoneType'> () {}\n"
-                "called Button.__init__ with args <class 'NoneType'> () {}\n"
+                "called ComboBox.__init__ with args NoneType () {}\n"
+                "called StringVar.__init__ with args ()\n"
+                "called Button.__init__ with args NoneType () {}\n"
                 "called StringVar.__init__ with args ()\n"
                 "called StringVar.set with arg 'xxx'\n")
         testobj.widgets.append([btn2, lbox2, 'frm', lbox2var])
@@ -1855,9 +1871,10 @@ class TestSaveGamesDialog:
         hbox = mockttk.MockFrame()
         # testobj.vbox2 = mockttk.MockFrame()
         assert capsys.readouterr().out == (
-                "called ComboBox.__init__ with args <class 'NoneType'> () {}\n"
-                "called Button.__init__ with args <class 'NoneType'> () {}\n"
-                "called Frame.__init__ with args <class 'NoneType'> () {}\n")
+                "called ComboBox.__init__ with args NoneType () {}\n"
+                "called StringVar.__init__ with args ()\n"
+                "called Button.__init__ with args NoneType () {}\n"
+                "called Frame.__init__ with args NoneType () {}\n")
                 # "called VBox.__init__\n")
         testobj.remove_mod(btn)
         assert not testobj.widgets
@@ -1869,8 +1886,11 @@ class TestSaveGamesDialog:
         testobj.widgets = [(btn, lbox, hbox)]
         testobj.remove_mod(btn)
         assert not testobj.widgets
-        assert capsys.readouterr().out == ("called Button.destroy\n"
+        assert capsys.readouterr().out == ("called Button.forget\n"
+                                           "called Button.destroy\n"
+                                           "called ComboBox.forget\n"
                                            "called ComboBox.destroy\n"
+                                           "called Frame.forget\n"
                                            "called Frame.destroy\n")
 
     def test_confirm(self, monkeypatch, capsys):
@@ -2009,8 +2029,9 @@ class TestSaveGamesDialog:
                 "called StringVar.__init__ with args ()\ncalled StringVar.set with arg 'xxx'\n"
                 "called StringVar.__init__ with args ()\ncalled StringVar.set with arg 'yyy'\n"
                 "called StringVar.__init__ with args ()\ncalled StringVar.set with arg 'zzz'\n"
-                "called Button.__init__ with args <class 'NoneType'> () {}\n"
-                "called ComboBox.__init__ with args <class 'NoneType'> () {}\n")
+                "called Button.__init__ with args NoneType () {}\n"
+                "called ComboBox.__init__ with args NoneType () {}\n"
+                "called StringVar.__init__ with args ()\n")
         testobj.update_conf('save_name')
         assert capsys.readouterr().out == ("called StringVar.get\n"
                                            "called StringVar.get\n"
@@ -2080,15 +2101,16 @@ class TestSaveGamesDialog:
         testobj.confirm_button = mockttk.MockButton()
         assert capsys.readouterr().out == (
                 "called StringVar.__init__ with args ()\n"
-                "called Button.__init__ with args <class 'NoneType'> () {}\n"
-                "called ComboBox.__init__ with args <class 'NoneType'> () {}\n"
-                "called Frame.__init__ with args <class 'NoneType'> () {}\n"
+                "called Button.__init__ with args NoneType () {}\n"
+                "called ComboBox.__init__ with args NoneType () {}\n"
+                "called StringVar.__init__ with args ()\n"
+                "called Frame.__init__ with args NoneType () {}\n"
                 "called StringVar.__init__ with args ()\n"
                 "called StringVar.__init__ with args ()\n"
                 "called StringVar.__init__ with args ()\n"
                 "called StringVar.__init__ with args ()\n"
-                "called Button.__init__ with args <class 'NoneType'> () {}\n"
-                "called Button.__init__ with args <class 'NoneType'> () {}\n")
+                "called Button.__init__ with args NoneType () {}\n"
+                "called Button.__init__ with args NoneType () {}\n")
         testobj.widgets = []
 
         testobj.savegame_selector_text.set('select a saved game')
