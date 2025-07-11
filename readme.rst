@@ -3,38 +3,37 @@ Stardew Valley Mods Manager
 
 For use with the user-written extensions (called "mods") for a game I very much like playing.
 
-Based on the assumption that the files for all the mods exist in directories per mod which in turn all are collected in one "mod directory" and are active unless they are "hidden" (having a dot preceding the directory name).
+Based on the given that the files for all the mods exist in directories per mod which in turn all are collected in one "mod directory" and are active unless they are "hidden" (having a dot preceding the directory name).
 
 It uses a configuration file containing all these directory names as well as the dependencies between the mods.
 
-In the gui you can select which mods to activate, it shows which mods are already activated. When you activate an extension, mods they depend on should automatically also be activated.
+In the gui you can select which mods to activate, it shows which mods are already activated. When you activate a mod, mods they in turn depend on should automatically also be activated.
 
-In the config you define a mod by associating the mod's directory name to the mod's display name. 
-Mods that need to be activatable must be named in a header (display name surrounded by [ and ]). 
-Dependencies are defined by naming the dependent mod's display name under the header containing the name of the depending mod. 
+The configuration is primarily built while installing the mods; they contain metadata about their structure which is read and converted for use. Installing is basically unzipping a downloaded mod file into the directory from where they are used. Reinstalling a(n updated) mod can also update the config if necessary.
 
-Because names are important, there's an option to check the configuration for (non-)matching names (spelling and case).
-
-There is also an option to directly edit the config file so you can add new mods to the collection.
-
+More stuff is defined in the configuration, most importantly it holds a list of all your save files and the mods they use, which may come in handy when you want to replay on an earlier save file, as you have the opportunity to activate all the mods it uses in one go.
 
 
 How to set up
 -------------
 
-Modify the file `sdv_mods.config.example` to your needs and rename it removing the .example suffix. Either leave it in this directory or (what I did on my Linux system) move it to the mods installation directory and make a symlink to it here.
+Create a shortcut to ``start.py`` in a directory on your system path. Adapt the shebang line if needed. 
+Edit ``toolkit.py`` to point to the type of gui you want to use (PyQt is the default, but you can switch to Tkinter if you don't want to install it). 
+Use the "Set Defaults" option to define some locations the program needs and download and install some mods to start populating the configuration.
 
 
 Dependencies of the project:
 ----------------------------
 - Python
-- PyQt(6)
+- PyQt or TkInter
 
 
 Changes summary:
 ................
 
-- Separated exiting the GUI from applying changes, so you can check and if necessary modify the results.
-- Added a way to enter new mods and dependencies directly from the gui, without having to know the structure of the file.
-- Added a (clunky) way to reorder the names on the screen.
-- Added a way to install a mod from the downloads directory from this GUI.
+This used to be a very simple app, but it escalated quickly.
+
+- Originally you had to enter the mod names, locations and dependencies manually, this is all done automatically now. You can still add a dependency manually if the mod author forgot to include it in the manifest.
+- Added a way to install a mod directly from this GUI. This started the move from maintaining the config manually to managing it automatically. 
+- I abandoned trying to create the possibilty to reorder the displayed names in favor of a distinction between mods you can activate by themselves and ones that you can't. So I had to build a means to indicate that, among other "mod attributes".
+- I added a way to register your save files with the mods they use, as well as a way to indicate a mod is to be "always on".
