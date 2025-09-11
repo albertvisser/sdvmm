@@ -241,7 +241,7 @@ class TestShowMods:
             'called QWidget.__init__()\n'
             "called Widget.setWindowTitle with arg `SDV Mod Manager`\n"
             "called VBox.__init__\n"
-            'called Widget.setLayout\n')
+            'called Widget.setLayout with arg MockVBoxLayout\n')
 
     def test_create_selectables_title(self, monkeypatch, capsys):
         """unittest for ShowMods.create_selectables_title
@@ -673,7 +673,7 @@ class TestSettingsDialogGui:
             "called VBox.__init__\n"
             "called Grid.__init__\n"
             "called VBox.addLayout with arg MockGridLayout\n"
-            "called Dialog.setLayout\n")
+            "called Dialog.setLayout with arg MockVBoxLayout\n")
 
     def test_add_label(self, monkeypatch, capsys):
         """unittest for SettingsDialogGui.add_label
@@ -798,7 +798,6 @@ class TestSettingsDialogGui:
         assert capsys.readouterr().out == (
                 f"called FileDialog.getExistingDirectory with args {testobj}"
                 " () {'caption': 'caption', 'directory': 'start'}\n")
-        return ''
 
     def test_confirm(self, monkeypatch, capsys):
         """unittest for SettingsDialogGui.confirm
@@ -844,7 +843,7 @@ class TestDeleteDialogGui:
         assert capsys.readouterr().out == (
             f"called Dialog.__init__ with args {parent} () {{}}\n"
             "called VBox.__init__\n"
-            "called Dialog.setLayout\n")
+            "called Dialog.setLayout with arg MockVBoxLayout\n")
 
     def test_add_combobox(self, monkeypatch, capsys):
         """unittest for DeleteDialogGui.add_combobox
@@ -978,7 +977,7 @@ class TestAttributesDialogGui:
         assert capsys.readouterr().out == (
             f"called Dialog.__init__ with args {parent} () {{}}\n"
             "called VBox.__init__\n"
-            "called Dialog.setLayout\n")
+            "called Dialog.setLayout with arg MockVBoxLayout\n")
 
     def test_add_combobox(self, monkeypatch, capsys):
         """unittest for AttributesDialogGui.add_combobox
@@ -1314,7 +1313,7 @@ class TestDependencyDialogGui:
         assert capsys.readouterr().out == (
             f"called Dialog.__init__ with args {parent} () {{}}\n"
             "called VBox.__init__\n"
-            "called Dialog.setLayout\n")
+            "called Dialog.setLayout with arg MockVBoxLayout\n")
 
     def test_add_label(self, monkeypatch, capsys):
         """unittest for DependencyDialogGui.add_label
@@ -1444,7 +1443,7 @@ class TestSaveGamesDialogGui:
         assert capsys.readouterr().out == (
             f"called Dialog.__init__ with args {parent} () {{}}\n"
             "called VBox.__init__\n"
-            "called Dialog.setLayout\n")
+            "called Dialog.setLayout with arg MockVBoxLayout\n")
 
     def test_add_combobox(self, monkeypatch, capsys):
         """unittest for SaveGamesDialogGui.add_combobox
