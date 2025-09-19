@@ -708,3 +708,176 @@ class TestJsonConf:
                 "called JsonConf.get_component_data with args ('hasid99', '_Nexus')\n"
                 "called JsonConf.get_component_data with args ('hasid100', '_Nexus')\n"
                 "called JsonConf.set_diritem.value with args ('dirname', '_Nexus', 99)\n")
+
+    def test_find_modsett(self, monkeypatch, capsys):
+        """unittest for JsonConf.find_modsett
+        """
+        def mock_list(name):
+            print(f"called conf.list_components_for_dir with arg '{name}'")
+            return []
+        def mock_list_2(name):
+            print(f"called conf.list_components_for_dir with arg '{name}'")
+            return ['xxx']
+        def mock_get(*args):
+            print('called conf.get_component_data with args', args)
+            return 'yyy'
+        def mock_get_2(*args):
+            print('called conf.get_component_data with args', args)
+            return 'yyy/zzz'
+        def mock_search(loc):
+            print(f"called _search_for_configs with arg '{loc}'")
+            return ['qq'], ['rr']
+        monkeypatch.setattr(testee, 'read_defaults', lambda *x: ['modbase'])
+        monkeypatch.setattr(testee, '_search_for_configs', mock_search)
+        monkeypatch.setattr(testee.os.path, 'exists', lambda *x: True)
+        testobj = self.setup_testobj('', monkeypatch, capsys)
+        testobj.modbase = 'modbase'
+        testobj.list_components_for_dir = mock_list
+        testobj.get_component_data = mock_get
+        assert testobj.find_modsett('modname', 'new') == ([], [])
+        assert capsys.readouterr().out == (
+                "called conf.list_components_for_dir with arg 'modname'\n")
+        assert testobj.find_modsett('modname', 'old') == ([], [])
+        assert capsys.readouterr().out == (
+                "called conf.list_components_for_dir with arg 'modname'\n")
+        testobj.list_components_for_dir = mock_list_2
+        assert testobj.find_modsett('modname', 'new') == (['qq'], ['rr'])
+        assert capsys.readouterr().out == (
+                "called conf.list_components_for_dir with arg 'modname'\n"
+                "called conf.get_component_data with args ('xxx', 'dirname')\n"
+                "called _search_for_configs with arg 'modbase/yyy'\n")
+        monkeypatch.setattr(testee.os.path, 'exists', lambda *x: False)
+        assert testobj.find_modsett('modname', 'new') == (['qq'], ['rr'])
+        assert capsys.readouterr().out == (
+                "called conf.list_components_for_dir with arg 'modname'\n"
+                "called conf.get_component_data with args ('xxx', 'dirname')\n"
+                "called _search_for_configs with arg 'modbase/.yyy'\n")
+        assert testobj.find_modsett('modname', 'old') == (['qq'], ['rr'])
+        assert capsys.readouterr().out == (
+                "called conf.list_components_for_dir with arg 'modname'\n"
+                "called conf.get_component_data with args ('xxx', 'dirname')\n"
+                "called _search_for_configs with arg 'modbase/.yyy~'\n")
+        monkeypatch.setattr(testee.os.path, 'exists', lambda *x: True)
+        testobj.get_component_data = mock_get_2
+        assert testobj.find_modsett('modname', 'old') == (['qq'], ['rr'])
+        assert capsys.readouterr().out == (
+                "called conf.list_components_for_dir with arg 'modname'\n"
+                "called conf.get_component_data with args ('xxx', 'dirname')\n"
+                "called _search_for_configs with arg 'modbase/.yyy~/zzz'\n")
+        assert testobj.find_modsett('modname', 'new') == (['qq'], ['rr'])
+        assert capsys.readouterr().out == (
+                "called conf.list_components_for_dir with arg 'modname'\n"
+                "called conf.get_component_data with args ('xxx', 'dirname')\n"
+                "called _search_for_configs with arg 'modbase/yyy/zzz'\n")
+        monkeypatch.setattr(testee.os.path, 'exists', lambda *x: False)
+        assert testobj.find_modsett('modname', 'new') == (['qq'], ['rr'])
+        assert capsys.readouterr().out == (
+                "called conf.list_components_for_dir with arg 'modname'\n"
+                "called conf.get_component_data with args ('xxx', 'dirname')\n"
+                "called _search_for_configs with arg 'modbase/.yyy/zzz'\n")
+
+    def test_find_modsett_backup(self, monkeypatch, capsys):
+        """unittest for JsonConf.find_modsett_backup
+        """
+        testobj = self.setup_testobj('', monkeypatch, capsys)
+        testobj._data = {}
+        testobj.BAK = 'qqq'
+        assert not testobj.find_modsett_backup('modname')
+        testobj._data = {testobj.BAK: {}}
+        assert not testobj.find_modsett_backup('modname')
+        testobj._data = {testobj.BAK: {'modname': []}}
+        assert not testobj.find_modsett_backup('modname')
+        testobj._data = {testobj.BAK: {'modname': ['xxx']}}
+        assert testobj.find_modsett_backup('modname')
+
+    def test_backup_modsett(self, monkeypatch, capsys, tmp_path):
+        """unittest for JsonConf.backup_modsett
+        """
+        def mock_load(loc):
+            print(f"called json.load with arg '{loc}'")
+            return 'stuff'
+        monkeypatch.setattr(testee.json, 'load', mock_load)
+        testobj = self.setup_testobj('', monkeypatch, capsys)
+        testobj.modbase = str(tmp_path)  # 'modbase'
+        testobj._data = {}
+        testobj.BAK = 'x'
+        testobj.backup_modsett('modname', [])
+        assert testobj._data == {testobj.BAK: {'modname': {}}}
+        assert capsys.readouterr().out == ""
+        filepath = tmp_path / 'xxx/file'
+        filepath.parent.mkdir()
+        filepath.touch()
+        testobj.backup_modsett('modname', [str(filepath)])
+        assert testobj._data == {testobj.BAK: {'modname': {f'{tmp_path}/xxx/file': 'stuff'}}}
+        assert capsys.readouterr().out == (
+                f"called json.load with arg '<_io.TextIOWrapper name='{filepath}'"
+                " mode='r' encoding='UTF-8'>'\n")
+        filepath = tmp_path / '.xxx/file'
+        filepath.parent.mkdir()
+        filepath.touch()
+        testobj.backup_modsett('modname', [str(filepath)])
+        assert testobj._data == {testobj.BAK: {'modname': {f'{tmp_path}/xxx/file': 'stuff'}}}
+        assert capsys.readouterr().out == (
+                f"called json.load with arg '<_io.TextIOWrapper name='{filepath}'"
+                " mode='r' encoding='UTF-8'>'\n")
+        filepath = tmp_path / '.xxx~/file'
+        filepath.parent.mkdir()
+        filepath.touch()
+        testobj.backup_modsett('modname', [str(filepath)])
+        assert testobj._data == {testobj.BAK: {'modname': {f'{tmp_path}/xxx/file': 'stuff'}}}
+        assert capsys.readouterr().out == (
+                f"called json.load with arg '<_io.TextIOWrapper name='{filepath}'"
+                " mode='r' encoding='UTF-8'>'\n")
+
+    def test_restore_modsett(self, monkeypatch, capsys, tmp_path):
+        """unittest for JsonConf.restore_modsett
+        """
+        def mock_dump(*args, **kwargs):
+            print('called json.dump with args', args)
+        def mock_copy(*args):
+            print('called shutil.copyfile with args', args)
+        monkeypatch.setattr(testee.json, 'dump', mock_dump)
+        monkeypatch.setattr(testee.shutil, 'copyfile', mock_copy)
+        monkeypatch.setattr(testee.os.path, 'exists', lambda *x: True)
+        testobj = self.setup_testobj('', monkeypatch, capsys)
+        testobj.modbase = str(tmp_path)
+        testobj.BAK = 'x'
+        testobj._data = {'x': {'modname': {str(tmp_path / 'xxx/file'): {'json': 'data'}}}}
+        (tmp_path / 'xxx').mkdir()
+        arg = 'modname'
+        testobj.restore_modsett(arg, False, False)
+        assert capsys.readouterr().out == ""
+        testobj.restore_modsett(arg, True, False)
+        assert capsys.readouterr().out == (
+                "called json.dump with args ({'json': 'data'}, <_io.TextIOWrapper"
+                f" name='{tmp_path}/xxx/file' mode='w' encoding='UTF-8'>)\n")
+        testobj.restore_modsett(arg, True, True)
+        assert capsys.readouterr().out == (
+                "called json.dump with args ({'json': 'data'}, <_io.TextIOWrapper"
+                f" name='{tmp_path}/xxx/file' mode='w' encoding='UTF-8'>)\n")
+        arg = [str(tmp_path / '.yyy~/file')]
+        testobj.restore_modsett(arg, False, True)
+        assert capsys.readouterr().out == (
+                f"called shutil.copyfile with args ('{tmp_path}/.yyy~/file',"
+                f" '{tmp_path}/.yyy/file')\n")
+        monkeypatch.setattr(testee.os.path, 'exists', lambda *x: False)
+        testobj.restore_modsett(arg, False, True)
+        assert capsys.readouterr().out == (
+                f"called shutil.copyfile with args ('{tmp_path}/.yyy~/file',"
+                f" '{tmp_path}/yyy/file')\n")
+
+
+def test_search_for_configs(tmp_path):
+    """unittest for jsonconfig._search_for_configs
+    """
+    root = tmp_path
+    assert testee._search_for_configs(root) == ([], [])
+    (root / 'modfile').touch()
+    (root / 'config.json').touch()
+    (root / 'xxx').mkdir()
+    (root / 'xxx' / 'modfile').touch()
+    (root / 'yyy').mkdir()
+    (root / 'yyy' / 'modfile').touch()
+    (root / 'yyy' / 'config.json').touch()
+    assert testee._search_for_configs(root) == (['config.json', 'yyy/config.json'],
+                                                [f'{root}/config.json', f'{root}/yyy/config.json'])

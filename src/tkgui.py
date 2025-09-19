@@ -39,6 +39,7 @@ class ShowMods():
     def __init__(self, master):
         self.master = master
         self.root = tk.Tk()
+        self.root.option_add('*tearOff', False)
         self.ecimage = ImageTk.PhotoImage(ECIMAGE)
         self.root.title("SDV Mod Manager")
         self.main = ttk.Frame(self.root)
@@ -510,14 +511,41 @@ class AttributesDialogGui(tk.Toplevel):
         self.textvars[cb] = textvar
         return cb
 
-    def add_button(self, text, callback, enabled=True):
+    def add_button(self, text, callback, pos=0, enabled=True):
         "add a button on the next line"
-        pos, text, char = get_shortcut_info(text)
+        textpos, text, char = get_shortcut_info(text)
         self.row += 1
-        button = ttk.Button(self.frm, text=text, underline=pos, command=callback)
-        button.grid(row=self.row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W), pady=2)
+        if pos == 1:
+            self.localbuttonbox = ttk.Frame(self.frm)
+            self.localbuttonbox.grid(row=self.row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W))
+        if pos:
+            button = ttk.Button(self.localbuttonbox, text=text, underline=textpos, command=callback)
+            button.grid(row=0, column=pos - 1, sticky=(tk.N, tk.E, tk.S, tk.W), pady=2)
+            self.localbuttonbox.columnconfigure(pos - 1, weight=1)
+        else:
+            button = ttk.Button(self.frm, text=text, underline=textpos, command=callback)
+            button.grid(row=self.row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W), pady=2)
         button.state([f'{"!" if enabled else ""}disabled'])
         self.bind(f'Alt-{char}', callback)
+        return button
+
+    def add_menubutton(self, text, options, callbacks, pos, enabled=True):
+        "add a button with a popup menu on the next line"
+        textpos, text, char = get_shortcut_info(text)
+        button = tk.Menubutton(self.localbuttonbox, text=text, underline=textpos)
+        # button['relief'] = 'raised'
+        button.configure(relief='raised')
+        button.grid(row=0, column=pos - 1, sticky=(tk.N, tk.E, tk.S, tk.W))
+        self.localbuttonbox.columnconfigure(pos - 1, weight=1)
+        button.menu = tk.Menu(button)
+        # button['menu'] = buttonmenu
+        button.configure(menu=button.menu)
+        for ix, name in enumerate(options):
+            # menu.addAction(name).triggered.connect(callbacks[ix])
+            button.menu.add_command(label=name, command=callbacks[ix])
+        # button.state([f'{"!" if enabled else ""}disabled'])
+        # button["state"] = "normal" if enabled else "disabled"
+        button.configure(state="normal" if enabled else "disabled")
         return button
 
     def add_buttonbox(self, buttondefs):
@@ -546,9 +574,13 @@ class AttributesDialogGui(tk.Toplevel):
         "callback for trace_add"
         self.maingui.enable_change()
 
-    def enable_button(self, field, value):
+    def enable_button(self, field, enabled):
         "make a button (un)usable"
-        field.state([f'{"!" if value else ""}disabled'])
+        if isinstance(field, tk.Menubutton):
+            # field["state"] = "normal" if enabled else "disabled"
+            field.configure(state="normal" if enabled else "disabled")
+        else:
+            field.state([f'{"!" if enabled else ""}disabled'])
 
     def get_combobox_value(self, field):
         "retrieve the selected/entered value from a combobox"
@@ -587,7 +619,10 @@ class AttributesDialogGui(tk.Toplevel):
         fields[5].state(['!disabled'])
         fields[6].state(['!disabled'])
         fields[7].state(['!disabled'])
-        fields[8].state(['!disabled'])
+        fields[8].state(['disabled'])
+        fields[9].state(['!disabled'])
+        fields[10].state(['!disabled'])
+        fields[11].configure(state="normal")
 
     def clear_field(self, field):
         "empty a field's (text) contents"
@@ -606,6 +641,70 @@ class AttributesDialogGui(tk.Toplevel):
         # put focus back to the parent window
         if self.parent is not None:
             self.parent.root.focus_set()
+        self.destroy()
+
+
+class RestoreDialogGui(tk.Toplevel):
+    """screen for dialog to select restore method
+    """
+    def __init__(self, maingui, parent):
+        self.maingui = maingui
+        self.parent = parent  # DialogGui heeft dezelfde parent als Dialog
+        super().__init__(parent)
+        self.frm = ttk.Frame(self, padding=10)
+        self.frm.grid(row=0, column=0, sticky=(tk.N, tk.E, tk.S, tk.W))
+        # self.frm.columnconfigure(0, weight=1)
+        self.row = 0
+        self.textvars = {}
+
+    def add_checkbox(self, text, callback, enabled=True):
+        "add a checkbox on the next line"
+        textpos, text, char = get_shortcut_info(text)
+        self.row += 1
+        textvar = tk.IntVar()
+        textvar.set(0)
+        cb = ttk.Checkbutton(self.frm, text=text, variable=textvar, underline=textpos,
+                             command=callback)
+        cb.grid(row=self.row, column=0, sticky=(tk.N, tk.E, tk.S, tk.W), pady=2)
+        cb.state([f'{"!" if enabled else ""}disabled'])
+        self.bind(f'Alt-{char}', callback)
+        self.textvars[cb] = textvar
+        return cb
+
+    def get_checkbox_value(self, field):
+        "retrieve the value from a checkbox"
+        # return field.getvar(field.cget('textvariable'))
+        return self.textvars[field].get()
+
+    def add_buttonbox(self, buttondefs):
+        "add a row of buttons at the bottom of the page"
+        self.row += 1
+        bbox = ttk.Frame(self, padding=10)
+        bbox.grid(row=self.row, column=0)
+        for ix, bdef in enumerate(buttondefs):
+            text, callback = bdef
+            pos, text, char = get_shortcut_info(text)
+            btn = ttk.Button(bbox, text=text, underline=pos, command=callback)
+            btn.grid(row=0, column=ix)
+            self.bind(f'<Alt-{char}>', callback)
+        self.bind('<Escape>', self.confirm)
+
+    def set_focus(self, field):
+        "set focus to field"
+        field.focus_set()
+
+    def confirm(self, event=None):
+        "close the dialog"
+        # put focus back to the parent window
+        if self.parent is not None:
+            self.parent.focus_set()
+        self.destroy()
+
+    def reject(self, event=None):
+        "close the dialog"
+        # put focus back to the parent window
+        if self.parent is not None:
+            self.parent.focus_set()
         self.destroy()
 
 

@@ -219,10 +219,12 @@ class JsonConf:
     SAVES = 'savedgames'
     knownsavekeys = ['player', 'farmName', 'ingameDate', MODS]
     PNAME, FNAME, GDATE = knownsavekeys[:-1]
+    BAK = 'backups'
 
     def __init__(self, filename):
         self.filename = filename
         self.filepath = pathlib.Path(filename)
+        self.modbase = read_defaults()[0]
         self._data = {}
 
     def load(self):
@@ -383,3 +385,75 @@ class JsonConf:
                         nexusid = value
         if nexusid:
             self.set_diritem_value(dirname, self.NXSKEY, int(nexusid))
+
+    def find_modsett(self, modname, version):   # 'old' / 'new'
+        "search for all files named 'config.json' in a mod's directory and return their locations"
+        names, locs = [], []
+        for component in self.list_components_for_dir(modname):
+            parts = self.get_component_data(component, self.DIR).split(os.sep, 1)
+            location = parts[0]
+            subdir = parts[1] if len(parts) > 1 else ''
+            if version == 'old':
+                location = f'.{location}~'
+            elif not os.path.exists(os.path.join(self.modbase, location)):
+                location = f'.{location}'
+            where = os.path.join(self.modbase, location)
+            if subdir:
+                where = os.path.join(where, subdir)
+            data = _search_for_configs(where)
+            names.extend(data[0])
+            locs.extend(data[1])
+        return names, locs
+
+    def find_modsett_backup(self, modname):
+        "search for a collection of config backups for a given mod"
+        if self.BAK not in self._data:
+            return False
+        if modname not in self._data[self.BAK]:
+            return False
+        return bool(self._data[self.BAK][modname])
+
+    def backup_modsett(self, modname, locs):
+        "save a copy of the config files for a given mod to a backup location"
+        if self.BAK not in self._data:
+            self._data[self.BAK] = {}
+        self._data[self.BAK][modname] = {}
+        for name in locs:
+            with open(name) as f:
+                data = json.load(f)
+            # name corrigeren voor vorige en/of inactieve versie
+            name = name.removeprefix(self.modbase + os.sep)
+            name, rest = name.split(os.sep, 1)
+            name = name.removesuffix('~').removeprefix('.')
+            name = os.path.join(self.modbase, name, rest)
+            self._data[self.BAK][modname][name] = data
+
+    def restore_modsett(self, arg, frombackup=False, fromprevious=False):
+        "retrieve the config files copies for a given mod and save them into the mod directory"
+        if frombackup:
+            modname = arg
+            data = self._data[self.BAK][modname]
+            for name, contents in data.items():
+                with open(name, 'w') as f:
+                    json.dump(contents, f, indent=2)
+        elif fromprevious:
+            names = arg
+            oldroot = os.path.relpath(names[0], self.modbase).split(os.sep)[0]
+            newroot = oldroot[:-1]
+            if not os.path.exists(newroot):
+                newroot = newroot[1:]
+            for name in names:
+                newname = name.replace(oldroot, newroot)
+                shutil.copyfile(name, newname)
+
+
+def _search_for_configs(root):
+    "execute search using os.walk"
+    result = [], []
+    for base, dirs, files in os.walk(root):
+        for name in files:
+            if name == 'config.json':
+                filename = os.path.join(base, name)
+                result[0].append(os.path.relpath(filename, root))
+                result[1].append(filename)
+    return result

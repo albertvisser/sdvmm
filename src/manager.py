@@ -7,6 +7,7 @@ import pathlib
 import contextlib
 import shutil
 import zipfile
+import tempfile
 import subprocess
 import functools
 from src import gui as gui
@@ -275,33 +276,11 @@ class Manager:
 
     def get_mod_components(self, modname):
         "build a message containing a list of mod components"
-        complist = []
-        for comp in self.conf.list_components_for_dir(modname):
-            text = (f'  {self.conf.get_component_data(comp, self.conf.NAME)} '
-                    f'  {self.conf.get_component_data(comp, self.conf.VRS)}\n'
-                    f'    ({comp})')
-            complist.append(text)
-        return f'Components for {modname}:\n' + '\n'.join(complist)
+        # verplaatst naar aanroepende methode omdat die nu in deze module zit
 
     def get_mod_dependencies(self, modname):
         "build a imessage containing a list of mod dependencies"
-        deplist = set()
-        for comp in self.conf.list_components_for_dir(modname):
-            for dep in self.conf.get_component_data(comp, self.conf.DEPS):
-                deplist.add(dep)
-        depnames = []
-        for dep in sorted(deplist):
-            try:
-                depname = self.conf.get_component_data(dep, self.conf.NAME)
-            except ValueError:
-                depname = 'unknown component:'
-                depnames.append((depname, dep))
-            else:
-                depnames.append((depname, f'({dep})'))
-        if not depnames:
-            depnames = [('None', '')]
-        return f'Dependencies for {modname}:\n' + "\n".join(f' {x} {y}'
-                                                            for (x, y) in sorted(depnames))
+        # verplaatst naar aanroepende methode omdat die nu in deze module zit
 
     def update_attributes(self, selectable, name, oldname, text, is_exempt):
         "do the updating (called from the dialog each time a mod is modified)"
@@ -594,10 +573,10 @@ class SettingsDialog:
         "define mod location"
         oldmodbase = self.doit.get_widget_text(self.modbase_text) or '~'
         filename = self.doit.select_directory("Where to install downloaded mods?",
-                                             os.path.expanduser(oldmodbase))
+                                              os.path.expanduser(oldmodbase))
         if filename:
             self.doit.set_widget_text(self.modbase_text,
-                                     filename.replace(os.path.expanduser('~'), '~'))
+                                      filename.replace(os.path.expanduser('~'), '~'))
 
     def select_download_path(self):
         "define download location"
@@ -615,7 +594,7 @@ class SettingsDialog:
                                               os.path.expanduser(oldsavepath))
         if filename:
             self.doit.set_widget_text(self.savepath_text,
-                                     filename.replace(os.path.expanduser('~'), '~'))
+                                      filename.replace(os.path.expanduser('~'), '~'))
 
     def update(self):
         "update settings and exit"
@@ -642,7 +621,7 @@ class DeleteDialog:
             name = conf.get_diritem_data(x, conf.SCRNAM) or x
             self.modnames[name] = x
         self.lbox = self.doit.add_combobox([self.seltext] + sorted(self.modnames), self.process,
-                                          editable=False)
+                                           editable=False)
         self.change_button = self.doit.add_buttonbox([('&Remove', self.update, False),
                                                      ('&Close', self.doit.accept, True)])[0]
         self.doit.set_focus(self.lbox)
@@ -677,10 +656,10 @@ class AttributesDialog:
             self.modnames[name] = x
 
         self.lbox = self.doit.add_combobox([self.seltext] + sorted(self.modnames), self.process,
-                                          editable=False)
+                                           editable=False)
         self.doit.add_label('Screen Name:\n'
-                           '(the suggestions in the box below are taken from\n'
-                           'the mod components')
+                            '(the suggestions in the box below are taken from\n'
+                            'the mod components')
         # self.name, self.clear_name_button = self.doit.add_with_clear_button(
         #         self.doit.add_combobox([], self.enable_change, editable=True, enabled=False),
         #         self.clear_name_text)
@@ -688,7 +667,7 @@ class AttributesDialog:
         self.name = self.doit.add_combobox([], self.enable_change, editable=True, enabled=False)
         self.clear_name_button = self.doit.add_clear_button(self.clear_name_text)
         self.doit.add_label('Screen Text:\n'
-                           '(to add some information e.q. if the mod is broken)')
+                            '(to add some information e.q. if the mod is broken)')
         # self.text, self.clear_text_button = self.doit.add_with_clear_button(
         #         self.doit.add_line_entry('', self.enable_change, enabled=False),
         #         self.clear_text_text)
@@ -699,7 +678,15 @@ class AttributesDialog:
                                                       self.enable_change, enabled=False)
         self.exempt_button = self.doit.add_checkbox('Do not touch when (de)activating for a save',
                                                     self.enable_change, enabled=False)
-        self.comps_button = self.doit.add_button('View &Components', self.view_components,
+        self.backup_button = self.doit.add_button('&Backup Mod Config', self.backup_settings,
+                                                  pos=1, enabled=False)
+        self.restore_button = self.doit.add_button('&Restore', self.restore_settings,
+                                                   pos=2, enabled=False)
+        self.compare_button = self.doit.add_menubutton('Co&mpare',
+                ['previous <-> current', 'backup <-> current', 'view current'],
+                [self.compare_settings, self.compare_to_backup, self.view_current], pos=3,
+                enabled=False)
+        self.comps_button = self.doit.add_button('&View Components', self.view_components,
                                                  enabled=False)
         self.deps_button = self.doit.add_button('View &Dependencies', self.view_dependencies,
                                                 enabled=False)
@@ -719,7 +706,8 @@ class AttributesDialog:
         self.choice = self.doit.get_combobox_value(self.lbox)
         field_list = [self.name, self.clear_name_button, self.text, self.clear_text_button,
                       self.activate_button, self.exempt_button, self.comps_button,
-                      self.deps_button, self.change_button]
+                      self.deps_button, self.change_button, self.backup_button,
+                      self.restore_button, self.compare_button]
         if self.choice == self.seltext:
             self.doit.reset_all_fields(field_list)
             return
@@ -727,7 +715,7 @@ class AttributesDialog:
         for x in self.conf.list_components_for_dir(self.modnames[self.choice]):
             items.add(self.conf.get_component_data(x, self.conf.NAME))
         self.doit.activate_and_populate_fields(field_list, [self.choice] + sorted(list(items)),
-                                              self.parent.master.screeninfo[self.choice])
+                                               self.parent.master.screeninfo[self.choice])
 
     def clear_name_text(self):
         "visually delete screen text"
@@ -737,14 +725,141 @@ class AttributesDialog:
         "visually delete additional text if any"
         self.doit.clear_field(self.text)
 
+    def backup_settings(self):
+        "store current mod settings - if present - for safekeeping"
+        modname = self.modnames[self.choice]
+        names, locs = self.conf.find_modsett(modname, 'new')
+        if not locs:
+            message = 'Geen mod settings gevonden'
+        else:
+            self.conf.backup_modsett(modname, locs)
+            self.conf.save()
+            message = 'Mod settings van huidige versie veilig gesteld:'
+            message += '\n' + '\n'.join(names)
+        gui.show_message(self.doit, message, title='SDVMM mod info')
+
+    def restore_settings(self):
+        "retrieve mod settings from older version"
+        modname = self.modnames[self.choice]
+        # zoek opgeslagen versie
+        saveloc = self.conf.find_modsett_backup(modname)
+        names, locs = self.conf.find_modsett(modname, 'old')
+        # indien gevonden:
+        if not saveloc and not locs:
+            message = 'Geen mod settings gevonden in vorige versie of in backup'
+        else:
+            message = ''
+            self.doit.dialog_data = {'found': [saveloc, locs]}  # alleen indicaties nodig denk ik
+            gui.show_dialog(RestoreDialog, self.doit)
+            choices = self.doit.dialog_data.get('choices', '')
+            if choices:
+                restore_from_backup, restore_from_previous, backup_previous = choices
+            else:
+                restore_from_backup = restore_from_previous = backup_previous = False
+            messagelist = []
+            if restore_from_backup:
+                self.conf.restore_modsett(modname, frombackup=True)
+                messagelist.append('teruggezet van backup')
+            elif restore_from_previous:
+                self.conf.restore_modsett(locs, fromprevious=True)
+                messagelist.append('teruggezet van vorige versie')
+            if backup_previous:
+                self.conf.backup_modsett(modname, locs)
+                self.conf.save()
+                messagelist.append('vorige versie veiliggesteld\n' + '\n'.join(names))
+            if messagelist:
+                message = 'Mod settings '
+                if len(messagelist) > 1:
+                    message += ', '.join(messagelist[:-1]) + ' en '
+                message += messagelist[-1]
+        if message:
+            gui.show_message(self.doit, message, title='SDVMM mod info')
+
+    def compare_settings(self):
+        "compare current mod settings with older version"
+        modname = self.modnames[self.choice]
+        newlocs = self.conf.find_modsett(modname, 'new')[1]
+        oldlocs = self.conf.find_modsett(modname, 'old')[1]
+        if newlocs and oldlocs:
+            if len(newlocs) == len(oldlocs):
+                for ix, loc in enumerate(newlocs):
+                    subprocess.run(['meld', loc, oldlocs[ix]])
+                message = 'Done.'
+            else:
+                message = 'Verschillende aantallen mod settings bestanden gevonden'
+        elif newlocs and not oldlocs:
+            message = 'Alleen mod settings van huidige versie gevonden'
+        elif oldlocs and not newlocs:
+            message = 'Alleen mod settings van vorige versie gevonden'
+        else:
+            message = 'Geen mod settings gevonden in vorige en huidige versie'
+        gui.show_message(self.doit, message, title='SDVMM mod info')
+
+    def compare_to_backup(self):
+        "compare current mod settings with backupped version"
+        modname = self.modnames[self.choice]
+        newlocs = self.conf.find_modsett(modname, 'new')[1]
+        if not self.conf.find_modsett_backup(modname):
+            message = 'Geen backup van mod settings gevonden'
+        else:
+            backups = self.conf._data[self.conf.BAK][modname]
+            tmpfile = tempfile.mkstemp()[1]
+            for ix, loc in enumerate(newlocs):
+                data = backups[loc]
+                with open(tmpfile, 'w') as f:
+                    json.dump(data, f, indent=2)
+                subprocess.run(['meld', loc, tmpfile])
+            os.unlink(tmpfile)
+            message = 'Done.' if newlocs else 'Geen mod settings gevonden'
+        gui.show_message(self.doit, message, title='SDVMM mod info')
+
+    def view_current(self):
+        "view config files for current version"
+        modname = self.modnames[self.choice]
+        newlocs = self.conf.find_modsett(modname, 'new')[1]
+        message = 'Geen mod settings gevonden'
+        for ix, loc in enumerate(newlocs):
+            # subprocess.run(['gnome-terminal', '--', 'vim', loc])  # opent in de achtergrond
+            # subprocess.run(['scite', loc])
+            message = pathlib.Path(loc).read_text()
+            if ix < len(newlocs) - 1:
+                gui.show_message(self.doit, message, title='SDVMM mod info')
+        gui.show_message(self.doit, message, title='SDVMM mod info')
+
     def view_components(self):
         "list components for mod"
-        message = self.parent.master.get_mod_components(self.modnames[self.choice])
+        complist = []
+        modname = self.modnames[self.choice]
+        for comp in self.conf.list_components_for_dir(modname):
+            text = (f'  {self.conf.get_component_data(comp, self.conf.NAME)} '
+                    f'  {self.conf.get_component_data(comp, self.conf.VRS)}\n'
+                    f'    ({comp})')
+            complist.append(text)
+        # message = self.parent.master.get_mod_components(self.modnames[self.choice])
+        message = f'Components for {modname}:\n' + '\n'.join(complist)
         gui.show_message(self.doit, message, title='SDVMM mod info')
 
     def view_dependencies(self):
         "list dependencies for mod"
-        message = self.parent.master.get_mod_dependencies(self.modnames[self.choice])
+        deplist = set()
+        modname = self.modnames[self.choice]
+        for comp in self.conf.list_components_for_dir(modname):
+            for dep in self.conf.get_component_data(comp, self.conf.DEPS):
+                deplist.add(dep)
+        depnames = []
+        for dep in sorted(deplist):
+            try:
+                depname = self.conf.get_component_data(dep, self.conf.NAME)
+            except ValueError:
+                depname = 'unknown component:'
+                depnames.append((depname, dep))
+            else:
+                depnames.append((depname, f'({dep})'))
+        if not depnames:
+            depnames = [('None', '')]
+        # message = self.parent.master.get_mod_dependencies(self.modnames[self.choice])
+        message = f'Dependencies for {modname}:\n' + "\n".join(f' {x} {y}'
+                                                               for (x, y) in sorted(depnames))
         gui.show_message(self.doit, message, title='SDVMM mod info')
 
     def update(self):
@@ -769,6 +884,34 @@ class AttributesDialog:
         gui.show_dialog(DependencyDialog, self.doit, self.conf)
         # add new dependency immediately
 
+
+class RestoreDialog:
+    """toon een dialoog die aangeeft welke van de twee gevonden is/zijn en vraagt
+    welke er teruggezet moet worden
+    vraag ook of de evt. vorige versie gebackupt moet worden indien gevonden
+    """
+    def __init__(self, parent):
+        self.parent = parent
+        self.doit = gui.RestoreDialogGui(self, parent)
+        # backup_found, oldlocs = self.parent.master.dialog_data['found']
+        backup_found, oldlocs = self.parent.dialog_data['found']
+        self.from_backup = self.doit.add_checkbox('&1. Restore from backup', backup_found)
+        self.from_previous = self.doit.add_checkbox('&2. Restore from previous version',
+                                                    bool(oldlocs))
+        self.backup_previous = self.doit.add_checkbox("&Backup previous version's settings",
+                                                      oldlocs and not backup_found)
+        self.doit.add_buttonbox([('&Ok', self.accept), ('&Cancel', self.doit.reject)])
+        self.doit.set_focus(self.from_backup)
+
+    def accept(self):
+        "communicate choices to parent"
+        from_backup = self.doit.get_checkbox_value(self.from_backup)
+        from_previous = self.doit.get_checkbox_value(self.from_previous)
+        backup_previous = self.doit.get_checkbox_value(self.backup_previous)
+        self.parent.dialog_data['choices'] = [from_backup, from_previous, backup_previous]
+        self.doit.confirm()
+
+
 class DependencyDialog:
     """Dialog for manually defining a new dependency
     """
@@ -783,16 +926,16 @@ class DependencyDialog:
                 self.modnames[conf.get_diritem_data(x, conf.SCRNAM)] = x
         self.doit.add_label("Selecteer de toe te voegen dependency")
         self.dependency_selector = self.doit.add_combobox(['select a mod'] + sorted(self.modnames),
-                                                         None, editable=False)
+                                                          None, editable=False)
         components = self.conf.list_components_for_dir(current_mod)
         if len(components) == 1:
             self.doit.add_label('De dependency wordt toegevoegd aan onderstaande component')
             self.component_selector = self.doit.add_combobox(components, None, editable=False,
-                                                            enabled=False)
+                                                             enabled=False)
         else:
             self.doit.add_label('Selecteer een component om de dependency aan toe te voegen')
             self.component_selector = self.doit.add_combobox(['select a component'] + components,
-                                                            None, editable=False, enabled=True)
+                                                             None, editable=False, enabled=True)
         self.doit.add_label("Bij Add wordt de dependency direct aan de configuratie toegevoegd")
         self.doit.add_buttonbox([('&Add dependency', self.accept), ('&Close', self.doit.reject)])
         self.doit.set_focus(self.dependency_selector)
@@ -825,8 +968,7 @@ class SaveGamesDialog:
         for x in conf.list_all_mod_dirs():
             self.modnames[conf.get_diritem_data(x, conf.SCRNAM)] = x
         self.savegame_selector = self.doit.add_combobox(
-                ['select a saved game'] + sorted(self.savenames), self.get_savedata,
-                editable=False)
+            ['select a saved game'] + sorted(self.savenames), self.get_savedata, editable=False)
         self.oldsavename = ''
         self.doit.add_label('Player name:')
         self.pname = self.doit.add_line_entry('')  # , self.doit.enable_change)
@@ -852,7 +994,7 @@ class SaveGamesDialog:
                                       editable=True, enabled=enabled)
         button, container = self.doit.add_clear_button(enabled)
         self.doit.set_callbacks((lbox, button), (functools.partial(self.process_mod, lbox),
-                               functools.partial(self.remove_mod, button)))
+                                                 functools.partial(self.remove_mod, button)))
         self.widgets.append([button, lbox, container])
         # print(f'  added {lbox=}, {button=} to {container=}')
         # print(f'  {len(self.widgets)=}', flush=True)

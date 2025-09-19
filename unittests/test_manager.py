@@ -38,6 +38,7 @@ class MockConf:
     SCRNAM, NAME, DEPS, COMPS, VRS = 'SCRNAM', 'Name', 'Deps', 'Comps', 'Version'
     PNAME, FNAME, GDATE, MODS, NXSKEY = 'Pname', 'Fname', 'Gdate', 'Mods', '_NexusKey'
     OPTOUT, DIR, SEL, SCRPOS, SCRTXT = '_DoNotTouch', 'dirname', 'Sel', 'ScrPos', 'ScrTxt'
+    BAK = 'backups'
 
     # SCRNAM, SEL, SCRPOS, NXSKEY, SCRTXT, DIR, DEPS, COMPS, NAME, VRS = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
     # OPTOUT = 10
@@ -97,6 +98,16 @@ class MockConf:
     def remove_diritem(self, name):
         "stub"
         print(f"called Conf.remove_diritem with arg '{name}'")
+    def find_modsett(self, *args):
+        print('called conf.find_modsett with args', args)
+        return [], []
+    def find_modsett_backup(self, *args):
+        print('called conf.find_modsett_backup with args', args)
+        return False
+    def backup_modsett(self, *args):
+        print('called conf.backup_modsett with args', args)
+    def restore_modsett(self, *args, **kwargs):
+        print('called conf.restore_modsett with args', args)
 
 
 class MockShowMods:
@@ -672,16 +683,6 @@ class TestManager:
     def test_add_dependencies(self, monkeypatch, capsys):
         """unittest for Manager.add_dependencies
         """
-        # def mock_list(name):
-        #     "stub"
-        #     print(f'called Conf.list_components_for_dir with arg {name}')
-        #     if name == 'moddir':
-        #         return ['w', 'x', 'y', 'x', 'z']
-        #     return []
-        # def mock_list_2(name):
-        #     "stub"
-        #     print(f'called Conf.list_comonents_for_dir with arg {name}')
-        #     raise ValueError
         def mock_get(name, itemtype):
             print(f"called Conf.get_component_data with args('{name}', '{itemtype}')")
             if itemtype == testobj.conf.DIR:
@@ -782,72 +783,12 @@ class TestManager:
     def test_get_mod_components(self, monkeypatch, capsys):
         """unittest for Manager.get_mod_components
         """
-        def mock_list(self, name):
-            "stub"
-            print(f"called Conf.list_components_for_dir with arg '{name}'")
-            return []
-        testobj = self.setup_testobj(monkeypatch, capsys)
-        assert testobj.get_mod_components('aaa') == ("Components for aaa:\n"
-                                                     "  xxx_compname   xxx_version\n"
-                                                     "    (xxx)\n"
-                                                     "  yyy_compname   yyy_version\n"
-                                                     "    (yyy)")
-        assert capsys.readouterr().out == (
-                "called Conf.list_components_for_dir with arg 'aaa'\n"
-                "called Conf.get_component_data with args ('xxx', 'Name')\n"
-                "called Conf.get_component_data with args ('xxx', 'Version')\n"
-                "called Conf.get_component_data with args ('yyy', 'Name')\n"
-                "called Conf.get_component_data with args ('yyy', 'Version')\n")
-        monkeypatch.setattr(MockConf, 'list_components_for_dir', mock_list)
-        assert testobj.get_mod_components('aaa') == "Components for aaa:\n"
-        assert capsys.readouterr().out == "called Conf.list_components_for_dir with arg 'aaa'\n"
+        # code verplaatst
 
     def test_get_mod_dependencies(self, monkeypatch, capsys):
         """unittest for Manager.get_mod_dependencies
         """
-        def mock_list(self, name):
-            "stub"
-            print(f"called Conf.list_components_for_dir with arg '{name}'")
-            return []
-        def mock_get(self, *args):
-            "stub"
-            print("called Conf.get_component_data with args", args)
-            if args[1] == self.DEPS:
-                return [f'{args[0]}_compname']
-            raise ValueError
-        def mock_get_2(self, *args):
-            "stub"
-            print("called Conf.get_component_data with args", args)
-            if args[1] == self.DEPS:
-                return [f'{args[0]}_depname']
-            if args[1] == self.NAME:
-                return f'{args[0]}_compname'
-            raise ValueError
-        monkeypatch.setattr(MockConf, 'get_component_data', mock_get)
-        testobj = self.setup_testobj(monkeypatch, capsys)
-        assert testobj.get_mod_dependencies('aaa') == ("Dependencies for aaa:\n"
-                                                       " unknown component: xxx_compname\n"
-                                                       " unknown component: yyy_compname")
-        assert capsys.readouterr().out == (
-                "called Conf.list_components_for_dir with arg 'aaa'\n"
-                "called Conf.get_component_data with args ('xxx', 'Deps')\n"
-                "called Conf.get_component_data with args ('yyy', 'Deps')\n"
-                "called Conf.get_component_data with args ('xxx_compname', 'Name')\n"
-                "called Conf.get_component_data with args ('yyy_compname', 'Name')\n")
-        monkeypatch.setattr(MockConf, 'get_component_data', mock_get_2)
-        assert testobj.get_mod_dependencies('aaa') == ("Dependencies for aaa:\n"
-                                                       " xxx_depname_compname (xxx_depname)\n"
-                                                       " yyy_depname_compname (yyy_depname)")
-        assert capsys.readouterr().out == (
-                "called Conf.list_components_for_dir with arg 'aaa'\n"
-                "called Conf.get_component_data with args ('xxx', 'Deps')\n"
-                "called Conf.get_component_data with args ('yyy', 'Deps')\n"
-                "called Conf.get_component_data with args ('xxx_depname', 'Name')\n"
-                "called Conf.get_component_data with args ('yyy_depname', 'Name')\n")
-        monkeypatch.setattr(MockConf, 'list_components_for_dir', mock_list)
-        assert testobj.get_mod_dependencies('aaa') == ("Dependencies for aaa:\n"
-                                                       " None ")
-        assert capsys.readouterr().out == "called Conf.list_components_for_dir with arg 'aaa'\n"
+        # code verplaatst
 
     def test_update_attributes(self, monkeypatch, capsys):
         """unittest for Manager.update_attributes
@@ -1994,6 +1935,7 @@ class MockAttributesGui:
     """
     def __init__(self, *args):
         print('called AttributesDialogGui.__init__ with args', args)
+        self.master = args[0]
     def add_label(self, *args):
         "stub"
         print('called AttributesDialogGui.add_label with args', args)
@@ -2028,6 +1970,10 @@ class MockAttributesGui:
         "stub"
         print('called AttributesDialogGui.add_button with args', args, kwargs)
         return 'button'
+    def add_menubutton(self, *args, **kwargs):
+        "stub"
+        print('called AttributesDialogGui.add_menubutton with args', args, kwargs)
+        return 'menubutton'
     def add_buttonbox(self, *args):
         "stub"
         print('called AttributesDialogGui.add_buttonbox with args', args)
@@ -2088,9 +2034,10 @@ class TestAttributesDialog:
             print('called AttributesDialog.__init__ with args', args)
         monkeypatch.setattr(testee.AttributesDialog, '__init__', mock_init)
         testobj = testee.AttributesDialog()
-        testobj.doit = MockAttributesGui()
-        assert capsys.readouterr().out == ('called AttributesDialog.__init__ with args ()\n'
-                                           'called AttributesDialogGui.__init__ with args ()\n')
+        testobj.doit = MockAttributesGui(testobj)
+        assert capsys.readouterr().out == (
+                'called AttributesDialog.__init__ with args ()\n'
+                f'called AttributesDialogGui.__init__ with args ({testobj},)\n')
         return testobj
 
     def test_init(self, monkeypatch, capsys, expected_output):
@@ -2152,6 +2099,9 @@ class TestAttributesDialog:
         testobj.exempt_button = 'checkbox'
         testobj.comps_button = 'button'
         testobj.deps_button = 'button'
+        testobj.backup_button = 'backup_button'
+        testobj.restore_button = 'restore_button'
+        testobj.compare_button = 'compare_button'
         testobj.change_button = 'change_button'
         testobj.modnames = {'xxx': {'aaa'}}
         testobj.doit.get_combobox_value = mock_get
@@ -2161,7 +2111,8 @@ class TestAttributesDialog:
                 "called AttributesDialogGui.get_combobox_value with args ('combobox',)\n"
                 "called AttributeDialogGui.reset_all_fields with args"
                 " (['combobox', 'clear_button', 'line_entry', 'clear_button',"
-                " 'checkbox', 'checkbox', 'button', 'button', 'change_button'],)\n")
+                " 'checkbox', 'checkbox', 'button', 'button', 'change_button',"
+                " 'backup_button', 'restore_button', 'compare_button'],)\n")
         testobj.doit.get_combobox_value = mock_get_2
         testobj.process()
         assert testobj.choice == 'xxx'
@@ -2172,7 +2123,8 @@ class TestAttributesDialog:
                 "called Conf.get_component_data with args ('yyy', 'Name')\n"
                 "called AttributeDialogGui.activate_and_populate_fields with args"
                 " (['combobox', 'clear_button', 'line_entry', 'clear_button',"
-                " 'checkbox', 'checkbox', 'button', 'button', 'change_button'],"
+                " 'checkbox', 'checkbox', 'button', 'button', 'change_button',"
+                " 'backup_button', 'restore_button', 'compare_button'],"
                 " ['xxx', 'xxx_compname', 'yyy_compname'],"
                 " {'txt': 'Xxx', 'sel': True, 'opt': False})\n")
 
@@ -2194,47 +2146,425 @@ class TestAttributesDialog:
         assert capsys.readouterr().out == (
             "called AttributeDialogGui.clear_field with args ('screentext_field',)\n")
 
-    def test_view_components(self, monkeypatch, capsys):
-        """unittest for AttributesDialog.view_components
+    def test_backup_settings(self, monkeypatch, capsys):
+        """unittest for AttributesDialog.backup_settings
         """
-        def mock_get(*args):
-            print('called ShowMods.get_mod_components with args', args)
-            return 'xxx'
+        def mock_find(*args):
+            print('called conf.find_modsett with args', args)
+            return ['name'], ['loc']
         def mock_show(*args, **kwargs):
             print('called gui.show_message with args', args, kwargs)
         monkeypatch.setattr(testee.gui, 'show_message', mock_show)
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.parent = types.SimpleNamespace(
-                master=types.SimpleNamespace(get_mod_components=mock_get))
-        # testobj.conf = MockConf()
+        testobj.conf = MockConf()
+        assert capsys.readouterr().out == "called JsonConf.__init__ with args () {}\n"
         testobj.choice = 'xxx'
-        testobj.modnames = {'xxx': {'aaa'}}
+        testobj.modnames = {'xxx': 'aaa'}
+        testobj.backup_settings()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett with args ('aaa', 'new')\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Geen mod settings gevonden') {'title': 'SDVMM mod info'}\n")
+        testobj.conf.find_modsett = mock_find
+        testobj.backup_settings()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett with args ('aaa', 'new')\n"
+                "called conf.backup_modsett with args ('aaa', ['loc'])\n"
+                "called JsonConf.save\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Mod settings van huidige versie veilig gesteld:\\nname')"
+                " {'title': 'SDVMM mod info'}\n")
+
+    def test_restore_settings(self, monkeypatch, capsys):
+        """unittest for AttributesDialog.restore_settings
+        """
+        def mock_find(*args):
+            print('called conf.find_modsett with args', args)
+            return ['x'], ['y']
+        def mock_findb(*args):
+            print('called conf.find_modsett_backup with args', args)
+            return True
+        def mock_show(*args, **kwargs):
+            print('called gui.show_message with args', args, kwargs)
+        monkeypatch.setattr(testee.gui, 'show_message', mock_show)
+        def mock_showd(*args):
+            print('called show_dialog with args', args[0].__name__, args[1:])
+            args[1].dialog_data['choices'] = True, False, False
+        def mock_showd_2(*args, **kwargs):
+            print('called show_dialog with args', args[0].__name__, args[1:])
+            args[1].dialog_data['choices'] = False, True, True
+        def mock_showd_3(*args, **kwargs):
+            print('called show_dialog with args', args[0].__name__, args[1:])
+            args[1].dialog_data['choices'] = False, False, False
+        def mock_showd_4(*args, **kwargs):
+            print('called show_dialog with args', args[0].__name__, args[1:])
+            args[1].dialog_data['choices'] = True, True, True
+        def mock_showd_5(*args, **kwargs):
+            print('called show_dialog with args', args[0].__name__, args[1:])
+            args[1].dialog_data = {}
+        monkeypatch.setattr(testee.gui, 'show_dialog', mock_showd)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.conf = MockConf()
+        assert capsys.readouterr().out == "called JsonConf.__init__ with args () {}\n"
+        testobj.choice = 'xxx'
+        testobj.modnames = {'xxx': 'aaa'}
+        testobj.restore_settings()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett_backup with args ('aaa',)\n"
+                "called conf.find_modsett with args ('aaa', 'old')\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Geen mod settings gevonden in vorige versie of in backup')"
+                " {'title': 'SDVMM mod info'}\n")
+        origfindb = testobj.conf.find_modsett_backup
+        testobj.conf.find_modsett_backup = mock_findb
+        testobj.restore_settings()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett_backup with args ('aaa',)\n"
+                "called conf.find_modsett with args ('aaa', 'old')\n"
+                f"called show_dialog with args RestoreDialog ({testobj.doit},)\n"
+                "called conf.restore_modsett with args ('aaa',)\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Mod settings teruggezet van backup')"
+                " {'title': 'SDVMM mod info'}\n")
+        testobj.conf.find_modsett_backup = origfindb
+        testobj.conf.find_modsett = mock_find
+        monkeypatch.setattr(testee.gui, 'show_dialog', mock_showd_2)
+        testobj.restore_settings()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett_backup with args ('aaa',)\n"
+                "called conf.find_modsett with args ('aaa', 'old')\n"
+                f"called show_dialog with args RestoreDialog ({testobj.doit},)\n"
+                "called conf.restore_modsett with args (['y'],)\n"
+                "called conf.backup_modsett with args ('aaa', ['y'])\n"
+                "called JsonConf.save\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Mod settings teruggezet van vorige versie en vorige versie veiliggesteld\\nx')"
+                " {'title': 'SDVMM mod info'}\n")
+        monkeypatch.setattr(testee.gui, 'show_dialog', mock_showd_3)
+        testobj.conf.find_modsett_backup = mock_findb
+        testobj.restore_settings()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett_backup with args ('aaa',)\n"
+                "called conf.find_modsett with args ('aaa', 'old')\n"
+                f"called show_dialog with args RestoreDialog ({testobj.doit},)\n")
+        monkeypatch.setattr(testee.gui, 'show_dialog', mock_showd_4)
+        testobj.restore_settings()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett_backup with args ('aaa',)\n"
+                "called conf.find_modsett with args ('aaa', 'old')\n"
+                f"called show_dialog with args RestoreDialog ({testobj.doit},)\n"
+                "called conf.restore_modsett with args ('aaa',)\n"
+                "called conf.backup_modsett with args ('aaa', ['y'])\n"
+                "called JsonConf.save\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Mod settings teruggezet van backup en vorige versie veiliggesteld\\nx')"
+                " {'title': 'SDVMM mod info'}\n")
+        monkeypatch.setattr(testee.gui, 'show_dialog', mock_showd_5)
+        testobj.conf.find_modsett_backup = mock_findb
+        testobj.restore_settings()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett_backup with args ('aaa',)\n"
+                "called conf.find_modsett with args ('aaa', 'old')\n"
+                f"called show_dialog with args RestoreDialog ({testobj.doit},)\n")
+
+    def test_compare_settings(self, monkeypatch, capsys):
+        """unittest for AttributesDialog.compare_settings
+        """
+        def mock_find(*args):
+            nonlocal counter
+            print('called conf.find_modsett with args', args)
+            counter += 1
+            if counter == 1:
+                return ['name'], ['loc']
+            return [], []
+        def mock_find_2(*args):
+            nonlocal counter
+            print('called conf.find_modsett with args', args)
+            counter += 1
+            if counter == 1:
+                return [], []
+            return ['name'], ['loc']
+        def mock_find_3(*args):
+            nonlocal counter
+            print('called conf.find_modsett with args', args)
+            counter += 1
+            if counter == 1:
+                return ['name1', 'name2'], ['loc11', 'loc12']
+            return ['name1', 'name2'], ['loc21', 'loc22']
+        def mock_find_4(*args):
+            nonlocal counter
+            print('called conf.find_modsett with args', args)
+            counter += 1
+            if counter == 1:
+                return ['name1', 'name2'], ['loc1', 'loc2']
+            return ['name'], ['loc2']
+        def mock_run(*args):
+            print('called subprocess.run with args', args)
+        def mock_show(*args, **kwargs):
+            print('called gui.show_message with args', args, kwargs)
+        monkeypatch.setattr(testee.gui, 'show_message', mock_show)
+        monkeypatch.setattr(testee.subprocess, 'run', mock_run)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.conf = MockConf()
+        assert capsys.readouterr().out == "called JsonConf.__init__ with args () {}\n"
+        testobj.choice = 'xxx'
+        testobj.modnames = {'xxx': 'aaa'}
+        testobj.compare_settings()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett with args ('aaa', 'new')\n"
+                "called conf.find_modsett with args ('aaa', 'old')\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Geen mod settings gevonden in vorige en huidige versie')"
+                " {'title': 'SDVMM mod info'}\n")
+        testobj.conf.find_modsett = mock_find
+        counter = 0
+        testobj.compare_settings()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett with args ('aaa', 'new')\n"
+                "called conf.find_modsett with args ('aaa', 'old')\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Alleen mod settings van huidige versie gevonden')"
+                " {'title': 'SDVMM mod info'}\n")
+        testobj.conf.find_modsett = mock_find_2
+        counter = 0
+        testobj.compare_settings()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett with args ('aaa', 'new')\n"
+                "called conf.find_modsett with args ('aaa', 'old')\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Alleen mod settings van vorige versie gevonden')"
+                " {'title': 'SDVMM mod info'}\n")
+        testobj.conf.find_modsett = mock_find_3
+        counter = 0
+        testobj.compare_settings()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett with args ('aaa', 'new')\n"
+                "called conf.find_modsett with args ('aaa', 'old')\n"
+                "called subprocess.run with args (['meld', 'loc11', 'loc21'],)\n"
+                "called subprocess.run with args (['meld', 'loc12', 'loc22'],)\n"
+                f"called gui.show_message with args ({testobj.doit}, 'Done.')"
+                " {'title': 'SDVMM mod info'}\n")
+        testobj.conf.find_modsett = mock_find_4
+        counter = 0
+        testobj.compare_settings()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett with args ('aaa', 'new')\n"
+                "called conf.find_modsett with args ('aaa', 'old')\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Verschillende aantallen mod settings bestanden gevonden')"
+                " {'title': 'SDVMM mod info'}\n")
+
+    def test_compare_to_backup(self, monkeypatch, capsys):
+        """unittest for AttributesDialog.compare_to_backup
+        """
+        def mock_find(*args):
+            print('called conf.find_modsett with args', args)
+            return [], []
+        def mock_find_2(*args):
+            print('called conf.find_modsett with args', args)
+            return ['x'], ['y']
+        def mock_find_3(*args):
+            print('called conf.find_modsett with args', args)
+            return ['x', 'y'], ['a', 'b']
+        def mock_findb(*args):
+            print('called conf.find_modsett_backup with args', args)
+            return False
+        def mock_findb_2(*args):
+            print('called conf.find_modsett_backup with args', args)
+            return True
+        def mock_run(*args):
+            print('called subprocess.run with args', (args[0][:-1],))  # laatste arg is gegenereerd
+        def mock_show(*args, **kwargs):
+            print('called gui.show_message with args', args, kwargs)
+        monkeypatch.setattr(testee.gui, 'show_message', mock_show)
+        monkeypatch.setattr(testee.subprocess, 'run', mock_run)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.conf = MockConf()
+        assert capsys.readouterr().out == "called JsonConf.__init__ with args () {}\n"
+        testobj.conf._data = {testobj.conf.BAK: {'aaa': {'y': 'data'}}}
+        testobj.conf.find_modsett = mock_find
+        testobj.conf.find_modsett_backup = mock_findb
+        testobj.choice = 'xxx'
+        testobj.modnames = {'xxx': 'aaa'}
+        testobj.compare_to_backup()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett with args ('aaa', 'new')\n"
+                "called conf.find_modsett_backup with args ('aaa',)\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Geen backup van mod settings gevonden')"
+                " {'title': 'SDVMM mod info'}\n")
+        testobj.conf.find_modsett = mock_find_2
+        testobj.compare_to_backup()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett with args ('aaa', 'new')\n"
+                "called conf.find_modsett_backup with args ('aaa',)\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Geen backup van mod settings gevonden')"
+                " {'title': 'SDVMM mod info'}\n")
+        testobj.conf.find_modsett = mock_find
+        testobj.conf.find_modsett_backup = mock_findb_2
+        testobj.compare_to_backup()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett with args ('aaa', 'new')\n"
+                "called conf.find_modsett_backup with args ('aaa',)\n"
+                f"called gui.show_message with args ({testobj.doit}, 'Geen mod settings gevonden')"
+                " {'title': 'SDVMM mod info'}\n")
+        testobj.conf.find_modsett = mock_find_2
+        testobj.compare_to_backup()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett with args ('aaa', 'new')\n"
+                "called conf.find_modsett_backup with args ('aaa',)\n"
+                "called subprocess.run with args (['meld', 'y'],)\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Done.')"
+                " {'title': 'SDVMM mod info'}\n")
+        testobj.conf.find_modsett = mock_find_3
+        testobj.conf._data = {testobj.conf.BAK: {'aaa': {'a': 'data', 'b': 'datb'}}}
+        testobj.compare_to_backup()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett with args ('aaa', 'new')\n"
+                "called conf.find_modsett_backup with args ('aaa',)\n"
+                "called subprocess.run with args (['meld', 'a'],)\n"
+                "called subprocess.run with args (['meld', 'b'],)\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Done.')"
+                " {'title': 'SDVMM mod info'}\n")
+
+    def test_view_current(self, monkeypatch, capsys, tmp_path):
+        """unittest for AttributesDialog.view_current
+        """
+        def mock_find(*args):
+            print('called conf.find_modsett with args', args)
+            return [], []
+        def mock_find_2(*args):
+            print('called conf.find_modsett with args', args)
+            return ['x'], [str(tmp_path / 'y')]
+        def mock_find_3(*args):
+            print('called conf.find_modsett with args', args)
+            return ['x', 'a'], [str(tmp_path / 'y'), str(tmp_path / 'b')]
+        def mock_show(*args, **kwargs):
+            print('called gui.show_message with args', args, kwargs)
+        monkeypatch.setattr(testee.gui, 'show_message', mock_show)
+        (tmp_path / 'y').write_text('data for x')
+        (tmp_path / 'b').write_text('data for a')
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.choice = 'xxx'
+        testobj.modnames = {'xxx': 'aaa'}
+        testobj.conf = MockConf()
+        assert capsys.readouterr().out == "called JsonConf.__init__ with args () {}\n"
+        testobj.conf.find_modsett = mock_find
+        testobj.view_current()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett with args ('aaa', 'new')\n"
+                f"called gui.show_message with args ({testobj.doit}, 'Geen mod settings gevonden')"
+                " {'title': 'SDVMM mod info'}\n")
+        testobj.conf.find_modsett = mock_find_2
+        testobj.view_current()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett with args ('aaa', 'new')\n"
+                f"called gui.show_message with args ({testobj.doit}, 'data for x')"
+                " {'title': 'SDVMM mod info'}\n")
+        testobj.conf.find_modsett = mock_find_3
+        testobj.view_current()
+        assert capsys.readouterr().out == (
+                "called conf.find_modsett with args ('aaa', 'new')\n"
+                f"called gui.show_message with args ({testobj.doit}, 'data for x')"
+                " {'title': 'SDVMM mod info'}\n"
+                f"called gui.show_message with args ({testobj.doit}, 'data for a')"
+                " {'title': 'SDVMM mod info'}\n")
+
+    def test_view_components(self, monkeypatch, capsys):
+        """unittest for AttributesDialog.view_components
+        """
+        def mock_list(self, name):
+            "stub"
+            print(f"called Conf.list_components_for_dir with arg '{name}'")
+            return []
+        def mock_show(*args, **kwargs):
+            print('called gui.show_message with args', args, kwargs)
+        monkeypatch.setattr(testee.gui, 'show_message', mock_show)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.parent = types.SimpleNamespace(master=types.SimpleNamespace())
+        testobj.conf = MockConf()
+        assert capsys.readouterr().out == "called JsonConf.__init__ with args () {}\n"
+        testobj.choice = 'xxx'
+        testobj.modnames = {'xxx': 'aaa'}
         testobj.view_components()
         assert capsys.readouterr().out == (
-                "called ShowMods.get_mod_components with args ({'aaa'},)\n"
-                f"called gui.show_message with args ({testobj.doit}, 'xxx')"
+                "called Conf.list_components_for_dir with arg 'aaa'\n"
+                "called Conf.get_component_data with args ('xxx', 'Name')\n"
+                "called Conf.get_component_data with args ('xxx', 'Version')\n"
+                "called Conf.get_component_data with args ('yyy', 'Name')\n"
+                "called Conf.get_component_data with args ('yyy', 'Version')\n"
+                f"called gui.show_message with args ({testobj.doit}, 'Components for aaa:\\n"
+                "  xxx_compname   xxx_version\\n    (xxx)\\n  yyy_compname   yyy_version\\n"
+                "    (yyy)') {'title': 'SDVMM mod info'}\n")
+
+        monkeypatch.setattr(MockConf, 'list_components_for_dir', mock_list)
+        testobj.view_components()
+        assert capsys.readouterr().out == (
+                "called Conf.list_components_for_dir with arg 'aaa'\n"
+                f"called gui.show_message with args ({testobj.doit}, 'Components for aaa:\\n')"
                 " {'title': 'SDVMM mod info'}\n")
 
     def test_view_dependencies(self, monkeypatch, capsys):
         """unittest for AttributesDialog.view_dependencies
         """
-        def mock_get(*args):
-            print('called ShowMods.get_mod_dependencies with args', args)
-            return 'xxx'
+        def mock_list(self, name):
+            "stub"
+            print(f"called Conf.list_components_for_dir with arg '{name}'")
+            return []
+        def mock_get(self, *args):
+            "stub"
+            print("called Conf.get_component_data with args", args)
+            if args[1] == self.DEPS:
+                return [f'{args[0]}_compname']
+            raise ValueError
+        def mock_get_2(self, *args):
+            "stub"
+            print("called Conf.get_component_data with args", args)
+            if args[1] == self.DEPS:
+                return [f'{args[0]}_depname']
+            if args[1] == self.NAME:
+                return f'{args[0]}_compname'
+            raise ValueError
         def mock_show(*args, **kwargs):
             print('called gui.show_message with args', args, kwargs)
         monkeypatch.setattr(testee.gui, 'show_message', mock_show)
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.parent = types.SimpleNamespace(
-                master=types.SimpleNamespace(get_mod_dependencies=mock_get))
-        # testobj.conf = MockConf()
+        testobj.parent = types.SimpleNamespace(master=types.SimpleNamespace())
+        monkeypatch.setattr(MockConf, 'get_component_data', mock_get)
+        testobj.conf = MockConf()
+        assert capsys.readouterr().out == "called JsonConf.__init__ with args () {}\n"
         testobj.choice = 'xxx'
-        testobj.modnames = {'xxx': {'aaa'}}
+        testobj.modnames = {'xxx': 'aaa'}
         testobj.view_dependencies()
         assert capsys.readouterr().out == (
-                "called ShowMods.get_mod_dependencies with args ({'aaa'},)\n"
-                f"called gui.show_message with args ({testobj.doit}, 'xxx')"
-                " {'title': 'SDVMM mod info'}\n")
+                "called Conf.list_components_for_dir with arg 'aaa'\n"
+                "called Conf.get_component_data with args ('xxx', 'Deps')\n"
+                "called Conf.get_component_data with args ('yyy', 'Deps')\n"
+                "called Conf.get_component_data with args ('xxx_compname', 'Name')\n"
+                "called Conf.get_component_data with args ('yyy_compname', 'Name')\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Dependencies for aaa:\\n unknown component: xxx_compname\\n"
+                " unknown component: yyy_compname') {'title': 'SDVMM mod info'}\n")
+        monkeypatch.setattr(MockConf, 'get_component_data', mock_get_2)
+        testobj.view_dependencies()
+        assert capsys.readouterr().out == (
+                "called Conf.list_components_for_dir with arg 'aaa'\n"
+                "called Conf.get_component_data with args ('xxx', 'Deps')\n"
+                "called Conf.get_component_data with args ('yyy', 'Deps')\n"
+                "called Conf.get_component_data with args ('xxx_depname', 'Name')\n"
+                "called Conf.get_component_data with args ('yyy_depname', 'Name')\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Dependencies for aaa:\\n xxx_depname_compname (xxx_depname)\\n"
+                " yyy_depname_compname (yyy_depname)') {'title': 'SDVMM mod info'}\n")
+        monkeypatch.setattr(MockConf, 'list_components_for_dir', mock_list)
+        testobj.view_dependencies()
+        assert capsys.readouterr().out == (
+                "called Conf.list_components_for_dir with arg 'aaa'\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Dependencies for aaa:\\n None ') {'title': 'SDVMM mod info'}\n")
 
     def test_update(self, monkeypatch, capsys):
         """unittest for AttributesDialog.update
@@ -2295,6 +2625,80 @@ class TestAttributesDialog:
         testobj.add_dep()
         assert capsys.readouterr().out == (
                 f"called show_dialog with args DependencyDialog ({testobj.doit}, {testobj.conf})\n")
+
+
+class MockRestoreDialogGui:
+    """teststub for gui.RestoreDialogGui object
+    """
+    def __init__(self, *args):
+        print('called RestoreDialogGui.__init__ with args', args)
+    def add_checkbox(self, *args, **kwargs):
+        "stub"
+        print('called RestoreDialogGui.add_checkbox with args', args, kwargs)
+        return 'checkbox'
+    def get_checkbox_value(self, *args):
+        "stub"
+        print('called RestoreDialogGui.get_checkbox_value with args', args)
+        return args[0]  # eigenlijk True of False maar is hier niet belangrijk
+    def add_buttonbox(self, *args):
+        "stub"
+        print('called RestoreDialogGui.add_buttonbox with args', args)
+    def set_focus(self, *args):
+        "stub"
+        print('called RestoreDialogGui.set_focus with args', args)
+    def confirm(self):
+        "stub"
+        print('called RestoreDialogGui.accept')
+    def reject(self):
+        "stub"
+        print('called RestoreDialogGui.reject')
+
+
+class TestRestoreDialog:
+    """unittests for manager.RestoreDialog
+    """
+    def setup_testobj(self, monkeypatch, capsys):
+        """stub for qtgui.RestoreDialog object
+
+        create the object skipping the normal initialization
+        intercept messages during creation
+        return the object so that other methods can be monkeypatched in the caller
+        """
+        def mock_init(self, *args):
+            print('called RestoreDialog.__init__ with args', args)
+        monkeypatch.setattr(testee.RestoreDialog, '__init__', mock_init)
+        testobj = testee.RestoreDialog()
+        testobj.doit = MockRestoreDialogGui()
+        assert capsys.readouterr().out == ('called RestoreDialog.__init__ with args ()\n'
+                                           'called RestoreDialogGui.__init__ with args ()\n')
+        return testobj
+
+    def test_init(self, monkeypatch, capsys, expected_output):
+        """unittest for RestoreDialog.__init__
+        """
+        monkeypatch.setattr(testee.gui, 'RestoreDialogGui', MockRestoreDialogGui)
+        parent = types.SimpleNamespace(dialog_data={'found': (True, True)})
+        testobj = testee.RestoreDialog(parent)
+        assert testobj.parent == parent
+        assert isinstance(testobj.doit, testee.gui.RestoreDialogGui)
+        assert capsys.readouterr().out == expected_output['restore'].format(testobj=testobj)
+
+    def test_accept(self, monkeypatch, capsys):
+        """unittest for RestoreDialog.accept
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.parent = types.SimpleNamespace(dialog_data={})
+        testobj.from_backup = 'from_backup'
+        testobj.from_previous = 'from_previous'
+        testobj.backup_previous = 'backup_previous'
+        testobj.accept()
+        assert testobj.parent.dialog_data['choices'] == ['from_backup', 'from_previous',
+                                                         'backup_previous']
+        assert capsys.readouterr().out == (
+                "called RestoreDialogGui.get_checkbox_value with args ('from_backup',)\n"
+                "called RestoreDialogGui.get_checkbox_value with args ('from_previous',)\n"
+                "called RestoreDialogGui.get_checkbox_value with args ('backup_previous',)\n"
+                "called RestoreDialogGui.accept\n")
 
 
 class MockDependencyGui:
@@ -3053,10 +3457,21 @@ called AttributesDialogGui.add_line_entry with args ('', {testobj.enable_change}
 called AttributesDialogGui.add_clear_button with args ({testobj.clear_text_text},) {{}}
 called AttributesDialogGui.add_checkbox with args ('This mod can be activated by itself', {testobj.enable_change}) {{'enabled': False}}
 called AttributesDialogGui.add_checkbox with args ('Do not touch when (de)activating for a save', {testobj.enable_change}) {{'enabled': False}}
-called AttributesDialogGui.add_button with args ('View &Components', {testobj.view_components}) {{'enabled': False}}
+called AttributesDialogGui.add_button with args ('&Backup Mod Config', {testobj.backup_settings}) {{'pos': 1, 'enabled': False}}
+called AttributesDialogGui.add_button with args ('&Restore', {testobj.restore_settings}) {{'pos': 2, 'enabled': False}}
+called AttributesDialogGui.add_menubutton with args ('Co&mpare', ['previous <-> current', 'backup <-> current', 'view current'], [{testobj.compare_settings}, {testobj.compare_to_backup}, {testobj.view_current}]) {{'pos': 3, 'enabled': False}}
+called AttributesDialogGui.add_button with args ('&View Components', {testobj.view_components}) {{'enabled': False}}
 called AttributesDialogGui.add_button with args ('View &Dependencies', {testobj.view_dependencies}) {{'enabled': False}}
 called AttributesDialogGui.add_buttonbox with args ([('&Update', {testobj.update}, False), ('&Add dependency', {testobj.add_dep}, False), ('&Close', {testobj.doit.accept}, True)],)
 called AttributesDialogGui.set_focus with args ('combobox',)
+"""
+restore_output = """\
+called RestoreDialogGui.__init__ with args ({testobj}, namespace(dialog_data={{'found': (True, True)}}))
+called RestoreDialogGui.add_checkbox with args ('&1. Restore from backup', True) {{}}
+called RestoreDialogGui.add_checkbox with args ('&2. Restore from previous version', True) {{}}
+called RestoreDialogGui.add_checkbox with args ("&Backup previous version's settings", False) {{}}
+called RestoreDialogGui.add_buttonbox with args ([('&Ok', {testobj.accept}), ('&Cancel', {testobj.doit.reject})],)
+called RestoreDialogGui.set_focus with args ('checkbox',)
 """
 dependency_output = """\
 called DependencyDialogGui.__init__ with args ({testobj}, namespace(maingui=namespace(modnames={{'xxx': 'Xxx'}}, choice='xxx')))
@@ -3107,4 +3522,5 @@ called SaveGamesDialogGui.set_focus with args ('combobox',)
 def expected_output():
     "fixture giving output predictions"
     return {'settings': settings_output, 'delete': delete_output, 'attrs': attributes_output,
+            'restore': restore_output,
             'deps': dependency_output, 'deps2': dependency_output_2, 'saves': savegames_output}

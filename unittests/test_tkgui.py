@@ -227,12 +227,15 @@ class TestShowMods:
             """stub
             """
             print('called ShowMods.root.__init__')
+        def mock_add(self, *args):
+            print('called ShowMods.root.add_option with args', args)
         def mock_title(self, *args):
             """stub
             """
             print('called ShowMods.root.__title__ with args', args)
         monkeypatch.setattr(testee.ImageTk, 'PhotoImage', mockttk.MockPhotoImage)
         monkeypatch.setattr(testee.tk.Tk, '__init__', mock_init)
+        monkeypatch.setattr(testee.tk.Tk, 'option_add', mock_add)
         monkeypatch.setattr(testee.tk.Tk, 'title', mock_title)
         monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
         master = types.SimpleNamespace()
@@ -244,6 +247,7 @@ class TestShowMods:
         assert testobj.buttons == {}
         assert capsys.readouterr().out == (
                 'called ShowMods.root.__init__\n'
+                "called ShowMods.root.add_option with args ('*tearOff', False)\n"
                 "called PhotoImage.__init__ with args ('ecimage',)\n"
                 "called ShowMods.root.__title__ with args ('SDV Mod Manager',)\n"
                 "called Frame.__init__ with args Tk () {}\n"
@@ -1498,6 +1502,7 @@ class TestAttributesDialogGui:
         assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
         testobj.row = 0
         result = testobj.add_button('xxx', callback)
+        assert testobj.row == 1
         assert isinstance(result, testee.ttk.Button)
         assert capsys.readouterr().out == (
                 "called Button.__init__ with args MockFrame ()"
@@ -1506,7 +1511,8 @@ class TestAttributesDialogGui:
                 " {'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
                 "called Button.state with args (['!disabled'],)\n"
                 f"called AttributesDialogGui.bind with args ('Alt-q', {callback})\n")
-        result = testobj.add_button('xxx', callback, False)
+        result = testobj.add_button('xxx', callback, enabled=False)
+        assert testobj.row == 2
         assert isinstance(result, testee.ttk.Button)
         assert capsys.readouterr().out == (
                 "called Button.__init__ with args MockFrame ()"
@@ -1515,6 +1521,85 @@ class TestAttributesDialogGui:
                 " {'row': 2, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
                 "called Button.state with args (['disabled'],)\n"
                 f"called AttributesDialogGui.bind with args ('Alt-q', {callback})\n")
+        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
+        result = testobj.add_button('xxx', callback, pos=1)
+        assert testobj.row == 3
+        assert isinstance(result, testee.ttk.Button)
+        assert isinstance(testobj.localbuttonbox, testee.ttk.Frame)
+        assert capsys.readouterr().out == (
+                "called Frame.__init__ with args MockFrame () {}\n"
+                "called Frame.grid with args ()"
+                " {'row': 3, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}\n"
+                "called Button.__init__ with args MockFrame ()"
+                f" {{'text': 'xxx', 'underline': 0, 'command': {callback}}}\n"
+                "called Button.grid with args ()"
+                " {'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
+                "called Frame.columnconfigure with args (0,)\n"
+                "called Button.state with args (['!disabled'],)\n"
+                f"called AttributesDialogGui.bind with args ('Alt-q', {callback})\n")
+        result = testobj.add_button('xxx', callback, 2, False)
+        assert testobj.row == 4
+        assert isinstance(result, testee.ttk.Button)
+        assert capsys.readouterr().out == (
+                "called Button.__init__ with args MockFrame ()"
+                f" {{'text': 'xxx', 'underline': 0, 'command': {callback}}}\n"
+                "called Button.grid with args ()"
+                " {'row': 0, 'column': 1, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
+                "called Frame.columnconfigure with args (1,)\n"
+                "called Button.state with args (['disabled'],)\n"
+                f"called AttributesDialogGui.bind with args ('Alt-q', {callback})\n")
+
+    def test_add_menubutton(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.add_button
+        """
+        def mock_get_info(text):
+            "stub"
+            return 0, text, 'q'
+        def callback1():
+            """empty stub for callback function
+            """
+        def callback2():
+            """empty stub for callback function
+            """
+        def mock_bind(*args):
+            "stub"
+            print('called AttributesDialogGui.bind with args', args)
+        monkeypatch.setattr(testee.tk, 'Menubutton', mockttk.MockMenubutton)
+        monkeypatch.setattr(testee.tk, 'Menu', mockttk.MockMenu)
+        monkeypatch.setattr(testee, 'get_shortcut_info', mock_get_info)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.bind = mock_bind
+        testobj.localbuttonbox = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        result = testobj.add_menubutton('xxx', ['xxx', 'yyy'], [callback1, callback2], 2)
+        assert isinstance(result, testee.tk.Menubutton)
+        assert capsys.readouterr().out == (
+                "called Menubutton.__init__ with args MockFrame ()"
+                " {'text': 'xxx', 'underline': 0}\n"
+                "called Menubutton.configure with args {'relief': 'raised'}\n"
+                "called Menubutton.grid with args ()"
+                " {'row': 0, 'column': 1, 'sticky': ('n', 'e', 's', 'w')}\n"
+                "called Frame.columnconfigure with args (1,)\n"
+                "called Menu.__init__ with args MockMenubutton () {}\n"
+                f"called Menubutton.configure with args {{'menu': {result.menu}}}\n"
+                f"called Menu.add_command with args () {{'label': 'xxx', 'command': {callback1}}}\n"
+                f"called Menu.add_command with args () {{'label': 'yyy', 'command': {callback2}}}\n"
+                "called Menubutton.configure with args {'state': 'normal'}\n")
+        result = testobj.add_menubutton('xxx', ['xxx', 'yyy'], [callback1, callback2], 1,
+                                        enabled=False)
+        assert isinstance(result, testee.tk.Menubutton)
+        assert capsys.readouterr().out == (
+                "called Menubutton.__init__ with args MockFrame ()"
+                " {'text': 'xxx', 'underline': 0}\n"
+                "called Menubutton.configure with args {'relief': 'raised'}\n"
+                "called Menubutton.grid with args ()"
+                " {'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}\n"
+                "called Frame.columnconfigure with args (0,)\n"
+                "called Menu.__init__ with args MockMenubutton () {}\n"
+                f"called Menubutton.configure with args {{'menu': {result.menu}}}\n"
+                f"called Menu.add_command with args () {{'label': 'xxx', 'command': {callback1}}}\n"
+                f"called Menu.add_command with args () {{'label': 'yyy', 'command': {callback2}}}\n"
+                "called Menubutton.configure with args {'state': 'disabled'}\n")
 
     def test_add_buttonbox(self, monkeypatch, capsys):
         """unittest for AttributesDialogGui.add_buttonbox
@@ -1574,25 +1659,36 @@ class TestAttributesDialogGui:
     def test_enable_button(self, monkeypatch, capsys):
         """unittest for AttributesDialogGui.enable_button
         """
+        monkeypatch.setattr(testee.tk, 'Menubutton', mockttk.MockMenubutton)
         button = mockttk.MockButton()
-        assert capsys.readouterr().out == "called Button.__init__ with args NoneType () {}\n"
+        button2 = mockttk.MockMenubutton()
+        assert capsys.readouterr().out == ("called Button.__init__ with args NoneType () {}\n"
+                                           "called Menubutton.__init__ with args NoneType () {}\n")
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.enable_button(button, False)
         assert capsys.readouterr().out == "called Button.state with args (['disabled'],)\n"
         testobj.enable_button(button, True)
         assert capsys.readouterr().out == "called Button.state with args (['!disabled'],)\n"
+        testobj.enable_button(button2, False)
+        assert capsys.readouterr().out == (
+                "called Menubutton.configure with args {'state': 'disabled'}\n")
+        testobj.enable_button(button2, True)
+        assert capsys.readouterr().out == (
+                "called Menubutton.configure with args {'state': 'normal'}\n")
 
     def test_get_combobox_value(self, monkeypatch, capsys):
         """unittest for AttributesDialogGui.get_combobox_value
         """
         wvar = mockttk.MockStringVar()
         widget = mockttk.MockComboBox(textvariable=wvar)
+        wvar.set('x')
         assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
                                            "called ComboBox.__init__ with args NoneType ()"
-                                           f" {{'textvariable': {wvar}}}\n")
+                                           f" {{'textvariable': {wvar}}}\n"
+                                           "called StringVar.set with arg 'x'\n")
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.textvars = {widget: wvar}
-        testobj.get_combobox_value(widget)
+        assert testobj.get_combobox_value(widget) == 'x'
         assert capsys.readouterr().out == "called StringVar.get\n"
 
     def test_get_checkbox_value(self, monkeypatch, capsys):
@@ -1600,12 +1696,14 @@ class TestAttributesDialogGui:
         """
         wvar = mockttk.MockIntVar()
         widget = mockttk.MockCheckBox(variable=wvar)
+        wvar.set(1)
         assert capsys.readouterr().out == ("called IntVar.__init__ with args ()\n"
                                            "called CheckBox.__init__ with args NoneType ()"
-                                           f" {{'variable': {wvar}}}\n")
+                                           f" {{'variable': {wvar}}}\n"
+                                           "called IntVar.set with arg 1\n")
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.textvars = {widget: wvar}
-        testobj.get_checkbox_value(widget)
+        assert testobj.get_checkbox_value(widget) == 1
         assert capsys.readouterr().out == "called IntVar.get\n"
 
     def test_get_field_text(self, monkeypatch, capsys):
@@ -1613,18 +1711,20 @@ class TestAttributesDialogGui:
         """
         wvar = mockttk.MockStringVar()
         widget = mockttk.MockEntry(textvariable=wvar)
+        wvar.set('x')
         assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
                                            "called Entry.__init__ with args NoneType ()"
-                                           f" {{'textvariable': {wvar}}}\n")
+                                           f" {{'textvariable': {wvar}}}\n"
+                                           "called StringVar.set with arg 'x'\n")
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.textvars = {widget: wvar}
-        testobj.get_field_text(widget)
+        assert testobj.get_field_text(widget) == 'x'
         assert capsys.readouterr().out == "called StringVar.get\n"
 
     def _test_reset_all_fields(self, monkeypatch, capsys):
         """unittest for AttributesDialogGui.reset_all_fields
         """
-        # niet geïmplemeteerd, dus geen unittest
+        # niet geïmplementeerd, dus geen unittest
 
     def test_activate_and_populate_fields(self, monkeypatch, capsys):
         """unittest for AttributesDialogGui.activate_and_populate_fields
@@ -1637,6 +1737,7 @@ class TestAttributesDialogGui:
                       mockttk.MockEntry(textvariable=wvar), mockttk.MockButton(),
                       mockttk.MockCheckBox(textvariable=xvar),
                       mockttk.MockCheckBox(textvariable=yvar),
+                      mockttk.MockButton(), mockttk.MockButton(), mockttk.MockButton(),
                       mockttk.MockButton(), mockttk.MockButton(), mockttk.MockButton())
         assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
                                            "called StringVar.__init__ with args ()\n"
@@ -1654,6 +1755,9 @@ class TestAttributesDialogGui:
                                            "called CheckBox.__init__ with args NoneType ()"
                                            f" {{'textvariable': {yvar}}}\n"
                                            "called StringVar.__init__ with args ()\n"
+                                           "called Button.__init__ with args NoneType () {}\n"
+                                           "called Button.__init__ with args NoneType () {}\n"
+                                           "called Button.__init__ with args NoneType () {}\n"
                                            "called Button.__init__ with args NoneType () {}\n"
                                            "called Button.__init__ with args NoneType () {}\n"
                                            "called Button.__init__ with args NoneType () {}\n")
@@ -1681,7 +1785,10 @@ class TestAttributesDialogGui:
                                            "called CheckBox.state with args (['!disabled'],)\n"
                                            "called Button.state with args (['!disabled'],)\n"
                                            "called Button.state with args (['!disabled'],)\n"
-                                           "called Button.state with args (['!disabled'],)\n")
+                                           "called Button.state with args (['disabled'],)\n"
+                                           "called Button.state with args (['!disabled'],)\n"
+                                           "called Button.state with args (['!disabled'],)\n"
+                                           "called Button.configure with args {'state': 'normal'}\n")
 
     def test_clear_field(self, monkeypatch, capsys):
         """unittest for AttributesDialogGui.clear_field
@@ -1729,6 +1836,187 @@ class TestAttributesDialogGui:
         testobj.close()
         assert capsys.readouterr().out == ("called ShowMods.root.focus_set\n"
                                            "called AttributesDialog.destroy\n")
+
+# 651-658, 662-672, 677, 681-690, 694, 699-701, 706-708
+class TestRestoreDialogGui:
+    """unittests for qtgui.RestoreDialogGui
+    """
+    def setup_testobj(self, monkeypatch, capsys):
+        """stub for qtgui.RestoreDialog object
+
+        create the object skipping the normal initialization
+        intercept messages during creation
+        return the object so that other methods can be monkeypatched in the caller
+        """
+        old_init = testee.tk.Toplevel.__init__
+        def mock_init(self, *args, **kwargs):
+            print('called RestoreDialogGui.__init__ with args', args)
+            old_init(self, *args, **kwargs)
+        monkeypatch.setattr(testee.RestoreDialogGui, '__init__', mock_init)
+        testobj = testee.RestoreDialogGui()
+        assert capsys.readouterr().out == 'called RestoreDialogGui.__init__ with args ()\n'
+        return testobj
+
+    def test_init(self, monkeypatch, capsys):
+        """unittest for RestoreDialog.__init__
+        """
+        def mock_init(self, *args, **kwargs):
+            print('called Toplevel.__init__ with args', args, kwargs)
+        monkeypatch.setattr(testee.tk.Toplevel, '__init__', mock_init)
+        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
+        testobj = testee.RestoreDialogGui('maingui', 'parent')
+        assert testobj.parent == 'parent'
+        assert testobj.maingui == 'maingui'
+        assert isinstance(testobj.frm, testee.ttk.Frame)
+        assert testobj.row == 0
+        assert testobj.textvars == {}
+        assert capsys.readouterr().out == (
+            "called Toplevel.__init__ with args ('parent',) {}\n"
+            "called Frame.__init__ with args RestoreDialogGui () {'padding': 10}\n"
+            "called Frame.grid with args () {'row': 0, 'column': 0,"
+            " 'sticky': ('n', 'e', 's', 'w')}\n")
+
+    def test_add_checkbox(self, monkeypatch, capsys):
+        """unittest for RestoreDialogGui.add_checkbox
+        """
+        def callback():
+            """empty stub for callback function
+            """
+        monkeypatch.setattr(testee.tk, 'IntVar', mockttk.MockIntVar)
+        monkeypatch.setattr(testee.ttk, 'Checkbutton', mockttk.MockCheckBox)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.row = 0
+        testobj.textvars = {}
+        result = testobj.add_checkbox('&xxx', callback)
+        assert isinstance(result, testee.ttk.Checkbutton)
+        assert testobj.textvars[result] == result.getvar(result.cget('variable'))
+        assert capsys.readouterr().out == (
+                "called IntVar.__init__ with args ()\n"
+                "called IntVar.set with arg 0\n"
+                "called CheckBox.__init__ with args MockFrame () {'text': 'xxx',"
+                f" 'variable': {testobj.textvars[result]}, 'underline': 0, 'command': {callback}}}\n"
+                "called CheckBox.grid with args ()"
+                " {'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
+                "called CheckBox.state with args (['!disabled'],)\n")
+
+    def test_add_checkbox_2(self, monkeypatch, capsys):
+        """unittest for AttributesDialogGui.add_checkbox
+        """
+        def callback():
+            """empty stub for callback function
+            """
+        monkeypatch.setattr(testee.tk, 'IntVar', mockttk.MockIntVar)
+        monkeypatch.setattr(testee.ttk, 'Checkbutton', mockttk.MockCheckBox)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.row = 0
+        testobj.textvars = {}
+        result = testobj.add_checkbox('&xxx', callback, False)
+        assert isinstance(result, testee.ttk.Checkbutton)
+        assert testobj.textvars[result] == result.getvar(result.cget('variable'))
+        assert capsys.readouterr().out == (
+                "called IntVar.__init__ with args ()\n"
+                "called IntVar.set with arg 0\n"
+                "called CheckBox.__init__ with args MockFrame () {'text': 'xxx',"
+                f" 'variable': {testobj.textvars[result]}, 'underline': 0, 'command': {callback}}}\n"
+                "called CheckBox.grid with args ()"
+                " {'row': 1, 'column': 0, 'sticky': ('n', 'e', 's', 'w'), 'pady': 2}\n"
+                "called CheckBox.state with args (['disabled'],)\n")
+
+    def test_get_checkbox_value(self, monkeypatch, capsys):
+        """unittest for RestoreDialogGui.get_checkbox_value
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        wvar = mockttk.MockIntVar()
+        widget = mockttk.MockCheckBox(variable=wvar)
+        wvar.set(1)
+        assert capsys.readouterr().out == ("called IntVar.__init__ with args ()\n"
+                                           "called CheckBox.__init__ with args NoneType ()"
+                                           f" {{'variable': {wvar}}}\n"
+                                           "called IntVar.set with arg 1\n")
+        testobj.textvars = {widget: wvar}
+        assert testobj.get_checkbox_value(widget) == 1
+        assert capsys.readouterr().out == "called IntVar.get\n"
+
+    def test_add_buttonbox(self, monkeypatch, capsys):
+        """unittest for RestoreDialogGui.add_buttonbox
+        """
+        def mock_get_info(text):
+            "stub"
+            return 0, text, 'q'
+        def callback():
+            """empty stub for callback function
+            """
+        def mock_bind(*args):
+            print('called RestoreDialogGui.bind with args', args)
+        monkeypatch.setattr(testee, 'get_shortcut_info', mock_get_info)
+        monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
+        monkeypatch.setattr(testee.ttk, 'Button', mockttk.MockButton)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.row = 0
+        testobj.bind = mock_bind
+        testobj.add_buttonbox([('xxx', callback())])
+        assert capsys.readouterr().out == (
+                "called Frame.__init__ with args RestoreDialogGui () {'padding': 10}\n"
+                "called Frame.grid with args () {'row': 1, 'column': 0}\n"
+                "called Button.__init__ with args MockFrame ()"
+                " {'text': 'xxx', 'underline': 0, 'command': None}\n"
+                "called Button.grid with args () {'row': 0, 'column': 0}\n"
+                "called RestoreDialogGui.bind with args ('<Alt-q>', None)\n"
+                f"called RestoreDialogGui.bind with args ('<Escape>', {testobj.confirm})\n")
+
+    def test_set_focus(self, monkeypatch, capsys):
+        """unittest for RestoreDialogGui.set_focus
+        """
+        wvar = mockttk.MockStringVar()
+        widget = mockttk.MockEntry(textvariable=wvar)
+        assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
+                                           "called Entry.__init__ with args NoneType ()"
+                                           f" {{'textvariable': {wvar}}}\n")
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.set_focus(widget)
+        assert capsys.readouterr().out == ("called Entry.focus_set\n")
+
+    def test_confirm(self, monkeypatch, capsys):
+        """unittest for RestoreDialogGui.confirm
+        """
+        def mock_focus():
+            print('called ShowMods.focus_set')
+        def mock_destroy():
+            print('called RestoreDialogGui.destroy')
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.destroy = mock_destroy
+        testobj.parent = types.SimpleNamespace(focus_set=mock_focus)
+        testobj.confirm()
+        assert capsys.readouterr().out == ("called ShowMods.focus_set\n"
+                                           "called RestoreDialogGui.destroy\n")
+        testobj.parent = None
+        testobj.confirm()
+        assert capsys.readouterr().out == "called RestoreDialogGui.destroy\n"
+
+    def test_reject(self, monkeypatch, capsys):
+        """unittest for RestoreDialogGui.confirm
+        """
+        def mock_focus():
+            print('called ShowMods.focus_set')
+        def mock_destroy():
+            print('called RestoreDialogGui.destroy')
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.frm = mockttk.MockFrame()
+        assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
+        testobj.destroy = mock_destroy
+        testobj.parent = types.SimpleNamespace(focus_set=mock_focus)
+        testobj.reject()
+        assert capsys.readouterr().out == ("called ShowMods.focus_set\n"
+                                           "called RestoreDialogGui.destroy\n")
+        testobj.parent = None
+        testobj.reject()
+        assert capsys.readouterr().out == "called RestoreDialogGui.destroy\n"
 
 
 class TestDependencyDialogGui:
@@ -1894,7 +2182,7 @@ class TestDependencyDialogGui:
         def mock_focus():
             print('called ShowMods.focus_set')
         def mock_destroy():
-            print('called DeleteDialogGui.destroy')
+            print('called DependencyDialogGui.destroy')
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.frm = mockttk.MockFrame()
         assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
@@ -1902,10 +2190,10 @@ class TestDependencyDialogGui:
         testobj.parent = types.SimpleNamespace(focus_set=mock_focus)
         testobj.reject()
         assert capsys.readouterr().out == ("called ShowMods.focus_set\n"
-                                           "called DeleteDialogGui.destroy\n")
+                                           "called DependencyDialogGui.destroy\n")
         testobj.parent = None
         testobj.reject()
-        assert capsys.readouterr().out == "called DeleteDialogGui.destroy\n"
+        assert capsys.readouterr().out == "called DependencyDialogGui.destroy\n"
 
     def test_confirm(self, monkeypatch, capsys):
         """unittest for DependencyDialogGui.confirm
@@ -1913,7 +2201,7 @@ class TestDependencyDialogGui:
         def mock_focus():
             print('called ShowMods.focus_set')
         def mock_destroy():
-            print('called DeleteDialogGui.destroy')
+            print('called DependencyDialogGui.destroy')
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.frm = mockttk.MockFrame()
         assert capsys.readouterr().out == "called Frame.__init__ with args NoneType () {}\n"
@@ -1921,10 +2209,10 @@ class TestDependencyDialogGui:
         testobj.parent = types.SimpleNamespace(focus_set=mock_focus)
         testobj.confirm()
         assert capsys.readouterr().out == ("called ShowMods.focus_set\n"
-                                           "called DeleteDialogGui.destroy\n")
+                                           "called DependencyDialogGui.destroy\n")
         testobj.parent = None
         testobj.confirm()
-        assert capsys.readouterr().out == "called DeleteDialogGui.destroy\n"
+        assert capsys.readouterr().out == "called DependencyDialogGui.destroy\n"
 
 
 class TestSaveGamesDialogGui:

@@ -359,12 +359,29 @@ class AttributesDialogGui(qtw.QDialog):
         self.vbox.addWidget(cb)
         return cb
 
-    def add_button(self, text, callback, enabled=True):
+    def add_button(self, text, callback, pos=0, enabled=True):
         "add a button on the next line"
+        if pos == 1:
+            self.localbuttonbox = qtw.QHBoxLayout()
+            self.vbox.addLayout(self.localbuttonbox)
         button = qtw.QPushButton(text)
         button.clicked.connect(callback)
-        self.vbox.addWidget(button)
+        if pos > 0:
+            self.localbuttonbox.addWidget(button)
+        else:
+            self.vbox.addWidget(button)
         button.setEnabled(enabled)
+        return button
+
+    def add_menubutton(self, text, options, callbacks, pos, enabled=True):
+        "add a button with a popup menu on the next line"
+        button = qtw.QPushButton(text)
+        menu = qtw.QMenu()
+        for ix, name in enumerate(options):
+            menu.addAction(name).triggered.connect(callbacks[ix])
+        button.setMenu(menu)
+        button.setEnabled(enabled)
+        self.localbuttonbox.addWidget(button)
         return button
 
     def start_line_with_clear_button(self):
@@ -432,6 +449,9 @@ class AttributesDialogGui(qtw.QDialog):
         fields[6].setDisabled(True)
         fields[7].setDisabled(True)
         fields[8].setDisabled(True)
+        fields[9].setDisabled(True)
+        fields[10].setDisabled(True)
+        fields[11].setDisabled(True)
 
     def activate_and_populate_fields(self, fields, items, screeninfo):
         "update the specified fields to be usable and enter some defaults"
@@ -449,10 +469,48 @@ class AttributesDialogGui(qtw.QDialog):
         fields[6].setDisabled(False)
         fields[7].setDisabled(False)
         fields[8].setDisabled(True)
+        fields[9].setDisabled(False)
+        fields[10].setDisabled(False)
+        fields[11].setDisabled(False)
 
     def clear_field(self, field):
         "empty a field's (text) contents"
         field.clear()
+
+
+class RestoreDialogGui(qtw.QDialog):
+    """screen for dialog to select restore method
+    """
+    def __init__(self, master, parent):
+        self.master = master
+        self.parent = parent  # DialogGui heeft dezelfde parent als Dialog
+        super().__init__(parent)
+        self.vbox = qtw.QVBoxLayout()
+        self.setLayout(self.vbox)
+
+    def add_checkbox(self, text, state):
+        "add a checkbox on the next line"
+        cb = qtw.QCheckBox(text, self)
+        cb.setEnabled(state)
+        self.vbox.addWidget(cb)
+        return cb
+
+    def get_checkbox_value(self, field):
+        "retrieve the value from a checkbox"
+        return field.isChecked()
+
+    def add_buttonbox(self, buttondefs):
+        "add a row of buttons at the bottom of the page"
+        hbox = qtw.QHBoxLayout()
+        for text, callback in buttondefs:
+            button = qtw.QPushButton(text)
+            button.clicked.connect(callback)
+            hbox.addWidget(button)
+        self.vbox.addLayout(hbox)
+
+    def set_focus(self, field):
+        "set focus to field"
+        field.setFocus()
 
 
 class DependencyDialogGui(qtw.QDialog):
