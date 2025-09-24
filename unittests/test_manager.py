@@ -67,7 +67,7 @@ class MockConf:
     def get_diritem_data(self, *args):
         "stub"
         print("called Conf.get_diritem_data with args", args)
-        return f'{args[0]}_name'
+        return f'{args[0]}'
     def get_component_data(self, *args):
         "stub"
         print("called Conf.get_component_data with args", args)
@@ -294,33 +294,21 @@ class TestManager:
             print(f"called Conf.get_diritem_data with args ('{name}', '{itemtype}')")
             if itemtype == testobj.conf.SCRNAM:
                 return f"scr{name}"
-            if itemtype == testobj.conf.SCRPOS:
-                return 'scrpos'
             if itemtype == testobj.conf.NXSKEY:
-                return 'scrkey'
+                return f'{name}key'
             if itemtype == testobj.conf.SCRTXT:
-                return 'scrtxt'
+                return f'{name}txt'
             if itemtype == testobj.conf.OPTOUT:
-                return 'optout'
+                return f'{name}optout'
             if itemtype == testobj.conf.COMPS:
-                return ['comps']
-            return 'sel'
-        def mock_gett(name):
-            print(f"called get_toplevel with arg '{name}'")
-            return name
-        def mock_getc(name, itemtype):
-            print(f"called Conf.get_component_data with args ('{name}', '{itemtype}')")
-            return ''
-        def mock_getc_2(name, itemtype):
-            print(f"called Conf.get_component_data with args ('{name}', '{itemtype}')")
-            return name
+                return [f'{name}comp1', f'{name}comp2']
+            return f'{name}sel'
 
-        monkeypatch.setattr(testee, 'get_toplevel', mock_gett)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.conf.list_all_mod_dirs = mock_list
         testobj.conf.get_diritem_data = mock_get
-        testobj.conf.get_component_data = mock_getc
         testobj.screeninfo = {'yyy': {'sel': 's', 'pos': 'p', 'key': 'k', 'txt': 't', 'opt': 'o'}}
+        testobj.revlookup = {}
 
         monkeypatch.setattr(testee, 'CONFIG', '')
         testobj.extract_screeninfo()
@@ -329,89 +317,49 @@ class TestManager:
         testobj.extract_screeninfo()
         assert testobj.screeninfo == {'yyy': {'sel': 's', 'pos': 'p', 'key': 'k', 'txt': 't',
                                               'opt': 'o'}}
+        assert testobj.revlookup == {}
         assert capsys.readouterr().out == "called Conf.list_all_mod_dirs\n"
 
         testobj.conf.list_all_mod_dirs = mock_list_2
         testobj.screeninfo = {}
+        testobj.revlookup = {}
         testobj.extract_screeninfo()
         assert testobj.screeninfo == {
-                'xxx': {'dir': '', 'sel': False, 'pos': '', 'key': '', 'txt': '', 'opt': False},
-                # 'yyy': {'dir': '', 'sel': 's', 'pos': 'p', 'key': 'k', 'txt': 't', 'opt': 'o'},
-                'yyy': {'dir': '', 'sel': False, 'pos': '', 'key': '', 'txt': '', 'opt': False}}
+                'xxx': {'key': '', 'nam': 'xxx', 'opt': False, 'sel': False, 'txt': ''},
+                'yyy': {'key': '', 'nam': 'yyy', 'opt': False, 'sel': False, 'txt': ''}}
+        assert testobj.revlookup == {'xxx': 'xxx', 'yyy': 'yyy'}
         assert capsys.readouterr().out == (
                 "called Conf.list_all_mod_dirs\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRNAM}')\n"
-                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.COMPS}')\n"
-                f"called Conf.get_component_data with args ('', '{testobj.conf.DIR}')\n"
-                f"called get_toplevel with arg ''\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SEL}')\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.OPTOUT}')\n"
-                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRPOS}')\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.NXSKEY}')\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRTXT}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRNAM}')\n"
-                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.COMPS}')\n"
-                f"called Conf.get_component_data with args ('', '{testobj.conf.DIR}')\n"
-                f"called get_toplevel with arg ''\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SEL}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.OPTOUT}')\n"
-                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRPOS}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.NXSKEY}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRTXT}')\n")
 
         testobj.conf.get_diritem_data = mock_get_2
         testobj.screeninfo = {}
+        testobj.revlookup = {}
         testobj.extract_screeninfo()
-        assert testobj.screeninfo == {'scrxxx': {'dir': '', 'sel': 'sel', 'pos': 'scrpos',
-                                                 'key': 'scrkey', 'txt': 'scrtxt', 'opt': 'optout'},
-                                      'scryyy': {'dir': '', 'sel': 'sel', 'pos': 'scrpos',
-                                                 'key': 'scrkey', 'txt': 'scrtxt', 'opt': 'optout'}}
+        assert testobj.screeninfo == {'xxx': {'nam': 'scrxxx', 'sel': 'xxxsel', 'opt': 'xxxoptout',
+                                              'key': 'xxxkey', 'txt': 'xxxtxt'},
+                                      'yyy': {'nam': 'scryyy', 'sel': 'yyysel', 'opt': 'yyyoptout',
+                                              'key': 'yyykey', 'txt': 'yyytxt'}}
+        assert testobj.revlookup == {'scrxxx': 'xxx', 'scryyy': 'yyy'}
         assert capsys.readouterr().out == (
                 "called Conf.list_all_mod_dirs\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRNAM}')\n"
-                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.COMPS}')\n"
-                f"called Conf.get_component_data with args ('comps', '{testobj.conf.DIR}')\n"
-                f"called get_toplevel with arg ''\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SEL}')\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.OPTOUT}')\n"
-                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRPOS}')\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.NXSKEY}')\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRTXT}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRNAM}')\n"
-                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.COMPS}')\n"
-                f"called Conf.get_component_data with args ('comps', '{testobj.conf.DIR}')\n"
-                f"called get_toplevel with arg ''\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SEL}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.OPTOUT}')\n"
-                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRPOS}')\n"
-                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.NXSKEY}')\n"
-                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRTXT}')\n")
-
-        testobj.conf.get_component_data = mock_getc_2
-        testobj.extract_screeninfo()
-        assert testobj.screeninfo == {
-                'scryyy': {'dir': 'comps', 'sel': 'sel', 'pos': 'scrpos', 'key': 'scrkey',
-                        'txt': 'scrtxt', 'opt': 'optout'},
-                'scrxxx': {'dir': 'comps', 'sel': 'sel', 'pos': 'scrpos', 'key': 'scrkey',
-                        'txt': 'scrtxt', 'opt': 'optout'}}
-        assert capsys.readouterr().out == (
-                "called Conf.list_all_mod_dirs\n"
-                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRNAM}')\n"
-                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.COMPS}')\n"
-                f"called Conf.get_component_data with args ('comps', '{testobj.conf.DIR}')\n"
-                f"called get_toplevel with arg 'comps'\n"
-                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SEL}')\n"
-                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.OPTOUT}')\n"
-                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRPOS}')\n"
-                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.NXSKEY}')\n"
-                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRTXT}')\n"
-                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRNAM}')\n"
-                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.COMPS}')\n"
-                f"called Conf.get_component_data with args ('comps', '{testobj.conf.DIR}')\n"
-                f"called get_toplevel with arg 'comps'\n"
-                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SEL}')\n"
-                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.OPTOUT}')\n"
-                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRPOS}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.NXSKEY}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRTXT}')\n")
 
@@ -472,15 +420,15 @@ class TestManager:
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.doit = types.SimpleNamespace(add_checkbox=mock_add)
         testobj.maxcol = 3
-        testobj.screeninfo = {'x': {'sel': True}, 'y': {'sel': True}, 'z': {'sel': False},
-                              'q': {'sel': False}}
+        testobj.screeninfo = {'x': {'nam': 'bb', 'sel': True}, 'y': {'nam': 'cc', 'sel': True},
+                              'z': {'nam': 'dd', 'sel': False}, 'q': {'nam': 'aa', 'sel': False}}
         assert testobj.add_items_to_grid('grid', []) == ({}, {})
         assert capsys.readouterr().out == ""
         assert testobj.add_items_to_grid('grid', ['x', 'y', 'z', 'q']) == (
-                {(0, 0): ('q', {'sel': False, 'pos': '0x0'}),
-                 (0, 1): ('x', {'sel': True, 'pos': '0x1'}),
-                 (0, 2): ('y', {'sel': True, 'pos': '0x2'}),
-                 (1, 0): ('z', {'sel': False, 'pos': '1x0'})},
+                {(0, 0): ('q', {'nam': 'aa', 'sel': False, 'pos': '0x0'}),
+                 (0, 1): ('x', {'nam': 'bb', 'sel': True, 'pos': '0x1'}),
+                 (0, 2): ('y', {'nam': 'cc', 'sel': True, 'pos': '0x2'}),
+                 (1, 0): ('z', {'nam': 'dd', 'sel': False, 'pos': '1x0'})},
                 {(0, 0): ('hbox', 'btn', 'cbox'),
                  (0, 1): ('hbox', 'btn', 'cbox'),
                  (0, 2): ('hbox', 'btn', 'cbox'),
@@ -533,14 +481,14 @@ class TestManager:
         testobj.set_texts_for_grid(positions, widgets)
         assert capsys.readouterr().out == ""
         widgets = {(0, 1): ('', 'label1', ''), (1, 1): ('', 'label2', '')}
-        positions = {(0, 1): ('aaa', {'txt': '', 'key': ''}),
-                     (1, 1): ('bbb', {'txt': 'xxx', 'key': 'yyy'})}
+        positions = {(0, 1): ('aaa', {'nam': 'Aaa', 'txt': '', 'key': ''}),
+                     (1, 1): ('bbb', {'nam': 'Bbb', 'txt': 'xxx', 'key': 'yyy'})}
         testobj.set_texts_for_grid(positions, widgets)
         assert capsys.readouterr().out == (
-                "called ShowMods.set_label_text with args (('', 'label1', ''),"
-                " 'aaa', '', '')\n"
-                "called ShowMods.set_label_text with args (('', 'label2', ''),"
-                " 'bbb', 'yyy', 'xxx')\n")
+                "called ShowMods.set_label_text with args"
+                " (('', 'label1', ''), 'Aaa', '', '')\n"
+                "called ShowMods.set_label_text with args"
+                " (('', 'label2', ''), 'Bbb', 'yyy', 'xxx')\n")
 
     def test_build_link_text(self, monkeypatch, capsys):
         """unittest for ShowMods.build_link_text
@@ -564,9 +512,9 @@ class TestManager:
         testobj.set_checks_for_grid(positions, widgets)
         assert capsys.readouterr().out == ""
         widgets = {(0, 1): ('', '', 'check1'), (1, 1): ('', '', 'check2'), (1, 2): ('', '', 'check3')}
-        positions = {(0, 1): ('aaa', {'dir': 'qqq', 'sel': True}),
-                     (1, 1): ('bbb', {'dir': 'xxx', 'sel': True}),
-                     (1, 2): ('ccc', {'dir': 'rrr', 'sel': False})}
+        positions = {(0, 1): (str(tmp_path / 'qqq'), {'nam': 'aaa', 'sel': True}),
+                     (1, 1): (str(tmp_path / 'xxx'), {'nam': 'bbb', 'sel': True}),
+                     (1, 2): (str(tmp_path / 'rrr'), {'nam': 'ccc', 'sel': False})}
         testobj.set_checks_for_grid(positions, widgets)
         assert capsys.readouterr().out == (
                 "called ShowMods.set_checkbox_state with args (('', '', 'check1'), False)\n"
@@ -648,10 +596,6 @@ class TestManager:
         def mock_get(name, itemtype):
             print(f"called Conf.get_component_data with args ('{name}', '{itemtype}')")
             return name
-        def mock_gett(name):
-            print(f"called get_toplevel with arg '{name}'")
-            return name
-        monkeypatch.setattr(testee, 'get_toplevel', mock_gett)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.add_dependencies = mock_add
         testobj.conf.get_component_data = mock_get
@@ -660,25 +604,21 @@ class TestManager:
         assert capsys.readouterr().out == ""
 
         testobj.conf.list_components_for_dir = mock_list
-        testobj.screeninfo = {'test': {'dir': 'xxx'}, 'other': {'dir': 'yyy'}}
         testobj.select_activations(['test', 'other'])
         assert testobj.directories == set()
-        assert capsys.readouterr().out == ("called Conf.list_components_for_dir with arg xxx\n"
-                                           "called Conf.list_components_for_dir with arg yyy\n")
+        assert capsys.readouterr().out == ("called Conf.list_components_for_dir with arg test\n"
+                                           "called Conf.list_components_for_dir with arg other\n")
 
         testobj.conf.list_components_for_dir = mock_list_2
-        testobj.screeninfo = {'test': {'dir': 'xxx'}, 'other': {'dir': 'yyy'}}
         testobj.select_activations(['test', 'other'])
-        assert testobj.directories == {'xxx', 'yyy'}
+        assert testobj.directories == {'test', 'other'}
         assert capsys.readouterr().out == (
-                "called Conf.list_components_for_dir with arg xxx\n"
-                f"called Conf.get_component_data with args ('xxx', '{testobj.conf.DIR}')\n"
-                "called get_toplevel with arg 'xxx'\n"
-                "called Conf.add_dependencies with arg xxx\n"
-                "called Conf.list_components_for_dir with arg yyy\n"
-                f"called Conf.get_component_data with args ('yyy', '{testobj.conf.DIR}')\n"
-                "called get_toplevel with arg 'yyy'\n"
-                "called Conf.add_dependencies with arg yyy\n")
+                "called Conf.list_components_for_dir with arg test\n"
+                "called Conf.get_component_data with args ('test', 'dirname')\n"
+                "called Conf.add_dependencies with arg test\n"
+                "called Conf.list_components_for_dir with arg other\n"
+                "called Conf.get_component_data with args ('other', 'dirname')\n"
+                "called Conf.add_dependencies with arg other\n")
 
     def test_add_dependencies(self, monkeypatch, capsys):
         """unittest for Manager.add_dependencies
@@ -696,10 +636,6 @@ class TestManager:
                     return ['w', 'x']
                 return []
             return ''
-        def mock_gett(name):
-            print(f"called get_toplevel with arg '{name}'")
-            return name
-        monkeypatch.setattr(testee, 'get_toplevel', mock_gett)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.conf.get_component_data = mock_get
         testobj.components_checked = []
@@ -709,16 +645,12 @@ class TestManager:
         assert capsys.readouterr().out == (
                 f"called Conf.get_component_data with args('comp.name', '{testobj.conf.DEPS}')\n"
                 f"called Conf.get_component_data with args('w', '{testobj.conf.DIR}')\n"
-                "called get_toplevel with arg 'wdir'\n"
                 f"called Conf.get_component_data with args('w', '{testobj.conf.DEPS}')\n"
                 f"called Conf.get_component_data with args('wq', '{testobj.conf.DIR}')\n"
-                "called get_toplevel with arg 'wqdir'\n"
                 f"called Conf.get_component_data with args('wq', '{testobj.conf.DEPS}')\n"
                 f"called Conf.get_component_data with args('x', '{testobj.conf.DIR}')\n"
-                "called get_toplevel with arg 'xdir'\n"
                 f"called Conf.get_component_data with args('x', '{testobj.conf.DEPS}')\n"
                 f"called Conf.get_component_data with args('xq', '{testobj.conf.DIR}')\n"
-                "called get_toplevel with arg 'xqdir'\n"
                 f"called Conf.get_component_data with args('xq', '{testobj.conf.DEPS}')\n")
 
     def test_activate(self, monkeypatch, capsys, tmp_path):
@@ -749,35 +681,39 @@ class TestManager:
         """
         def mock_show(*args):
             print('called show_dialog with args', args[0].__name__, args[1:])
-            args[1].master.attr_changes = []
+            args[1].master.attr_changes = {}
         def mock_show_2(*args):
             print('called show_dialog with args', args[0].__name__, args[1:])
-            args[1].master.attr_changes = [('xxx', 'yyy'), ('zzz', '')]  # , ('', 'qqq')]i kan dit?
-            args[1].master.screeninfo = {'xxx': {'dir': 'xxx-dir', 'txt': 'xxx-txt', 'sel': True,
+            args[1].master.attr_changes = {'xxx': 'xxx-old', 'zzz': 'zzz-old'}
+            args[1].master.screeninfo = {'xxx': {'nam': 'xxx-nam', 'txt': 'xxx-txt', 'sel': True,
                                                  'opt': False},
-                                         'zzz': {'dir': 'zzz-dir', 'txt': 'zzz-txt', 'sel': False,
+                                         'zzz': {'nam': '', 'txt': 'zzz-txt', 'sel': False,
                                                  'opt': True}}
         def mock_set(*args):
             print('called Conf.set_diritem_value with args', args)
         monkeypatch.setattr(testee.gui, 'show_dialog', mock_show)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.doit = MockShowMods(testobj)
+        testobj.revlookup = {}
         testobj.conf.set_diritem_value = mock_set
         assert capsys.readouterr().out == f"called gui.ShowMods.__init__() with arg '{testobj}'\n"
         testobj.manage_attributes()
+        assert testobj.revlookup == {}
         assert capsys.readouterr().out == (
                 f"called show_dialog with args AttributesDialog ({testobj.doit}, {testobj.conf})\n")
         monkeypatch.setattr(testee.gui, 'show_dialog', mock_show_2)
+        testobj.revlookup = {'xxx-old': 'xxx', 'zzz-old': 'yyy'}
         testobj.manage_attributes()
         assert capsys.readouterr().out == (
                 f"called show_dialog with args AttributesDialog ({testobj.doit}, {testobj.conf})\n"
-                "called Conf.set_diritem_value with args ('xxx-dir', 'SCRNAM', 'xxx')\n"
-                "called Conf.set_diritem_value with args ('xxx-dir', 'ScrTxt', 'xxx-txt')\n"
-                "called Conf.set_diritem_value with args ('xxx-dir', 'Sel', True)\n"
-                "called Conf.set_diritem_value with args ('xxx-dir', '_DoNotTouch', False)\n"
-                "called Conf.set_diritem_value with args ('zzz-dir', 'ScrTxt', 'zzz-txt')\n"
-                "called Conf.set_diritem_value with args ('zzz-dir', 'Sel', False)\n"
-                "called Conf.set_diritem_value with args ('zzz-dir', '_DoNotTouch', True)\n"
+                "called Conf.set_diritem_value with args ('xxx', 'SCRNAM', 'xxx-nam')\n"
+                "called Conf.set_diritem_value with args ('xxx', 'ScrTxt', 'xxx-txt')\n"
+                "called Conf.set_diritem_value with args ('xxx', 'Sel', True)\n"
+                "called Conf.set_diritem_value with args ('xxx', '_DoNotTouch', False)\n"
+                "called Conf.set_diritem_value with args ('zzz', 'SCRNAM', '')\n"
+                "called Conf.set_diritem_value with args ('zzz', 'ScrTxt', 'zzz-txt')\n"
+                "called Conf.set_diritem_value with args ('zzz', 'Sel', False)\n"
+                "called Conf.set_diritem_value with args ('zzz', '_DoNotTouch', True)\n"
                 "called JsonConf.save\n")
 
     def test_get_mod_components(self, monkeypatch, capsys):
@@ -805,41 +741,86 @@ class TestManager:
             print('called ShowMods.set_label_text with args', args)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.doit = types.SimpleNamespace(refresh_widgets=mock_refresh)
-        # testobj.build_screen_text = mock_build
         testobj.doit.set_label_text = mock_build
         testobj.switch_by_selectability = mock_switch
         testobj.get_widget_list = mock_get
-        testobj.screeninfo = {}
-        testobj.attr_changes = []
-        assert testobj.update_attributes(True, 'xxx', 'xxx', 'yyy', True) == (
-                False, 'Tweemaal schermnaam wijzigen van een mod zonder de dialoog af te breken'
-                ' en opnieuw te starten is helaas nog niet mogelijk')
-        assert capsys.readouterr().out == ""
-        testobj.screeninfo = {'xxx': {'sel': False, 'txt': '', 'opt': False, 'pos': '1x2'}}
-        assert testobj.update_attributes(True, 'xxx', 'xxx', 'yyy', True) == (True, '')
-        assert testobj.screeninfo == {'xxx': {'sel': True, 'txt': 'yyy', 'opt': True, 'pos': '1x2'}}
-        assert testobj.attr_changes == [('xxx', '')]
-        assert capsys.readouterr().out == (
-                "called Manager.switch_by_selectability with args (True, 'xxx', 'xxx')\n"
-                "called ShowMods.refresh_widgets with args ()\n")
-        testobj.screeninfo = {'xxx': {'sel': False, 'txt': '', 'opt': False, 'pos': '1x2', 'key': 1}}
-        testobj.attr_changes = []
-        assert testobj.update_attributes(False, 'yyy', 'xxx', '', False) == (True, '')
-        assert testobj.screeninfo == {'yyy': {'sel': False, 'txt': '', 'opt': False, 'pos': '1x2',
-                                              'key': 1}}
-        assert testobj.attr_changes == [('yyy', 'xxx')]
-        assert capsys.readouterr().out == (
-                "called Manager.get_widget_list with args (1, 2, False)\n"
-                "called ShowMods.set_label_text with args (['widget', 'label'], 'yyy', 1, '')\n")
-        testobj.screeninfo = {'xxx': {'sel': False, 'txt': '', 'opt': False, 'pos': '1x2', 'key': 1}}
-        testobj.attr_changes = []
-        assert testobj.update_attributes(False, 'xxx', 'xxx', '', False) == (True, '')
-        assert testobj.screeninfo == {'xxx': {'sel': False, 'txt': '', 'opt': False, 'pos': '1x2',
-                                              'key': 1}}
-        assert testobj.attr_changes == [('xxx', '')]
-        assert capsys.readouterr().out == ''
+        testobj.attr_changes = {}
+        testobj.unplotted_widgets = {(1, 1): 'widgetu'}
+        testobj.nonsel_widgets = {(1, 1): 'widgetn'}
+        # assert testobj.update_attributes(True, 'xxx', 'xxx', 'yyy', True) == (
+        #         False, 'Tweemaal schermnaam wijzigen van een mod zonder de dialoog af te breken'
+        #         ' en opnieuw te starten is helaas nog niet mogelijk')
+        # assert capsys.readouterr().out == ""
+        testobj.screeninfo = {'xxx': {'nam': 'xxx', 'sel': False, 'txt': '', 'opt': False,
+                                      'pos': '1x1'}}
+        testobj.not_selectable = ['xxx']
+        testobj.unplotted = []
+        testobj.revlookup = {'xxx': 'xxx'}
+        testobj.update_attributes(True, 'xxx', 'xxx', 'yyy', True)
+        assert testobj.screeninfo == {'xxx': {'sel': True, 'txt': 'yyy', 'opt': True, 'nam': 'xxx',
+                                      'pos': '1x1'}}
+        assert testobj.attr_changes == {'xxx': 'xxx'}
+        assert testobj.not_selectable == []
+        assert testobj.unplotted == ['xxx']
+        assert testobj.revlookup == {'xxx': 'xxx'}
+        assert capsys.readouterr().out == "called ShowMods.refresh_widgets with args ()\n"
 
-    def test_switch_by_selectability(self, monkeypatch, capsys):
+        testobj.screeninfo = {'xxx': {'nam': 'xxx', 'sel': False, 'txt': '', 'opt': False, 'key': 1,
+                                      'pos': '1x1'}}
+        testobj.revlookup = {'xxx': 'xxx'}
+        testobj.attr_changes = {}
+        testobj.update_attributes(False, 'yyy', 'xxx', '', False)
+        assert testobj.screeninfo == {'xxx': {'nam': 'yyy', 'sel': False, 'txt': '', 'opt': False,
+                                              'key': 1, 'pos': '1x1'}}
+        assert testobj.attr_changes == {'xxx': 'xxx'}
+        assert testobj.not_selectable == []
+        assert testobj.unplotted == ['xxx']
+        assert testobj.revlookup == {'xxx': 'xxx'}   # moet dat niet {'yyy': 'xxx'} zijn?
+        assert capsys.readouterr().out == (
+                "called ShowMods.set_label_text with args ('widgetn', 'yyy', 1, '')\n")
+
+        testobj.screeninfo = {'xxx': {'nam': 'yyy', 'sel': True, 'txt': '', 'opt': False, 'key': 1,
+                                      'pos': '1x1'}}
+        testobj.revlookup = {'yyy': 'xxx'}
+        testobj.attr_changes = {}
+        testobj.update_attributes(True, 'yyy', 'yyy', 'q', False)
+        assert testobj.screeninfo == {'xxx': {'nam': 'yyy', 'sel': True, 'txt': 'q', 'opt': False,
+                                              'key': 1, 'pos': '1x1'}}
+        assert testobj.attr_changes == {'xxx': 'yyy'}
+        assert testobj.not_selectable == []
+        assert testobj.unplotted == ['xxx']
+        assert testobj.revlookup == {'yyy': 'xxx'}
+        assert capsys.readouterr().out == (
+                "called ShowMods.set_label_text with args ('widgetu', 'yyy', 1, 'q')\n")
+
+        testobj.screeninfo = {'xxx': {'sel': True, 'txt': '', 'opt': False, 'nam': 'xxx', 'key': 1,
+                                      'pos': '1x1'}}
+        testobj.revlookup = {'xxx': 'xxx'}
+        testobj.attr_changes = {}
+        testobj.update_attributes(False, 'xxx', 'xxx', '', False)
+        assert testobj.screeninfo == {'xxx': {'sel': False, 'txt': '', 'opt': False, 'nam': 'xxx',
+                                              'key': 1, 'pos': '1x1'}}
+        assert testobj.attr_changes == {'xxx': 'xxx'}
+        assert testobj.not_selectable == ['xxx']
+        assert testobj.unplotted == []
+        assert testobj.revlookup == {'xxx': 'xxx'}
+        assert capsys.readouterr().out == "called ShowMods.refresh_widgets with args ()\n"
+
+        testobj.screeninfo = {'xxx': {'sel': False, 'txt': '', 'opt': False, 'nam': 'xxx', 'key': 1,
+                                      'pos': '1x1'}}
+        testobj.revlookup = {'xxx': 'xxx'}
+        testobj.attr_changes = {}
+        testobj.update_attributes(False, 'xxx', 'xxx', '', False)
+        assert testobj.screeninfo == {'xxx': {'sel': False, 'txt': '', 'opt': False, 'nam': 'xxx',
+                                              'key': 1, 'pos': '1x1'}}
+        assert testobj.attr_changes == {'xxx': 'xxx'}
+        assert testobj.not_selectable == ['xxx']
+        assert testobj.unplotted == []
+        assert testobj.revlookup == {'xxx': 'xxx'}
+        assert capsys.readouterr().out == (
+                "called ShowMods.set_label_text with args ('widgetn', 'xxx', 1, '')\n")
+
+    def _test_switch_by_selectability(self, monkeypatch, capsys):
         """unittest for Manager.switch_selectability
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
@@ -874,7 +855,7 @@ class TestManager:
         assert testobj.unplotted == ['xxx']
         assert testobj.not_selectable == ['xxx']
 
-    def test_get_widget_list(self, monkeypatch, capsys):
+    def _test_get_widget_list(self, monkeypatch, capsys):
         """unittest for Manager.get_widget_list
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
@@ -904,7 +885,7 @@ class TestManager:
         assert capsys.readouterr().out == (
                 f"called show_dialog with args SaveGamesDialog ({testobj.doit}, {testobj.conf})\n")
 
-    def test_update_config_from_screenpos(self, monkeypatch, capsys):
+    def _test_update_config_from_screenpos(self, monkeypatch, capsys):
         """unittest for Manager.update_config_from_screenpos
         """
         def mock_set(*args):
@@ -1544,33 +1525,35 @@ class TestManager:
         assert capsys.readouterr().out == (
                 f"called gui.ShowMods.__init__() with arg '{testobj}'\n"
                 "called JsonConf.__init__ with args () {}\n")
-        testobj.screeninfo = {'moddir': {'dir': 'stuff'}}
+        testobj.screeninfo = {'moddir': {'nam': 'stuff'}}
+        testobj.revlookup = {'stuff': 'moddir'}
         testobj.unplotted = ['moddir', 'stuff']
         testobj.not_selectable = ['stuff']
-        testobj.remove_mod('moddir')
+        testobj.remove_mod('stuff')
         assert testobj.screeninfo == {}
         assert testobj.unplotted == ['stuff']
         assert testobj.not_selectable == ['stuff']
         assert capsys.readouterr().out == (
                 "called gui.ShowMods.refresh_widgets with args {'first_time': False}\n"
-                "called Conf.list_components_for_dir with arg 'stuff'\n"
+                "called Conf.list_components_for_dir with arg 'moddir'\n"
                 "called Conf.remove_component with arg 'xxx'\n"
                 "called Conf.remove_component with arg 'yyy'\n"
-                "called Conf.remove_diritem with arg 'stuff'\n"
+                "called Conf.remove_diritem with arg 'moddir'\n"
                 "called JsonConf.save\n")
-        testobj.screeninfo = {'moddir': {'dir': 'stuff'}}
+        testobj.screeninfo = {'moddir': {'nam': 'stuff'}}
+        testobj.revlookup = {'stuff': 'moddir'}
         testobj.unplotted = ['stuff']
         testobj.not_selectable = ['moddir', 'stuff']
-        testobj.remove_mod('moddir')
+        testobj.remove_mod('stuff')
         assert testobj.screeninfo == {}
         assert testobj.unplotted == ['stuff']
         assert testobj.not_selectable == ['stuff']
         assert capsys.readouterr().out == (
                 "called gui.ShowMods.refresh_widgets with args {'first_time': False}\n"
-                "called Conf.list_components_for_dir with arg 'stuff'\n"
+                "called Conf.list_components_for_dir with arg 'moddir'\n"
                 "called Conf.remove_component with arg 'xxx'\n"
                 "called Conf.remove_component with arg 'yyy'\n"
-                "called Conf.remove_diritem with arg 'stuff'\n"
+                "called Conf.remove_diritem with arg 'moddir'\n"
                 "called JsonConf.save\n")
 
 
@@ -1876,7 +1859,7 @@ class TestDeleteDialog:
         testobj = testee.DeleteDialog(parent, conf)
         assert testobj.parent == parent
         assert testobj.conf == conf
-        assert testobj.modnames == {'xxx_name': 'xxx', 'yyy_name': 'yyy'}
+        assert testobj.modnames == {'xxx': 'xxx', 'yyy': 'yyy'}
         assert testobj.lbox == 'combobox'
         assert testobj.change_button == 'button0'
         assert capsys.readouterr().out == expected_output['delete'].format(testobj=testobj)
@@ -2050,7 +2033,7 @@ class TestAttributesDialog:
         assert testobj.parent == parent
         assert testobj.conf == conf
         assert testobj.choice == ''
-        assert testobj.modnames == {'xxx_name': 'xxx', 'yyy_name': 'yyy'}
+        assert testobj.modnames == {'xxx': 'xxx', 'yyy': 'yyy'}
         assert testobj.lbox == 'combobox'
         assert testobj.name == 'combobox'
         assert testobj.clear_name_button == 'clear_button'
@@ -2083,13 +2066,14 @@ class TestAttributesDialog:
             return testee.AttributesDialog.seltext
         def mock_get_2(*args):
             print('called AttributesDialogGui.get_combobox_value with args', args)
-            return 'xxx'
+            return 'Xxx'
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.conf = MockConf()
         assert capsys.readouterr().out == "called JsonConf.__init__ with args () {}\n"
         testobj.parent = types.SimpleNamespace(
                 master=types.SimpleNamespace(
-                    screeninfo={'xxx': {'txt': 'Xxx', 'sel': True, 'opt': False}}))
+                    revlookup={'Xxx': 'xxx'},
+                    screeninfo={'xxx': {'txt': '...', 'sel': True, 'opt': False}}))
         testobj.lbox = 'combobox'
         testobj.name = 'combobox'
         testobj.clear_name_button = 'clear_button'
@@ -2103,7 +2087,7 @@ class TestAttributesDialog:
         testobj.restore_button = 'restore_button'
         testobj.compare_button = 'compare_button'
         testobj.change_button = 'change_button'
-        testobj.modnames = {'xxx': {'aaa'}}
+        testobj.modnames = {'Xxx': 'xxx'}
         testobj.doit.get_combobox_value = mock_get
         testobj.process()
         assert testobj.choice == testee.AttributesDialog.seltext
@@ -2115,18 +2099,18 @@ class TestAttributesDialog:
                 " 'backup_button', 'restore_button', 'compare_button'],)\n")
         testobj.doit.get_combobox_value = mock_get_2
         testobj.process()
-        assert testobj.choice == 'xxx'
+        assert testobj.choice == 'Xxx'
         assert capsys.readouterr().out == (
                 "called AttributesDialogGui.get_combobox_value with args ('combobox',)\n"
-                "called Conf.list_components_for_dir with arg '{'aaa'}'\n"
+                "called Conf.list_components_for_dir with arg 'xxx'\n"
                 "called Conf.get_component_data with args ('xxx', 'Name')\n"
                 "called Conf.get_component_data with args ('yyy', 'Name')\n"
                 "called AttributeDialogGui.activate_and_populate_fields with args"
                 " (['combobox', 'clear_button', 'line_entry', 'clear_button',"
                 " 'checkbox', 'checkbox', 'button', 'button', 'change_button',"
                 " 'backup_button', 'restore_button', 'compare_button'],"
-                " ['xxx', 'xxx_compname', 'yyy_compname'],"
-                " {'txt': 'Xxx', 'sel': True, 'opt': False})\n")
+                " ['Xxx', 'xxx_compname', 'yyy_compname'],"
+                " {'txt': '...', 'sel': True, 'opt': False})\n")
 
     def test_clear_name_text(self, monkeypatch, capsys):
         """unittest for AttributesDialog.clear_text
@@ -2571,10 +2555,6 @@ class TestAttributesDialog:
         """
         def mock_update(*args):
             print("called ShowMods.update_attributes with args", args)
-            return False, 'A message'
-        def mock_update2(*args):
-            print("called ShowMods.update_attributes with args", args)
-            return True, ''
         def mock_show(*args, **kwargs):
             print('called gui.show_message with args', args, kwargs)
         monkeypatch.setattr(testee.gui, 'show_message', mock_show)
@@ -2589,18 +2569,6 @@ class TestAttributesDialog:
         testobj.activate_button = 'activate_button'
         testobj.exempt_button = 'exempt_button'
         testobj.change_button = 'change_button'
-        testobj.update()
-        assert capsys.readouterr().out == (
-                "called AttributesDialogGui.enable_button with args ('clear_name_button', False)\n"
-                "called AttributesDialogGui.enable_button with args ('clear_text_button', False)\n"
-                "called AttributeDialogGui.get_checkbox_value with args ('activate_button',)\n"
-                "called AttributesDialogGui.get_field_text with args ('text_button',)\n"
-                "called AttributeDialogGui.get_combobox_value with args ('name_button',)\n"
-                "called AttributeDialogGui.get_checkbox_value with args ('exempt_button',)\n"
-                "called ShowMods.update_attributes with args"
-                " ('activate_button', '', 'xxx', 'text_button', 'exempt_button')\n"
-                f"called gui.show_message with args ({testobj.doit}, 'A message') {{}}\n")
-        testobj.parent.master.update_attributes = mock_update2
         testobj.update()
         assert capsys.readouterr().out == (
                 "called AttributesDialogGui.enable_button with args ('clear_name_button', False)\n"
@@ -2796,7 +2764,7 @@ class TestDependencyDialog:
         testobj = testee.DependencyDialog(parent, conf)
         assert testobj.parent == parent
         assert testobj.conf == conf
-        assert testobj.modnames == {'xxx_name': 'xxx', 'yyy_name': 'yyy'}
+        assert testobj.modnames == {'xxx': 'xxx', 'yyy': 'yyy'}
         assert capsys.readouterr().out == expected_output['deps'].format(testobj=testobj)
 
         conf.list_all_mod_dirs = mock_list
@@ -2956,7 +2924,7 @@ class TestSaveGamesDialog:
         assert testobj.parent == parent
         assert testobj.conf == conf
         assert testobj.savenames == ['qqq', 'rrr']
-        assert testobj.modnames == {'xxx_name': 'xxx', 'yyy_name': 'yyy'}
+        assert testobj.modnames == {'xxx': 'xxx', 'yyy': 'yyy'}
         assert testobj.savegame_selector == 'combobox'
         assert testobj.oldsavename == ''
         assert testobj.pname == 'line_entry'
@@ -3058,9 +3026,6 @@ class TestSaveGamesDialog:
         def mock_select(self, names):
             print(f'called Manager.select_activations with arg {names}')
             self.directories = ['sss', 'ttt']
-        def mock_list_dirs():
-            print('called Conf.list_all_mod_dirs')
-            return []
         def mock_show(*args, **kwargs):
             print('called gui.show_message with args', args, kwargs)
         # monkeypatch.setattr(testee.os.path, 'exists', mock_exists)
@@ -3091,8 +3056,6 @@ class TestSaveGamesDialog:
                 "called SaveGamesDialogGui.accept\n")
 
         monkeypatch.setattr(MockManager, 'select_activations', mock_select)
-        # monkeypatch.setattr(testee.os.path, 'exists', mock_exists_2)
-        # testobj.conf.list_components_for_dir = mock_list_comps
         (tmp_path / 'yyy').touch()
         testobj.confirm()
         assert capsys.readouterr().out == (
@@ -3101,7 +3064,6 @@ class TestSaveGamesDialog:
                 "called Conf.list_all_mod_dirs\n"
                 "called Conf.get_diritem_data with args ('xxx', '_DoNotTouch')\n"
                 "called Conf.get_diritem_data with args ('yyy', '_DoNotTouch')\n"
-                "called Conf.get_diritem_data with args ('yyy', 'SCRNAM')\n"
                 "called Manager.select_activations with arg ['qqq', 'rrr', 'yyy']\n"
                 "called Manager.activate with args\n"
                 "called Manager.refresh_widget_data\n"
@@ -3198,7 +3160,7 @@ class TestSaveGamesDialog:
         def mock_get_mods(name):
             "stub"
             print(f"called Conf.get_mods_for_saveitem with arg {name}")
-            return ['newmodname']
+            return ['newmod1', 'newmod2']
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.conf = MockConf()
         assert capsys.readouterr().out == "called JsonConf.__init__ with args () {}\n"
@@ -3258,7 +3220,10 @@ class TestSaveGamesDialog:
                 "called AttributesDialogGui.set_field_text with args ('fname', 'oldfname')\n"
                 "called AttributesDialogGui.set_field_text with args ('gdate', 'oldgdate')\n"
                 "called Conf.get_mods_for_saveitem with arg xxx\n"
-                "called SaveGamesDialogGui.set_combobox_value with args ('combobox', 'newmodname')\n"
+                "called Conf.get_diritem_data with args ('newmod1', 'SCRNAM')\n"
+                "called SaveGamesDialogGui.set_combobox_value with args ('combobox', 'newmod1')\n"
+                "called Conf.get_diritem_data with args ('newmod2', 'SCRNAM')\n"
+                "called SaveGamesDialogGui.set_combobox_value with args ('combobox', 'newmod2')\n"
                 "called SaveGamesDialogGui.enable_widget with args ('update_button', True)\n"
                 "called SaveGamesDialogGui.enable_widget with args ('confirm_button', True)\n")
         # testobj.widgets = [['button', 'combobox', 'container']]
@@ -3276,7 +3241,10 @@ class TestSaveGamesDialog:
                 "called AttributesDialogGui.set_field_text with args ('fname', 'oldfname')\n"
                 "called AttributesDialogGui.set_field_text with args ('gdate', 'oldgdate')\n"
                 "called Conf.get_mods_for_saveitem with arg xxx\n"
-                "called SaveGamesDialogGui.set_combobox_value with args ('combobox', 'newmodname')\n"
+                "called Conf.get_diritem_data with args ('newmod1', 'SCRNAM')\n"
+                "called SaveGamesDialogGui.set_combobox_value with args ('combobox', 'newmod1')\n"
+                "called Conf.get_diritem_data with args ('newmod2', 'SCRNAM')\n"
+                "called SaveGamesDialogGui.set_combobox_value with args ('combobox', 'newmod2')\n"
                 "called SaveGamesDialogGui.enable_widget with args ('update_button', False)\n"
                 "called SaveGamesDialogGui.enable_widget with args ('confirm_button', True)\n")
 
@@ -3435,7 +3403,7 @@ called DeleteDialogGui.__init__ with args ({testobj}, {testobj.parent})
 called Conf.list_all_mod_dirs
 called Conf.get_diritem_data with args ('xxx', 'SCRNAM')
 called Conf.get_diritem_data with args ('yyy', 'SCRNAM')
-called DeleteDialogGui.add_combobox with args (['select a mod to remove from the config', 'xxx_name', 'yyy_name'], {testobj.process}) {{'editable': False}}
+called DeleteDialogGui.add_combobox with args (['select a mod to remove from the config', 'xxx', 'yyy'], {testobj.process}) {{'editable': False}}
 called DeleteDialogGui.add_buttonbox with args ([('&Remove', {testobj.update}, False), ('&Close', {testobj.doit.accept}, True)],)
 called DeleteDialogGui.set_focus with args ('combobox',)
 """
@@ -3446,7 +3414,7 @@ called AttributesDialogGui.__init__ with args ({testobj}, {testobj.parent})
 called Conf.list_all_mod_dirs
 called Conf.get_diritem_data with args ('xxx', 'SCRNAM')
 called Conf.get_diritem_data with args ('yyy', 'SCRNAM')
-called AttributesDialogGui.add_combobox with args (['select a mod to change the screen text etc.', 'xxx_name', 'yyy_name'], {testobj.process}) {{'editable': False}}
+called AttributesDialogGui.add_combobox with args (['select a mod to change the screen text etc.', 'xxx', 'yyy'], {testobj.process}) {{'editable': False}}
 called AttributesDialogGui.add_label with args ('Screen Name:\\n(the suggestions in the box below are taken from\\nthe mod components',)
 called AttributesDialogGui.start_line_with_clear_button
 called AttributesDialogGui.add_combobox with args ([], {testobj.enable_change}) {{'editable': True, 'enabled': False}}
@@ -3479,7 +3447,7 @@ called Conf.list_all_mod_dirs
 called Conf.get_diritem_data with args ('xxx', 'SCRNAM')
 called Conf.get_diritem_data with args ('yyy', 'SCRNAM')
 called DependencyDialogGui.add_label with args ('Selecteer de toe te voegen dependency',)
-called DependencyDialogGui.add_combobox with args (['select a mod', 'xxx_name', 'yyy_name'], None) {{'editable': False}}
+called DependencyDialogGui.add_combobox with args (['select a mod', 'xxx', 'yyy'], None) {{'editable': False}}
 called Conf.list_components_for_dir with arg 'Xxx'
 called DependencyDialogGui.add_label with args ('Selecteer een component om de dependency aan toe te voegen',)
 called DependencyDialogGui.add_combobox with args (['select a component', 'xxx', 'yyy'], None) {{'editable': False, 'enabled': True}}

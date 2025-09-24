@@ -110,7 +110,8 @@ class ShowMods(qtw.QWidget):
         #     check.stateChanged.disconnect()
         if selectable:
             check.setEnabled(True)
-            check.stateChanged.connect(self.enable_button)
+            # check.stateChanged.connect(self.enable_button)
+            check.clicked.connect(self.enable_button)
         label = qtw.QLabel()
         hbox.addSpacing(50)
         hbox.addWidget(check)
@@ -140,6 +141,7 @@ class ShowMods(qtw.QWidget):
 
     def enable_button(self):
         "make activating mods possible"
+        # if not self.master.initializing:
         self.buttons['actv'].setEnabled(True)
 
     def update_mods(self):

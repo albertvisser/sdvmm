@@ -531,6 +531,7 @@ class TestShowMods:
         """unittest for ShowMods.enable_button
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.master = types.SimpleNamespace()
         testobj.buttons = {'actv': mockqtw.MockPushButton()}
         assert capsys.readouterr().out == 'called PushButton.__init__ with args () {}\n'
         testobj.enable_button()

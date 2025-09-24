@@ -139,7 +139,8 @@ class ShowMods():
         """
         label = widgetlist[1]
         if updateid:
-            name = f'{name} ({updateid})'
+            # name = f'{name} ({updateid})'
+            name = f'{name}'
             label.bind('<Button-1>', self.open_browser)
             label.configure(foreground="blue", cursor="hand2")
         if text:

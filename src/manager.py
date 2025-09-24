@@ -10,7 +10,7 @@ import zipfile
 import tempfile
 import subprocess
 import functools
-from src import gui as gui
+from src import gui
 import src.jsonconfig as dmlj
 MODBASE, CONFIG, DOWNLOAD = dmlj.read_defaults()[:3]
 
@@ -62,6 +62,7 @@ class Manager:
         self.maxcol = dmlj.read_defaults()[3] or 3
         self.directories = set()
         self.screeninfo = {}
+        self.revlookup = {}
         self.unplotted = []
         self.not_selectable = []
         self.plotted_widgets = {}
@@ -74,6 +75,7 @@ class Manager:
     def build_and_start_gui(self):
         """build screen: make the user select from a list which expansions they want to have active
         """
+        # self.initializing = True
         self.extract_screeninfo()
         self.doit = gui.ShowMods(self)
         # self.doit.setup_screen()
@@ -91,6 +93,7 @@ class Manager:
         self.doit.create_buttons(self.BUTTON_LIST)
         self.doit.refresh_widgets(first_time=True)
         self.doit.setup_actions()
+        # self.initializing = False
         self.doit.show_screen()
 
     def extract_screeninfo(self):
@@ -106,19 +109,13 @@ class Manager:
         if not CONFIG:
             return
         for dirname in self.conf.list_all_mod_dirs():
-            item = self.conf.get_diritem_data(dirname, self.conf.SCRNAM) or dirname
-            oldinfo = self.screeninfo[item] if item in self.screeninfo else {'sel': False, 'pos': '',
-                                                                             'key': '', 'txt': '',
-                                                                             'opt': False}
-            realdirname = get_toplevel(self.conf.get_component_data(
-                self.conf.get_diritem_data(dirname, self.conf.COMPS)[0], self.conf.DIR))
-            self.screeninfo[item] = {
-                'dir': realdirname,
-                'sel': self.conf.get_diritem_data(dirname, self.conf.SEL) or oldinfo['sel'],
-                'opt': self.conf.get_diritem_data(dirname, self.conf.OPTOUT) or oldinfo['opt'],
-                'pos': self.conf.get_diritem_data(dirname, self.conf.SCRPOS) or oldinfo['pos'],
-                'key': self.conf.get_diritem_data(dirname, self.conf.NXSKEY) or oldinfo['key'],
-                'txt': self.conf.get_diritem_data(dirname, self.conf.SCRTXT) or oldinfo['txt']}
+            self.screeninfo[dirname] = {
+                'nam': self.conf.get_diritem_data(dirname, self.conf.SCRNAM) or dirname,
+                'sel': self.conf.get_diritem_data(dirname, self.conf.SEL) or False,
+                'opt': self.conf.get_diritem_data(dirname, self.conf.OPTOUT) or False,
+                'key': self.conf.get_diritem_data(dirname, self.conf.NXSKEY) or '',
+                'txt': self.conf.get_diritem_data(dirname, self.conf.SCRTXT) or ''}
+            self.revlookup[self.screeninfo[dirname]['nam']] = dirname
 
     def order_widgets(self, selectable_container, dependencies_container, first_time=True):
         """reshuffle the lists and dicts containing the widget info:
@@ -156,7 +153,7 @@ class Manager:
         rownum, colnum = 0, -1
         widgets = {}
         positions = {}
-        for text in sorted(items):
+        for text in sorted(items, key=lambda x: self.screeninfo[x]['nam']):
             colnum += 1
             if colnum == self.maxcol:
                 rownum += 1
@@ -184,8 +181,8 @@ class Manager:
         """add texts to the widgets
         """
         for pos, info in positions.items():
-            text, data = info
-            self.doit.set_label_text(widgets[pos], text, data['key'], data['txt'])
+            data = info[1]
+            self.doit.set_label_text(widgets[pos], data['nam'], data['key'], data['txt'])
 
     def build_link_text(self, name, updateid):
         """use updateid and name to create text for a clickable link
@@ -197,8 +194,9 @@ class Manager:
     def set_checks_for_grid(self, positions, widgets):
         "determine what value to set the checkboxes to"
         for pos, info in positions.items():
-            data = info[1]
-            loc = os.path.join(self.modbase, data['dir'])
+            # data = info[1]
+            # loc = os.path.join(self.modbase, data['dir'])
+            loc = os.path.join(self.modbase, info[0])
             self.doit.set_checkbox_state(widgets[pos], os.path.exists(loc))
 
     def process_activations(self):
@@ -219,9 +217,11 @@ class Manager:
     def select_activations(self, modnames):
         "expand the selection to a list of directories"
         # determine which directories should be activated
+        # breakpoint()
         self.directories = set()
-        for item in modnames:
-            moddir = self.screeninfo[item]['dir']
+        for moddir in modnames:
+            # moddir = self.screeninfo[item]['dir']
+            # moddir = self.revlookup[item]  niet meer nodig
             for entry in self.conf.list_components_for_dir(moddir):
                 compdir = get_toplevel(self.conf.get_component_data(entry, self.conf.DIR))
                 self.directories.add(compdir)
@@ -258,18 +258,19 @@ class Manager:
 
         also the possibility to view components and dependencies
         """
-        self.attr_changes = []  # list of changed mods
+        self.attr_changes = {}  # list of changed mods
         gui.show_dialog(AttributesDialog, self.doit, self.conf)
         # screeninfo is updated in the dialog, here we update the configuration
-        # attr_changes is also changed in the dialog
+        # attr_changes is also changed in the dialog (through calling update_attributes)
         changes = False
-        for newname, oldname in self.attr_changes:
-            dirname = self.screeninfo[newname]['dir']
-            if oldname:
-                self.conf.set_diritem_value(dirname, self.conf.SCRNAM, newname)
-            self.conf.set_diritem_value(dirname, self.conf.SCRTXT, self.screeninfo[newname]['txt'])
-            self.conf.set_diritem_value(dirname, self.conf.SEL, self.screeninfo[newname]['sel'])
-            self.conf.set_diritem_value(dirname, self.conf.OPTOUT, self.screeninfo[newname]['opt'])
+        for dirname, oldname in self.attr_changes.items():
+            newname = self.screeninfo[dirname]['nam']
+            self.conf.set_diritem_value(dirname, self.conf.SCRNAM, newname)
+            self.conf.set_diritem_value(dirname, self.conf.SCRTXT, self.screeninfo[dirname]['txt'])
+            self.conf.set_diritem_value(dirname, self.conf.SEL, self.screeninfo[dirname]['sel'])
+            self.conf.set_diritem_value(dirname, self.conf.OPTOUT, self.screeninfo[dirname]['opt'])
+            # also update reverse lookup
+            self.revlookup[newname] = self.revlookup.pop(oldname)
             changes = True
         if changes:
             self.conf.save()
@@ -286,70 +287,41 @@ class Manager:
         "do the updating (called from the dialog each time a mod is modified)"
         # we kunnen er van uitgaan dat de screeninfo values altijd alle waarden bevatten
         # zie methode extract_screeninfo
-        try:
-            oldselect = self.screeninfo[oldname]['sel']
-        except KeyError:    # oldname niet gevonden
-            message = ("Tweemaal schermnaam wijzigen van een mod zonder de dialoog"
-                       " af te breken en opnieuw te starten is helaas nog niet mogelijk")
-            # dat wil zeggen het lukt wel, maar niet zonder dump
-            # als ik aan het eind van deze dialoog self.choice de waarde van name geef
-            # dan krijg ik geen dump als ik het meteen doe maar als ik tussendoor
-            # een andere mod kies en dan naarr deze terugga gaat het alsnog mis
-            # bij het ophalen van de modgegevens uit de json configuratie
-            return False, message
-        self.screeninfo[oldname]['sel'] = selectable
-        oldtext = self.screeninfo[oldname]['txt']
-        self.screeninfo[oldname]['txt'] = text
-        self.screeninfo[oldname]['opt'] = is_exempt
-        if name != oldname:
-            self.screeninfo[name] = self.screeninfo.pop(oldname)
-            self.attr_changes.append((name, oldname))
-        else:
-            self.attr_changes.append((oldname, ''))
-
-        rownum, colnum = [int(y) for y in self.screeninfo[name]['pos'].split('x', 1)]
+        # 1106: we gaan hier zorgen dat de key van screeninfo niet meer aangepast hoeft te worden
+        # nieuwe variant
+        # breakpoint()
+        dirname = self.revlookup[oldname]
+        self.attr_changes[dirname] = oldname
+        oldselect = self.screeninfo[dirname]['sel']
+        oldtext = self.screeninfo[dirname]['txt']
+        self.screeninfo[dirname]['sel'] = selectable
+        self.screeninfo[dirname]['nam'] = name
+        self.screeninfo[dirname]['txt'] = text
+        self.screeninfo[dirname]['opt'] = is_exempt
+        rownum, colnum = [int(y) for y in self.screeninfo[dirname]['pos'].split('x', 1)]
         if selectable != oldselect:
-            # if not self.switch_selectability(selectable, name, oldname):
-            #     message = ("Onselecteerbaar maken van mods met coordinaten in de config"
-            #                " is helaas nog niet mogelijk")
-            #     return False, message
-            self.switch_by_selectability(selectable, name, oldname)
-            self.doit.refresh_widgets()  # not first_time
-        elif text != oldtext or name != oldname:
-            # alleen schermtekst wijzigen
-            widgetlist = self.get_widget_list(rownum, colnum, oldselect)
-            # self.build_screen_text(widgetlist, name, text, self.screeninfo[name]['key'])
-            self.doit.set_label_text(widgetlist, name, self.screeninfo[name]['key'], text)
-        return True, ''
-
-    def switch_by_selectability(self, selectable, name, oldname):
-        "move screeninfo keys to from unplotted to not_selectable or vice versa"
-        if selectable:
-            if name != oldname:
-                self.not_selectable.remove(oldname)
-            else:
+            # self.switch_by_selectability(selectable, dirname)
+            if selectable:
                 self.not_selectable.remove(name)
-            self.unplotted.append(name)
-        else:
-            # if name in self.unplotted or oldname in self.unplotted:
-            if name != oldname:
-                self.unplotted.remove(oldname)
+                self.unplotted.append(name)
             else:
                 self.unplotted.remove(name)
-            self.not_selectable.append(name)
-            # else:
-            #     return False
-        # return True
+                self.not_selectable.append(name)
+            self.doit.refresh_widgets()  # not first_time
+        else:  # if text != oldtext or name != oldname: moet ook bij naam terugzetten
+            # alleen schermtekst wijzigen
+            # widgetlist = self.get_widget_list(rownum, colnum, oldselect)
+            widgetlist = self.unplotted_widgets if selectable else self.nonsel_widgets
+            self.doit.set_label_text(widgetlist[(rownum, colnum)], name,
+                                     self.screeninfo[dirname]['key'], text)
+
+    def switch_by_selectability(self, selectable, name):
+        "move screeninfo keys to from unplotted to not_selectable or vice versa"
+        # versimpeld en daarom teruggestopt in de aanroeper
 
     def get_widget_list(self, rownum, colnum, selectable):
         "retrieve list of windows depending on screen location and selectability"
-        if selectable:
-            try:
-                return self.plotted_widgets[(rownum, colnum)]
-            except KeyError:
-                return self.unplotted_widgets[(rownum, colnum)]
-        else:
-            return self.nonsel_widgets[(rownum, colnum)]
+        # versimpeld en daarom teruggestopt in de aanroeper
 
     def manage_savefiles(self):
         "handle dialog for selecting a savefile to perform actions on"
@@ -357,13 +329,6 @@ class Manager:
         gui.show_dialog(SaveGamesDialog, self.doit, self.conf)
         # if changes:
         #     self.conf.save()
-
-    def update_config_from_screenpos(self):
-        """rewrite and reread config after reorganizing screen
-        """
-        for item in self.screeninfo.values():
-            self.conf.set_diritem_data(item['dir'], self.conf.SCRPOS, item['pos'])
-        self.conf.save()
 
     def update_mods(self, names):
         "installeer de aangegeven mod files"
@@ -529,15 +494,15 @@ class Manager:
     def remove_mod(self, modname):
         "remove a mod from the config"
         # remove from screen attributes dict
-        moddata = self.screeninfo.pop(modname)
+        moddir = self.revlookup[modname]
+        self.screeninfo.pop(moddir)
         with contextlib.suppress(ValueError):
-            self.unplotted.remove(modname)
+            self.unplotted.remove(moddir)
         with contextlib.suppress(ValueError):
-            self.not_selectable.remove(modname)
+            self.not_selectable.remove(moddir)
         # refresh names on screen
         self.doit.refresh_widgets(first_time=False)
         # remove from config
-        moddir = moddata['dir']
         components = self.conf.list_components_for_dir(moddir)
         for comp in components:
             self.conf.remove_componentdata(comp)
@@ -711,11 +676,12 @@ class AttributesDialog:
         if self.choice == self.seltext:
             self.doit.reset_all_fields(field_list)
             return
+        dirname = self.parent.master.revlookup[self.choice]
         items = set()
         for x in self.conf.list_components_for_dir(self.modnames[self.choice]):
             items.add(self.conf.get_component_data(x, self.conf.NAME))
         self.doit.activate_and_populate_fields(field_list, [self.choice] + sorted(list(items)),
-                                               self.parent.master.screeninfo[self.choice])
+                                               self.parent.master.screeninfo[dirname])
 
     def clear_name_text(self):
         "visually delete screen text"
@@ -871,12 +837,8 @@ class AttributesDialog:
         text = self.doit.get_field_text(self.text)
         name = self.doit.get_combobox_value(self.name)
         is_exempt = self.doit.get_checkbox_value(self.exempt_button)
-        ok, message = self.parent.master.update_attributes(selectable, name, self.choice,
-                                                           text, is_exempt)
-        if not ok:
-            gui.show_message(self.doit, message)
-        else:
-            self.doit.enable_button(self.change_button, False)
+        self.parent.master.update_attributes(selectable, name, self.choice, text, is_exempt)
+        self.doit.enable_button(self.change_button, False)
 
     def add_dep(self):
         """add dependency manually
@@ -1031,7 +993,7 @@ class SaveGamesDialog:
         for dirname in self.conf.list_all_mod_dirs():
             if (self.conf.get_diritem_data(dirname, self.conf.OPTOUT)
                     and os.path.exists(os.path.join(self.parent.master.modbase, dirname))):
-                modnames.append(self.conf.get_diritem_data(dirname, self.conf.SCRNAM) or dirname)
+                modnames.append(dirname)
         self.parent.master.select_activations(modnames)
         if self.parent.master.directories:   # alleen leeg als er niks geselecteerd is
             self.parent.master.activate()
@@ -1094,14 +1056,9 @@ class SaveGamesDialog:
             self.doit.set_field_text(self.fname, self.old_fname)
             self.doit.set_field_text(self.gdate, self.old_gdate)
             self.oldmods = self.conf.get_mods_for_saveitem(newvalue)
-        # breakpoint()
         for modname in self.oldmods:
-            # instellen van eem waarde veroorzaakt een nieuwe selector
-            self.doit.set_combobox_value(self.widgets[-1][1], modname)
-            # self.doit.enable_widget(self.widgets[-1][0], True)
-            # self.doit.enable_widget(self.widgets[-1][1], True)
-        # print(f'  {self.oldmods=}')
-        # print(f'  {self.widgets=}', flush=True)
+            name = self.conf.get_diritem_data(modname, self.conf.SCRNAM)
+            self.doit.set_combobox_value(self.widgets[-1][1], name)
         self.doit.enable_widget(self.update_button, new_in_conf)
         self.doit.enable_widget(self.confirm_button, True)
 
