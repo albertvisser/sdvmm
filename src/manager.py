@@ -983,6 +983,7 @@ class SaveGamesDialog:
             if item[0] == btn:
                 self.doit.remove_modselector(item)
                 self.widgets.remove(item)
+        self.doit.enable_widget(self.update_button, True)
 
     def confirm(self):
         "activate the mods belonging to this save file"
