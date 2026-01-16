@@ -219,9 +219,9 @@ class Manager:
         # determine which directories should be activated
         # breakpoint()
         self.directories = set()
-        for moddir in modnames:
+        for name in modnames:
             # moddir = self.screeninfo[item]['dir']
-            # moddir = self.revlookup[item]  niet meer nodig
+            moddir = self.revlookup[name]  
             for entry in self.conf.list_components_for_dir(moddir):
                 compdir = get_toplevel(self.conf.get_component_data(entry, self.conf.DIR))
                 self.directories.add(compdir)
