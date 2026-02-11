@@ -599,6 +599,7 @@ class TestManager:
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.add_dependencies = mock_add
         testobj.conf.get_component_data = mock_get
+        testobj.revlookup = {'test': 'xxx', 'other': 'yyy'}
         testobj.select_activations([])
         assert testobj.directories == set()
         assert capsys.readouterr().out == ""
@@ -606,19 +607,19 @@ class TestManager:
         testobj.conf.list_components_for_dir = mock_list
         testobj.select_activations(['test', 'other'])
         assert testobj.directories == set()
-        assert capsys.readouterr().out == ("called Conf.list_components_for_dir with arg test\n"
-                                           "called Conf.list_components_for_dir with arg other\n")
+        assert capsys.readouterr().out == ("called Conf.list_components_for_dir with arg xxx\n"
+                                           "called Conf.list_components_for_dir with arg yyy\n")
 
         testobj.conf.list_components_for_dir = mock_list_2
         testobj.select_activations(['test', 'other'])
-        assert testobj.directories == {'test', 'other'}
+        assert testobj.directories == {'xxx', 'yyy'}
         assert capsys.readouterr().out == (
-                "called Conf.list_components_for_dir with arg test\n"
-                "called Conf.get_component_data with args ('test', 'dirname')\n"
-                "called Conf.add_dependencies with arg test\n"
-                "called Conf.list_components_for_dir with arg other\n"
-                "called Conf.get_component_data with args ('other', 'dirname')\n"
-                "called Conf.add_dependencies with arg other\n")
+                "called Conf.list_components_for_dir with arg xxx\n"
+                "called Conf.get_component_data with args ('xxx', 'dirname')\n"
+                "called Conf.add_dependencies with arg xxx\n"
+                "called Conf.list_components_for_dir with arg yyy\n"
+                "called Conf.get_component_data with args ('yyy', 'dirname')\n"
+                "called Conf.add_dependencies with arg yyy\n")
 
     def test_add_dependencies(self, monkeypatch, capsys):
         """unittest for Manager.add_dependencies
@@ -2614,7 +2615,7 @@ class MockRestoreDialogGui:
     def set_focus(self, *args):
         "stub"
         print('called RestoreDialogGui.set_focus with args', args)
-    def confirm(self):
+    def accept(self):
         "stub"
         print('called RestoreDialogGui.accept')
     def reject(self):
@@ -2986,19 +2987,25 @@ class TestSaveGamesDialog:
         """unittest for SaveGamesDialog.remove_mod
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.update_button = 'update button'
+        # lege widgets lijst is waarschijnlijk onbestaanbaar
         testobj.widgets = []
         testobj.remove_mod('btn')
         assert not testobj.widgets
-        assert capsys.readouterr().out == ""
+        assert capsys.readouterr().out == (
+                "called SaveGamesDialogGui.enable_widget with args ('update button', True)\n")
+        # widget niet gevonden in  lijst is waarschijnlijk onbestaanbaar
         testobj.widgets = [('button', 'checkbox')]
         testobj.remove_mod('btn')
         assert testobj.widgets == [('button', 'checkbox')]
-        assert capsys.readouterr().out == ""
+        assert capsys.readouterr().out == (
+                "called SaveGamesDialogGui.enable_widget with args ('update button', True)\n")
         testobj.widgets = [('btn', 'cbox')]
         testobj.remove_mod('btn')
         assert not testobj.widgets
         assert capsys.readouterr().out == (
-                "called SaveGamesDialogGui.remove_modselector with args (('btn', 'cbox'),)\n")
+                "called SaveGamesDialogGui.remove_modselector with args (('btn', 'cbox'),)\n"
+                "called SaveGamesDialogGui.enable_widget with args ('update button', True)\n")
 
     def test_confirm(self, monkeypatch, capsys, tmp_path):
         """unittest for SaveGamesDialog.confirm

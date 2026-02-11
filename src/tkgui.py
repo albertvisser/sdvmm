@@ -843,8 +843,8 @@ class SaveGamesDialogGui(tk.Toplevel):
         "add a text field to the same line in the grid"
         textvar = tk.StringVar()
         textvar.set(text)
-        textvar.trace_add('write', self.monitor_textvar)
         cb = ttk.Entry(self.hfrm, textvariable=textvar)
+        cb.state(['readonly'])
         cb.grid(row=self.hrow, column=1)
         self.textvars[cb] = textvar
         self.hrow += 1
@@ -912,14 +912,6 @@ class SaveGamesDialogGui(tk.Toplevel):
     def set_focus(self, field):
         "set focus to field"
         field.focus_set()
-
-    def monitor_textvar(self, *args):
-        "enable change button"
-        self.maingui.update_button.state(['!disabled'])
-
-    # def enable_change(self):    # moet dit niet monitor_textvar zijn?
-    #     "enable change button"
-    #     self.maingui.update_button.state(['!disabled'])
 
     def enable_widget(self, widget, value):
         "make a widget (un)usable"

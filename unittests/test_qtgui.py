@@ -486,6 +486,9 @@ class TestShowMods:
     def test_set_label_text(self, monkeypatch, capsys):
         """unittest for ShowMods.set_label_text
         """
+        def mock_text(self):
+            return self._text
+        monkeypatch.setattr(mockqtw.MockLabel, 'text', mock_text)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.master = MockManager()
         widgetlist = ['frame', mockqtw.MockLabel(), 'check']
@@ -603,11 +606,13 @@ class TestShowMods:
         check.setChecked(True)
         assert capsys.readouterr().out == ("called CheckBox.setChecked with arg True\n")
         assert testobj.get_labeltext_if_checked(widgetlist) == 'xxx'
-        assert capsys.readouterr().out == ("called CheckBox.isChecked\n")
+        assert capsys.readouterr().out == ("called CheckBox.isChecked\n"
+                                           "called Label.text\n")
         label.setText('xxx<yyy>zzz<qqq>rrr')
         assert capsys.readouterr().out == ("called Label.setText with arg `xxx<yyy>zzz<qqq>rrr`\n")
         assert testobj.get_labeltext_if_checked(widgetlist) == 'zzz'
-        assert capsys.readouterr().out == ("called CheckBox.isChecked\n")
+        assert capsys.readouterr().out == ("called CheckBox.isChecked\n"
+                                           "called Label.text\n")
 
     def test_select_value(self, monkeypatch, capsys):
         """unittest for ShowMods.select_value
@@ -1060,13 +1065,13 @@ class TestAttributesDialogGui:
         assert capsys.readouterr().out == "called VBox.__init__\n"
         result = testobj.add_checkbox('xxx', callback)
         assert isinstance(result, testee.qtw.QCheckBox)
-        assert capsys.readouterr().out == ("called CheckBox.__init__ with text 'xxx'\n"
+        assert capsys.readouterr().out == (f"called CheckBox.__init__ with args ('xxx', {testobj})\n"
                                            f"called Signal.connect with args ({callback},)\n"
                                            "called CheckBox.setEnabled with arg True\n"
                                            "called VBox.addWidget with arg MockCheckBox\n")
         result = testobj.add_checkbox('xxx', callback, False)
         assert isinstance(result, testee.qtw.QCheckBox)
-        assert capsys.readouterr().out == ("called CheckBox.__init__ with text 'xxx'\n"
+        assert capsys.readouterr().out == (f"called CheckBox.__init__ with args ('xxx', {testobj})\n"
                                            f"called Signal.connect with args ({callback},)\n"
                                            "called CheckBox.setEnabled with arg False\n"
                                            "called VBox.addWidget with arg MockCheckBox\n")
@@ -1393,12 +1398,12 @@ class TestRestoreDialogGui:
         assert capsys.readouterr().out == "called VBox.__init__\n"
         result = testobj.add_checkbox('xxx', True)
         assert isinstance(result, testee.qtw.QCheckBox)
-        assert capsys.readouterr().out == ("called CheckBox.__init__ with text 'xxx'\n"
+        assert capsys.readouterr().out == (f"called CheckBox.__init__ with args ('xxx', {testobj})\n"
                                            "called CheckBox.setEnabled with arg True\n"
                                            "called VBox.addWidget with arg MockCheckBox\n")
         result = testobj.add_checkbox('xxx', False)
         assert isinstance(result, testee.qtw.QCheckBox)
-        assert capsys.readouterr().out == ("called CheckBox.__init__ with text 'xxx'\n"
+        assert capsys.readouterr().out == (f"called CheckBox.__init__ with args ('xxx', {testobj})\n"
                                            "called CheckBox.setEnabled with arg False\n"
                                            "called VBox.addWidget with arg MockCheckBox\n")
 
@@ -1689,6 +1694,7 @@ class TestSaveGamesDialogGui:
         assert capsys.readouterr().out == (
                 "called LineEdit.__init__\n"
                 "called LineEdit.setText with arg `text`\n"
+                "called LineEdit.setReadOnly with arg `True`\n"
                 "called LineEdit.setMinimumWidth with arg `380`\n"
                 "called Grid.addWidget with arg MockLineEdit at (0, 1)\n")
 
@@ -1795,15 +1801,6 @@ class TestSaveGamesDialogGui:
                                            "called PushButton.__init__ with args () {}\n"
                                            f"called Signal.connect with args ({callback1},)\n"
                                            f"called Signal.connect with args ({callback2},)\n")
-
-    def test_enable_change(self, monkeypatch, capsys):
-        """unittest for SaveGamesDialogGui.enable_change
-        """
-        testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.master = types.SimpleNamespace(update_button=mockqtw.MockPushButton())
-        assert capsys.readouterr().out == "called PushButton.__init__ with args () {}\n"
-        testobj.enable_change()
-        assert capsys.readouterr().out == "called PushButton.setEnabled with arg `True`\n"
 
     def test_enable_widget(self, monkeypatch, capsys):
         """unittest for SaveGamesDialogGui.enable_widget

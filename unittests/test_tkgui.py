@@ -1837,7 +1837,7 @@ class TestAttributesDialogGui:
         assert capsys.readouterr().out == ("called ShowMods.root.focus_set\n"
                                            "called AttributesDialog.destroy\n")
 
-# 651-658, 662-672, 677, 681-690, 694, 699-701, 706-708
+
 class TestRestoreDialogGui:
     """unittests for qtgui.RestoreDialogGui
     """
@@ -2378,9 +2378,9 @@ class TestSaveGamesDialogGui:
         assert capsys.readouterr().out == (
                 "called StringVar.__init__ with args ()\n"
                 "called StringVar.set with arg 'xxx'\n"
-                f"called StringVar.trace_add with args ('write', {testobj.monitor_textvar})\n"
                 "called Entry.__init__ with args MockFrame ()"
                 f" {{'textvariable': {result.getvar(result.cget('textvariable'))}}}\n"
+                "called Entry.state with args (['readonly'],)\n"
                 "called Entry.grid with args () {'row': 0, 'column': 1}\n")
 
     def test_get_field_text(self, monkeypatch, capsys):
@@ -2527,15 +2527,6 @@ class TestSaveGamesDialogGui:
         assert capsys.readouterr().out == (
                 f"called ComboBox.bind with args ('<<ComboboxSelected>>', {callback1})\n"
                 f"called Button.bind with args ('<Return>', {callback2})\n")
-
-    def test_monitor_textvar(self, monkeypatch, capsys):
-        """unittest for SaveGamesDialogGui.monitor_textvar
-        """
-        testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.maingui = types.SimpleNamespace(update_button=mockttk.MockButton())
-        assert capsys.readouterr().out == "called Button.__init__ with args NoneType () {}\n"
-        testobj.monitor_textvar()
-        assert capsys.readouterr().out == "called Button.state with args (['!disabled'],)\n"
 
     def test_enable_widget(self, monkeypatch, capsys):
         """unittest for SaveGamesDialogGui.enable_widget

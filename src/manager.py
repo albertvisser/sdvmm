@@ -221,7 +221,7 @@ class Manager:
         self.directories = set()
         for name in modnames:
             # moddir = self.screeninfo[item]['dir']
-            moddir = self.revlookup[name]  
+            moddir = self.revlookup[name]
             for entry in self.conf.list_components_for_dir(moddir):
                 compdir = get_toplevel(self.conf.get_component_data(entry, self.conf.DIR))
                 self.directories.add(compdir)
@@ -293,7 +293,7 @@ class Manager:
         dirname = self.revlookup[oldname]
         self.attr_changes[dirname] = oldname
         oldselect = self.screeninfo[dirname]['sel']
-        oldtext = self.screeninfo[dirname]['txt']
+        # oldtext = self.screeninfo[dirname]['txt']
         self.screeninfo[dirname]['sel'] = selectable
         self.screeninfo[dirname]['nam'] = name
         self.screeninfo[dirname]['txt'] = text
@@ -647,10 +647,10 @@ class AttributesDialog:
                                                   pos=1, enabled=False)
         self.restore_button = self.doit.add_button('&Restore', self.restore_settings,
                                                    pos=2, enabled=False)
-        self.compare_button = self.doit.add_menubutton('Co&mpare',
-                ['previous <-> current', 'backup <-> current', 'view current'],
-                [self.compare_settings, self.compare_to_backup, self.view_current], pos=3,
-                enabled=False)
+        self.compare_button = self.doit.add_menubutton(
+            'Co&mpare', ['previous <-> current', 'backup <-> current', 'view current'],
+            [self.compare_settings, self.compare_to_backup, self.view_current], pos=3,
+            enabled=False)
         self.comps_button = self.doit.add_button('&View Components', self.view_components,
                                                  enabled=False)
         self.deps_button = self.doit.add_button('View &Dependencies', self.view_dependencies,
@@ -871,7 +871,7 @@ class RestoreDialog:
         from_previous = self.doit.get_checkbox_value(self.from_previous)
         backup_previous = self.doit.get_checkbox_value(self.backup_previous)
         self.parent.dialog_data['choices'] = [from_backup, from_previous, backup_previous]
-        self.doit.confirm()
+        self.doit.accept()
 
 
 class DependencyDialog:
@@ -933,11 +933,11 @@ class SaveGamesDialog:
             ['select a saved game'] + sorted(self.savenames), self.get_savedata, editable=False)
         self.oldsavename = ''
         self.doit.add_label('Player name:')
-        self.pname = self.doit.add_line_entry('')  # , self.doit.enable_change)
+        self.pname = self.doit.add_line_entry('')
         self.doit.add_label('Farm name:')
-        self.fname = self.doit.add_line_entry('')  # , self.doit.enable_change)
+        self.fname = self.doit.add_line_entry('')
         self.doit.add_label('In-game date:')
-        self.gdate = self.doit.add_line_entry('')  # , self.doit.enable_change)
+        self.gdate = self.doit.add_line_entry('')
         self.widgets = []
         self.doit.start_modselect_block('Uses:')
         self.add_modselector(False)

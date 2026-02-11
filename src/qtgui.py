@@ -617,6 +617,7 @@ class SaveGamesDialogGui(qtw.QDialog):
         "add a text field to the same line in the grid"
         lb = qtw.QLineEdit(self)
         lb.setText(text)
+        lb.setReadOnly(True)
         lb.setMinimumWidth(380)
         self.gbox.addWidget(lb, self.row, 1)
         self.row += 1
@@ -674,10 +675,6 @@ class SaveGamesDialogGui(qtw.QDialog):
         "set the variable callbacks for the fields"
         widgets[0].currentTextChanged.connect(callbacks[0])
         widgets[1].clicked.connect(callbacks[1])
-
-    def enable_change(self):
-        "enable change button"
-        self.master.update_button.setEnabled(True)
 
     def enable_widget(self, widget, value):
         "make a widget (un)usable"
