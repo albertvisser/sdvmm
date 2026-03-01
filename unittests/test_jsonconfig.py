@@ -510,6 +510,10 @@ class TestJsonConf:
             testobj.get_component_data('zzz')
         assert str(exc.value) == 'component zzz not found in config'
         assert testobj.get_component_data('xxx') == {'qqq': '...', 'r': 'rrr'}
+        testobj.get_component_data('xxx')
+        assert capsys.readouterr().out == ''
+        testobj.get_component_data('XXX')
+        assert capsys.readouterr().out == ''
         with pytest.raises(ValueError) as exc:
             assert testobj.get_component_data('xxx', 'ppp')
         assert str(exc.value) == "Unknown key 'ppp' for component xxx"

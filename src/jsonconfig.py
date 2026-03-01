@@ -282,7 +282,11 @@ class JsonConf:
     def get_component_data(self, component, key=None):
         "return the value for a given key for the given component"
         if component not in self._data[self.COMPS]:
-            raise ValueError(f'component {component} not found in config')
+            testdict = {x.lower(): x for x in self._data[self.COMPS]}
+            if component.lower() in testdict:
+                component = testdict[component.lower()]
+            else:
+                raise ValueError(f'component {component} not found in config')
         if key is None:
             return self._data[self.COMPS][component]
         if key not in self.knownkeys:
