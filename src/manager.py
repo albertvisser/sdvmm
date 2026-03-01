@@ -302,11 +302,11 @@ class Manager:
         if selectable != oldselect:
             # self.switch_by_selectability(selectable, dirname)
             if selectable:
-                self.not_selectable.remove(name)
-                self.unplotted.append(name)
+                self.not_selectable.remove(dirname)
+                self.unplotted.append(dirname)
             else:
-                self.unplotted.remove(name)
-                self.not_selectable.append(name)
+                self.unplotted.remove(dirname)
+                self.not_selectable.append(dirname)
             self.doit.refresh_widgets()  # not first_time
         else:  # if text != oldtext or name != oldname: moet ook bij naam terugzetten
             # alleen schermtekst wijzigen

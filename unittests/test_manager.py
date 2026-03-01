@@ -794,32 +794,32 @@ class TestManager:
         assert capsys.readouterr().out == (
                 "called ShowMods.set_label_text with args ('widgetu', 'yyy', 1, 'q')\n")
 
-        testobj.screeninfo = {'xxx': {'sel': True, 'txt': '', 'opt': False, 'nam': 'xxx', 'key': 1,
+        testobj.screeninfo = {'yyy': {'sel': True, 'txt': '', 'opt': False, 'nam': 'xxx', 'key': 1,
                                       'pos': '1x1'}}
-        testobj.revlookup = {'xxx': 'xxx'}
+        testobj.revlookup = {'xxx': 'yyy'}
         testobj.attr_changes = {}
+        testobj.unplotted = ['yyy']
         testobj.update_attributes(False, 'xxx', 'xxx', '', False)
-        assert testobj.screeninfo == {'xxx': {'sel': False, 'txt': '', 'opt': False, 'nam': 'xxx',
+        assert testobj.screeninfo == {'yyy': {'sel': False, 'txt': '', 'opt': False, 'nam': 'xxx',
                                               'key': 1, 'pos': '1x1'}}
-        assert testobj.attr_changes == {'xxx': 'xxx'}
-        assert testobj.not_selectable == ['xxx']
+        assert testobj.attr_changes == {'yyy': 'xxx'}
+        assert testobj.not_selectable == ['yyy']
         assert testobj.unplotted == []
-        assert testobj.revlookup == {'xxx': 'xxx'}
+        assert testobj.revlookup == {'xxx': 'yyy'}
         assert capsys.readouterr().out == "called ShowMods.refresh_widgets with args ()\n"
 
-        testobj.screeninfo = {'xxx': {'sel': False, 'txt': '', 'opt': False, 'nam': 'xxx', 'key': 1,
+        testobj.screeninfo = {'yyy': {'sel': False, 'txt': '', 'opt': False, 'nam': 'xxx', 'key': 1,
                                       'pos': '1x1'}}
-        testobj.revlookup = {'xxx': 'xxx'}
+        testobj.revlookup = {'xxx': 'yyy'}
         testobj.attr_changes = {}
-        testobj.update_attributes(False, 'xxx', 'xxx', '', False)
-        assert testobj.screeninfo == {'xxx': {'sel': False, 'txt': '', 'opt': False, 'nam': 'xxx',
+        testobj.update_attributes(True, 'xxx', 'xxx', '', False)
+        assert testobj.screeninfo == {'yyy': {'sel': True, 'txt': '', 'opt': False, 'nam': 'xxx',
                                               'key': 1, 'pos': '1x1'}}
-        assert testobj.attr_changes == {'xxx': 'xxx'}
-        assert testobj.not_selectable == ['xxx']
-        assert testobj.unplotted == []
-        assert testobj.revlookup == {'xxx': 'xxx'}
-        assert capsys.readouterr().out == (
-                "called ShowMods.set_label_text with args ('widgetn', 'xxx', 1, '')\n")
+        assert testobj.attr_changes == {'yyy': 'xxx'}
+        assert testobj.not_selectable == []
+        assert testobj.unplotted == ['yyy']
+        assert testobj.revlookup == {'xxx': 'yyy'}
+        assert capsys.readouterr().out == "called ShowMods.refresh_widgets with args ()\n"
 
     def _test_switch_by_selectability(self, monkeypatch, capsys):
         """unittest for Manager.switch_selectability
