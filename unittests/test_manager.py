@@ -3019,6 +3019,8 @@ class TestSaveGamesDialog:
                 return False
             if args == ('yyy', '_DoNotTouch'):
                 return True
+            if args == ('yyy', 'SCRNAM'):
+                return 'Yyy'
             if args == ('zzz', '_DoNotTouch'):
                 return True
         def mock_get_component_data(*args):
@@ -3027,6 +3029,12 @@ class TestSaveGamesDialog:
                 return 'aaa'
             if args[0] == 'yyy':
                 return '.bbb'
+        def mock_get_activated():
+            print("called Manager.get_activated_activatable_mods")
+            return ['qqq', 'rrr']
+        def mock_get_activated_2():
+            print("called Manager.get_activated_activatable_mods")
+            return ['qqq', 'rrr', 'Yyy']
         def mock_get_mods(name):
             print(f"called Conf.get_mods_for_saveitem with arg {name}")
             return ['qqq', 'rrr']
@@ -3044,6 +3052,7 @@ class TestSaveGamesDialog:
                                            'called JsonConf.__init__ with args () {}\n')
         testobj.savegame_selector = 'combobox'
         testobj.parent.master.modbase = tmp_path
+        testobj.parent.master.get_activated_activatable_mods = mock_get_activated
         testobj.doit.get_combobox_value = mock_get_value
 
         testobj.conf.get_diritem_data = mock_get_diritem_data
@@ -3051,11 +3060,13 @@ class TestSaveGamesDialog:
         testobj.conf.get_mods_for_saveitem = mock_get_mods
         testobj.confirm()
         assert capsys.readouterr().out == (
+                "called Manager.get_activated_activatable_mods\n"
                 "called SaveGamesDialogGui.get_combobox_value with args ('combobox',)\n"
                 "called Conf.get_mods_for_saveitem with arg aaa\n"
                 "called Conf.list_all_mod_dirs\n"
                 "called Conf.get_diritem_data with args ('xxx', '_DoNotTouch')\n"
                 "called Conf.get_diritem_data with args ('yyy', '_DoNotTouch')\n"
+                "called Conf.get_diritem_data with args ('yyy', 'SCRNAM')\n"
                 "called Manager.select_activations with args (['qqq', 'rrr'],)\n"
                 "called Manager.refresh_widget_data\n"
                 "called gui.show_message with args"
@@ -3066,12 +3077,34 @@ class TestSaveGamesDialog:
         (tmp_path / 'yyy').touch()
         testobj.confirm()
         assert capsys.readouterr().out == (
+                "called Manager.get_activated_activatable_mods\n"
                 "called SaveGamesDialogGui.get_combobox_value with args ('combobox',)\n"
                 "called Conf.get_mods_for_saveitem with arg aaa\n"
                 "called Conf.list_all_mod_dirs\n"
                 "called Conf.get_diritem_data with args ('xxx', '_DoNotTouch')\n"
                 "called Conf.get_diritem_data with args ('yyy', '_DoNotTouch')\n"
-                "called Manager.select_activations with arg ['qqq', 'rrr', 'yyy']\n"
+                "called Conf.get_diritem_data with args ('yyy', 'SCRNAM')\n"
+                # "called Manager.select_activations with arg ['qqq', 'rrr', 'yyy']\n"
+                # toelichting: hij wil 'yyy' er bij halen vanwege de DoNotTouch instelling
+                # maar deze zit niet in de lijst met reeds geactiveerde mods
+                "called Manager.select_activations with arg ['qqq', 'rrr']\n"
+                "called Manager.activate with args\n"
+                "called Manager.refresh_widget_data\n"
+                "called gui.show_message with args"
+                f" ({testobj.doit}, 'wijzigingen zijn doorgevoerd') {{'title': 'Change Config'}}\n"
+                "called SaveGamesDialogGui.accept\n")
+
+        testobj.parent.master.get_activated_activatable_mods = mock_get_activated_2
+        testobj.confirm()
+        assert capsys.readouterr().out == (
+                "called Manager.get_activated_activatable_mods\n"
+                "called SaveGamesDialogGui.get_combobox_value with args ('combobox',)\n"
+                "called Conf.get_mods_for_saveitem with arg aaa\n"
+                "called Conf.list_all_mod_dirs\n"
+                "called Conf.get_diritem_data with args ('xxx', '_DoNotTouch')\n"
+                "called Conf.get_diritem_data with args ('yyy', '_DoNotTouch')\n"
+                "called Conf.get_diritem_data with args ('yyy', 'SCRNAM')\n"
+                "called Manager.select_activations with arg ['qqq', 'rrr', 'Yyy']\n"
                 "called Manager.activate with args\n"
                 "called Manager.refresh_widget_data\n"
                 "called gui.show_message with args"
@@ -3227,9 +3260,9 @@ class TestSaveGamesDialog:
                 "called AttributesDialogGui.set_field_text with args ('fname', 'oldfname')\n"
                 "called AttributesDialogGui.set_field_text with args ('gdate', 'oldgdate')\n"
                 "called Conf.get_mods_for_saveitem with arg xxx\n"
-                "called Conf.get_diritem_data with args ('newmod1', 'SCRNAM')\n"
+                # "called Conf.get_diritem_data with args ('newmod1', 'SCRNAM')\n"
                 "called SaveGamesDialogGui.set_combobox_value with args ('combobox', 'newmod1')\n"
-                "called Conf.get_diritem_data with args ('newmod2', 'SCRNAM')\n"
+                # "called Conf.get_diritem_data with args ('newmod2', 'SCRNAM')\n"
                 "called SaveGamesDialogGui.set_combobox_value with args ('combobox', 'newmod2')\n"
                 "called SaveGamesDialogGui.enable_widget with args ('update_button', True)\n"
                 "called SaveGamesDialogGui.enable_widget with args ('confirm_button', True)\n")
@@ -3248,9 +3281,9 @@ class TestSaveGamesDialog:
                 "called AttributesDialogGui.set_field_text with args ('fname', 'oldfname')\n"
                 "called AttributesDialogGui.set_field_text with args ('gdate', 'oldgdate')\n"
                 "called Conf.get_mods_for_saveitem with arg xxx\n"
-                "called Conf.get_diritem_data with args ('newmod1', 'SCRNAM')\n"
+                # "called Conf.get_diritem_data with args ('newmod1', 'SCRNAM')\n"
                 "called SaveGamesDialogGui.set_combobox_value with args ('combobox', 'newmod1')\n"
-                "called Conf.get_diritem_data with args ('newmod2', 'SCRNAM')\n"
+                # "called Conf.get_diritem_data with args ('newmod2', 'SCRNAM')\n"
                 "called SaveGamesDialogGui.set_combobox_value with args ('combobox', 'newmod2')\n"
                 "called SaveGamesDialogGui.enable_widget with args ('update_button', False)\n"
                 "called SaveGamesDialogGui.enable_widget with args ('confirm_button', True)\n")

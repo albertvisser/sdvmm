@@ -202,17 +202,24 @@ class Manager:
     def process_activations(self):
         """process changes in mods to activate
         """
-        modnames = []
-        # all_widgets = self.plotted_widgets | self.unplotted_widgets
-        # for widgetlist in all_widgets.values():
-        for widgetlist in self.unplotted_widgets.values():
-            name = self.doit.get_labeltext_if_checked(widgetlist)
-            if name:
-                modnames.append(name)
+        modnames = self.get_activated_activatable_mods()
+        # modnames = []
+        # for widgetlist in self.unplotted_widgets.values():
+        #     name = self.doit.get_labeltext_if_checked(widgetlist)
+        #     if name:
+        #         modnames.append(name)
         self.select_activations(modnames)
         if self.directories:   # alleen leeg als er niks aangevinkt is
             self.activate()
         self.refresh_widget_data()
+
+    def get_activated_activatable_mods(self):
+        modnames = []
+        for widgetlist in self.unplotted_widgets.values():
+            name = self.doit.get_labeltext_if_checked(widgetlist)
+            if name:
+                modnames.append(name)
+        return modnames
 
     def select_activations(self, modnames):
         "expand the selection to a list of directories"
@@ -987,14 +994,21 @@ class SaveGamesDialog:
 
     def confirm(self):
         "activate the mods belonging to this save file"
+        activated = self.parent.master.get_activated_activatable_mods()
         selected = self.doit.get_combobox_value(self.savegame_selector)
-        modnames = self.conf.get_mods_for_saveitem(selected)
+        modnames = self.conf.get_mods_for_saveitem(selected)[:]
         # uitzetten gebeurt in activate(), hier moeten de mods die ongemoeid gelaten moeten worden
         # en aanstaan, toegevoegd worden aan de selectie
         for dirname in self.conf.list_all_mod_dirs():
-            if (self.conf.get_diritem_data(dirname, self.conf.OPTOUT)
-                    and os.path.exists(os.path.join(self.parent.master.modbase, dirname))):
-                modnames.append(dirname)
+            # if (self.conf.get_diritem_data(dirname, self.conf.OPTOUT)
+            #         and os.path.exists(os.path.join(self.parent.master.modbase, dirname))):
+            #     modnames.append(dirname)
+            if self.conf.get_diritem_data(dirname, self.conf.OPTOUT):
+                # modnames.append(self.conf.get_diritem_data(dirname, self.conf.SCRNAM))
+                # alleen de mods die al aan staan
+                modname = self.conf.get_diritem_data(dirname, self.conf.SCRNAM)
+                if modname in activated:
+                    modnames.append(modname)
         self.parent.master.select_activations(modnames)
         if self.parent.master.directories:   # alleen leeg als er niks geselecteerd is
             self.parent.master.activate()
@@ -1058,8 +1072,9 @@ class SaveGamesDialog:
             self.doit.set_field_text(self.gdate, self.old_gdate)
             self.oldmods = self.conf.get_mods_for_saveitem(newvalue)
         for modname in self.oldmods:
-            name = self.conf.get_diritem_data(modname, self.conf.SCRNAM)
-            self.doit.set_combobox_value(self.widgets[-1][1], name)
+            # name = self.conf.get_diritem_data(modname, self.conf.SCRNAM)
+            # self.doit.set_combobox_value(self.widgets[-1][1], name)
+            self.doit.set_combobox_value(self.widgets[-1][1], modname)
         self.doit.enable_widget(self.update_button, new_in_conf)
         self.doit.enable_widget(self.confirm_button, True)
 
