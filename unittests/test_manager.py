@@ -60,6 +60,9 @@ class MockConf:
         "stub"
         print("called Conf.list_all_mod_dirs")
         return ['xxx', 'yyy']
+    def list_all_components(self):
+        "stub"
+        print("called Conf.list_all_components")
     def list_components_for_dir(self, name):
         "stub"
         print(f"called Conf.list_components_for_dir with arg '{name}'")
@@ -309,6 +312,7 @@ class TestManager:
         testobj.conf.get_diritem_data = mock_get
         testobj.screeninfo = {'yyy': {'sel': 's', 'pos': 'p', 'key': 'k', 'txt': 't', 'opt': 'o'}}
         testobj.revlookup = {}
+        testobj.complookup = {}
 
         monkeypatch.setattr(testee, 'CONFIG', '')
         testobj.extract_screeninfo()
@@ -318,16 +322,17 @@ class TestManager:
         assert testobj.screeninfo == {'yyy': {'sel': 's', 'pos': 'p', 'key': 'k', 'txt': 't',
                                               'opt': 'o'}}
         assert testobj.revlookup == {}
+        assert testobj.complookup == {}
         assert capsys.readouterr().out == "called Conf.list_all_mod_dirs\n"
 
         testobj.conf.list_all_mod_dirs = mock_list_2
         testobj.screeninfo = {}
-        testobj.revlookup = {}
         testobj.extract_screeninfo()
         assert testobj.screeninfo == {
                 'xxx': {'key': '', 'nam': 'xxx', 'opt': False, 'sel': False, 'txt': ''},
                 'yyy': {'key': '', 'nam': 'yyy', 'opt': False, 'sel': False, 'txt': ''}}
         assert testobj.revlookup == {'xxx': 'xxx', 'yyy': 'yyy'}
+        assert testobj.complookup == {'': 'yyy'}
         assert capsys.readouterr().out == (
                 "called Conf.list_all_mod_dirs\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRNAM}')\n"
@@ -335,21 +340,26 @@ class TestManager:
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.OPTOUT}')\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.NXSKEY}')\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRTXT}')\n"
+                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.COMPS}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRNAM}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SEL}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.OPTOUT}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.NXSKEY}')\n"
-                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRTXT}')\n")
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRTXT}')\n"
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.COMPS}')\n")
 
         testobj.conf.get_diritem_data = mock_get_2
         testobj.screeninfo = {}
         testobj.revlookup = {}
+        testobj.complookup = {}
         testobj.extract_screeninfo()
         assert testobj.screeninfo == {'xxx': {'nam': 'scrxxx', 'sel': 'xxxsel', 'opt': 'xxxoptout',
                                               'key': 'xxxkey', 'txt': 'xxxtxt'},
                                       'yyy': {'nam': 'scryyy', 'sel': 'yyysel', 'opt': 'yyyoptout',
                                               'key': 'yyykey', 'txt': 'yyytxt'}}
         assert testobj.revlookup == {'scrxxx': 'xxx', 'scryyy': 'yyy'}
+        assert testobj.complookup == {'xxxcomp1': 'xxx', 'xxxcomp2': 'xxx',
+                                      'yyycomp1': 'yyy', 'yyycomp2': 'yyy'}
         assert capsys.readouterr().out == (
                 "called Conf.list_all_mod_dirs\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRNAM}')\n"
@@ -357,11 +367,13 @@ class TestManager:
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.OPTOUT}')\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.NXSKEY}')\n"
                 f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.SCRTXT}')\n"
+                f"called Conf.get_diritem_data with args ('xxx', '{testobj.conf.COMPS}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRNAM}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SEL}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.OPTOUT}')\n"
                 f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.NXSKEY}')\n"
-                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRTXT}')\n")
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.SCRTXT}')\n"
+                f"called Conf.get_diritem_data with args ('yyy', '{testobj.conf.COMPS}')\n")
 
     def test_order_widgets(self, monkeypatch, capsys):
         """unittest for ShowMods.order_widgets
@@ -2084,6 +2096,7 @@ class TestAttributesDialog:
         testobj.exempt_button = 'checkbox'
         testobj.comps_button = 'button'
         testobj.deps_button = 'button'
+        testobj.depts_button = 'button'
         testobj.backup_button = 'backup_button'
         testobj.restore_button = 'restore_button'
         testobj.compare_button = 'compare_button'
@@ -2096,7 +2109,7 @@ class TestAttributesDialog:
                 "called AttributesDialogGui.get_combobox_value with args ('combobox',)\n"
                 "called AttributeDialogGui.reset_all_fields with args"
                 " (['combobox', 'clear_button', 'line_entry', 'clear_button',"
-                " 'checkbox', 'checkbox', 'button', 'button', 'change_button',"
+                " 'checkbox', 'checkbox', 'button', 'button', 'button', 'change_button',"
                 " 'backup_button', 'restore_button', 'compare_button'],)\n")
         testobj.doit.get_combobox_value = mock_get_2
         testobj.process()
@@ -2108,7 +2121,7 @@ class TestAttributesDialog:
                 "called Conf.get_component_data with args ('yyy', 'Name')\n"
                 "called AttributeDialogGui.activate_and_populate_fields with args"
                 " (['combobox', 'clear_button', 'line_entry', 'clear_button',"
-                " 'checkbox', 'checkbox', 'button', 'button', 'change_button',"
+                " 'checkbox', 'checkbox', 'button', 'button', 'button', 'change_button',"
                 " 'backup_button', 'restore_button', 'compare_button'],"
                 " ['Xxx', 'xxx_compname', 'yyy_compname'],"
                 " {'txt': '...', 'sel': True, 'opt': False})\n")
@@ -2551,6 +2564,76 @@ class TestAttributesDialog:
                 f"called gui.show_message with args ({testobj.doit},"
                 " 'Dependencies for aaa:\\n None ') {'title': 'SDVMM mod info'}\n")
 
+    def test_view_dependents(self, monkeypatch, capsys):
+        """unittest for AttributesDialog.view_dependents
+        """
+        def mock_list(self, name):
+            "stub"
+            print(f"called Conf.list_components_for_dir with arg '{name}'")
+            return ['xxx_depname', 'Yourname_depname', 'zzz']
+        def mock_list_all(self):
+            print('called Conf.list_all_components')
+            return []
+        def mock_list_all_2(self):
+            print('called Conf.list_all_components')
+            return ['zzz']
+        def mock_list_all_3(self):
+            print('called Conf.list_all_components')
+            return ['YourName']
+        def mock_list_all_4(self):
+            print('called Conf.list_all_components')
+            return ['xxx']
+        def mock_get(self, *args):
+            "stub"
+            print("called Conf.get_component_data with args", args)
+            if args[1] == self.DEPS:
+                return [f'{args[0]}_depname']
+            if args[1] == self.SCRNAM:
+                return [f'{args[0]}_scrname']
+            raise ValueError
+        def mock_show(*args, **kwargs):
+            print('called gui.show_message with args', args, kwargs)
+        monkeypatch.setattr(testee.gui, 'show_message', mock_show)
+        monkeypatch.setattr(MockConf, 'list_components_for_dir', mock_list)
+        monkeypatch.setattr(MockConf, 'list_all_components', mock_list_all)
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.parent = types.SimpleNamespace(master=types.SimpleNamespace())
+        monkeypatch.setattr(MockConf, 'get_component_data', mock_get)
+        testobj.conf = MockConf()
+        assert capsys.readouterr().out == "called JsonConf.__init__ with args () {}\n"
+        testobj.choice = 'xxx'
+        testobj.modnames = {'xxx': 'aaa'}
+        testobj.parent.master.complookup = {'xxx': 'qqq'}
+        testobj.view_dependents()
+        assert capsys.readouterr().out == (
+                "called Conf.list_components_for_dir with arg 'aaa'\n"
+                "called Conf.list_all_components\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Mods depending on xxx:\\n\\nNone') {'title': 'SDVMM mod info'}\n")
+        monkeypatch.setattr(MockConf, 'list_all_components', mock_list_all_2)
+        testobj.view_dependents()
+        assert capsys.readouterr().out == (
+                "called Conf.list_components_for_dir with arg 'aaa'\n"
+                "called Conf.list_all_components\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Mods depending on xxx:\\n\\nNone') {'title': 'SDVMM mod info'}\n")
+        monkeypatch.setattr(MockConf, 'list_all_components', mock_list_all_3)
+        testobj.view_dependents()
+        assert capsys.readouterr().out == (
+                "called Conf.list_components_for_dir with arg 'aaa'\n"
+                "called Conf.list_all_components\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Mods depending on xxx:\\n\\nNone') {'title': 'SDVMM mod info'}\n")
+        monkeypatch.setattr(MockConf, 'list_all_components', mock_list_all_4)
+        testobj.view_dependents()
+        assert capsys.readouterr().out == (
+                "called Conf.list_components_for_dir with arg 'aaa'\n"
+                "called Conf.list_all_components\n"
+                "called Conf.get_component_data with args ('xxx', 'Deps')\n"
+                "called Conf.get_diritem_data with args ('qqq', 'SCRNAM')\n"
+                f"called gui.show_message with args ({testobj.doit},"
+                " 'Mods depending on xxx:\\n\\nqqq') {'title': 'SDVMM mod info'}\n")
+
     def test_update(self, monkeypatch, capsys):
         """unittest for AttributesDialog.update
         """
@@ -2759,7 +2842,7 @@ class TestDependencyDialog:
             return ['yyy']
         monkeypatch.setattr(testee.gui, 'DependencyDialogGui', MockDependencyGui)
         parent = types.SimpleNamespace(
-                maingui=types.SimpleNamespace(modnames={'xxx': 'Xxx'}, choice='xxx'))
+                master=types.SimpleNamespace(modnames={'xxx': 'Xxx'}, choice='xxx'))
         conf = MockConf()
         assert capsys.readouterr().out == "called JsonConf.__init__ with args () {}\n"
         testobj = testee.DependencyDialog(parent, conf)
@@ -3084,9 +3167,6 @@ class TestSaveGamesDialog:
                 "called Conf.get_diritem_data with args ('xxx', '_DoNotTouch')\n"
                 "called Conf.get_diritem_data with args ('yyy', '_DoNotTouch')\n"
                 "called Conf.get_diritem_data with args ('yyy', 'SCRNAM')\n"
-                # "called Manager.select_activations with arg ['qqq', 'rrr', 'yyy']\n"
-                # toelichting: hij wil 'yyy' er bij halen vanwege de DoNotTouch instelling
-                # maar deze zit niet in de lijst met reeds geactiveerde mods
                 "called Manager.select_activations with arg ['qqq', 'rrr']\n"
                 "called Manager.activate with args\n"
                 "called Manager.refresh_widget_data\n"
@@ -3470,6 +3550,7 @@ called AttributesDialogGui.add_button with args ('&Restore', {testobj.restore_se
 called AttributesDialogGui.add_menubutton with args ('Co&mpare', ['previous <-> current', 'backup <-> current', 'view current'], [{testobj.compare_settings}, {testobj.compare_to_backup}, {testobj.view_current}]) {{'pos': 3, 'enabled': False}}
 called AttributesDialogGui.add_button with args ('&View Components', {testobj.view_components}) {{'enabled': False}}
 called AttributesDialogGui.add_button with args ('View &Dependencies', {testobj.view_dependencies}) {{'enabled': False}}
+called AttributesDialogGui.add_button with args ('View De&pendents', {testobj.view_dependents}) {{'enabled': False}}
 called AttributesDialogGui.add_buttonbox with args ([('&Update', {testobj.update}, False), ('&Add dependency', {testobj.add_dep}, False), ('&Close', {testobj.doit.accept}, True)],)
 called AttributesDialogGui.set_focus with args ('combobox',)
 """
@@ -3482,7 +3563,7 @@ called RestoreDialogGui.add_buttonbox with args ([('&Ok', {testobj.accept}), ('&
 called RestoreDialogGui.set_focus with args ('checkbox',)
 """
 dependency_output = """\
-called DependencyDialogGui.__init__ with args ({testobj}, namespace(maingui=namespace(modnames={{'xxx': 'Xxx'}}, choice='xxx')))
+called DependencyDialogGui.__init__ with args ({testobj}, namespace(master=namespace(modnames={{'xxx': 'Xxx'}}, choice='xxx')))
 called Conf.list_all_mod_dirs
 called Conf.get_diritem_data with args ('xxx', 'SCRNAM')
 called Conf.get_diritem_data with args ('yyy', 'SCRNAM')
@@ -3496,7 +3577,7 @@ called DependencyDialogGui.add_buttonbox with args ([('&Add dependency', {testob
 called DependencyDialogGui.set_focus with args ('combobox',)
 """
 dependency_output_2 = """\
-called DependencyDialogGui.__init__ with args ({testobj}, namespace(maingui=namespace(modnames={{'xxx': 'Xxx'}}, choice='xxx')))
+called DependencyDialogGui.__init__ with args ({testobj}, namespace(master=namespace(modnames={{'xxx': 'Xxx'}}, choice='xxx')))
 called Conf.list_all_mod_dirs
 called DependencyDialogGui.add_label with args ('Selecteer de toe te voegen dependency',)
 called DependencyDialogGui.add_combobox with args (['select a mod'], None) {{'editable': False}}

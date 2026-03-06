@@ -1738,7 +1738,8 @@ class TestAttributesDialogGui:
                       mockttk.MockCheckBox(textvariable=xvar),
                       mockttk.MockCheckBox(textvariable=yvar),
                       mockttk.MockButton(), mockttk.MockButton(), mockttk.MockButton(),
-                      mockttk.MockButton(), mockttk.MockButton(), mockttk.MockButton())
+                      mockttk.MockButton(), mockttk.MockButton(), mockttk.MockButton(),
+                      mockttk.MockButton())
         assert capsys.readouterr().out == ("called StringVar.__init__ with args ()\n"
                                            "called StringVar.__init__ with args ()\n"
                                            "called IntVar.__init__ with args ()\n"
@@ -1755,6 +1756,7 @@ class TestAttributesDialogGui:
                                            "called CheckBox.__init__ with args NoneType ()"
                                            f" {{'textvariable': {yvar}}}\n"
                                            "called StringVar.__init__ with args ()\n"
+                                           "called Button.__init__ with args NoneType () {}\n"
                                            "called Button.__init__ with args NoneType () {}\n"
                                            "called Button.__init__ with args NoneType () {}\n"
                                            "called Button.__init__ with args NoneType () {}\n"
@@ -1783,6 +1785,7 @@ class TestAttributesDialogGui:
                                            # f"called CheckBox.getvar with arg {yvar}\n"
                                            "called IntVar.set with arg OPT\n"
                                            "called CheckBox.state with args (['!disabled'],)\n"
+                                           "called Button.state with args (['!disabled'],)\n"
                                            "called Button.state with args (['!disabled'],)\n"
                                            "called Button.state with args (['!disabled'],)\n"
                                            "called Button.state with args (['disabled'],)\n"

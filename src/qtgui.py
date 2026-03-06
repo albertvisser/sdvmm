@@ -454,6 +454,7 @@ class AttributesDialogGui(qtw.QDialog):
         fields[9].setDisabled(True)
         fields[10].setDisabled(True)
         fields[11].setDisabled(True)
+        fields[12].setDisabled(True)
 
     def activate_and_populate_fields(self, fields, items, screeninfo):
         "update the specified fields to be usable and enter some defaults"
@@ -470,10 +471,11 @@ class AttributesDialogGui(qtw.QDialog):
         fields[5].setEnabled(True)
         fields[6].setDisabled(False)
         fields[7].setDisabled(False)
-        fields[8].setDisabled(True)
-        fields[9].setDisabled(False)
+        fields[8].setDisabled(False)
+        fields[9].setDisabled(True)
         fields[10].setDisabled(False)
         fields[11].setDisabled(False)
+        fields[12].setDisabled(False)
 
     def clear_field(self, field):
         "empty a field's (text) contents"

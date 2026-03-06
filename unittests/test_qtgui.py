@@ -705,7 +705,7 @@ class TestSettingsDialogGui:
         result = testobj.add_line_entry('text')
         assert isinstance(result, testee.qtw.QLineEdit)
         assert capsys.readouterr().out == (
-                "called LineEdit.__init__\n"
+                f"called LineEdit.__init__ with args ({testobj},)\n"
                 "called LineEdit.setText with arg `text`\n"
                 "called LineEdit.setMinimumWidth with arg `380`\n"
                 "called Grid.addWidget with arg MockLineEdit at (0, 1)\n")
@@ -765,7 +765,7 @@ class TestSettingsDialogGui:
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
         field = mockqtw.MockLineEdit()
-        assert capsys.readouterr().out == "called LineEdit.__init__\n"
+        assert capsys.readouterr().out == "called LineEdit.__init__ with args ()\n"
         testobj.set_focus(field)
         assert capsys.readouterr().out == ("called LineEdit.setFocus\n")
 
@@ -774,7 +774,7 @@ class TestSettingsDialogGui:
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
         widget = mockqtw.MockLineEdit()
-        assert capsys.readouterr().out == "called LineEdit.__init__\n"
+        assert capsys.readouterr().out == "called LineEdit.__init__ with args ()\n"
         assert testobj.get_widget_text(widget) == ''
         assert capsys.readouterr().out == ("called LineEdit.text\n")
         widget = mockqtw.MockSpinBox()
@@ -791,7 +791,7 @@ class TestSettingsDialogGui:
         testobj.set_widget_text(widget, 'xxx')
         assert capsys.readouterr().out == ("called Label.setText with arg `xxx`\n")
         widget = mockqtw.MockLineEdit()
-        assert capsys.readouterr().out == "called LineEdit.__init__\n"
+        assert capsys.readouterr().out == "called LineEdit.__init__ with args ()\n"
         testobj.set_widget_text(widget, 'xxx')
         assert capsys.readouterr().out == ("called LineEdit.setText with arg `xxx`\n")
 
@@ -908,7 +908,7 @@ class TestDeleteDialogGui:
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
         field = mockqtw.MockLineEdit()
-        assert capsys.readouterr().out == "called LineEdit.__init__\n"
+        assert capsys.readouterr().out == "called LineEdit.__init__ with args ()\n"
         testobj.set_focus(field)
         assert capsys.readouterr().out == ("called LineEdit.setFocus\n")
 
@@ -1041,14 +1041,14 @@ class TestAttributesDialogGui:
         result = testobj.add_line_entry('text', callback)
         assert isinstance(result, testee.qtw.QLineEdit)
         assert capsys.readouterr().out == (
-                "called LineEdit.__init__\n"
+                f"called LineEdit.__init__ with args ({testobj},)\n"
                 f"called Signal.connect with args ({callback},)\n"
                 "called LineEdit.setEnabled with arg True\n"
                 "called HBox.addWidget with arg MockLineEdit\n")
         result = testobj.add_line_entry('text', callback, False)
         assert isinstance(result, testee.qtw.QLineEdit)
         assert capsys.readouterr().out == (
-                "called LineEdit.__init__\n"
+                f"called LineEdit.__init__ with args ({testobj},)\n"
                 f"called Signal.connect with args ({callback},)\n"
                 "called LineEdit.setEnabled with arg False\n"
                 "called HBox.addWidget with arg MockLineEdit\n")
@@ -1213,7 +1213,7 @@ class TestAttributesDialogGui:
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
         field = mockqtw.MockLineEdit()
-        assert capsys.readouterr().out == "called LineEdit.__init__\n"
+        assert capsys.readouterr().out == "called LineEdit.__init__ with args ()\n"
         testobj.set_focus(field)
         assert capsys.readouterr().out == ("called LineEdit.setFocus\n")
 
@@ -1249,7 +1249,7 @@ class TestAttributesDialogGui:
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
         widget = mockqtw.MockLineEdit()
-        assert capsys.readouterr().out == "called LineEdit.__init__\n"
+        assert capsys.readouterr().out == "called LineEdit.__init__ with args ()\n"
         assert testobj.get_field_text(widget) == ''
         assert capsys.readouterr().out == ("called LineEdit.text\n")
 
@@ -1260,13 +1260,15 @@ class TestAttributesDialogGui:
         field_list = (mockqtw.MockComboBox(), mockqtw.MockPushButton(), mockqtw.MockLineEdit(),
                       mockqtw.MockPushButton(), mockqtw.MockCheckBox(), mockqtw.MockCheckBox(),
                       mockqtw.MockPushButton(), mockqtw.MockPushButton(), mockqtw.MockPushButton(),
-                      mockqtw.MockPushButton(), mockqtw.MockPushButton(), mockqtw.MockPushButton())
+                      mockqtw.MockPushButton(), mockqtw.MockPushButton(), mockqtw.MockPushButton(),
+                      mockqtw.MockPushButton())
         assert capsys.readouterr().out == ("called ComboBox.__init__\n"
                                            "called PushButton.__init__ with args () {}\n"
-                                           "called LineEdit.__init__\n"
+                                           "called LineEdit.__init__ with args ()\n"
                                            "called PushButton.__init__ with args () {}\n"
                                            "called CheckBox.__init__\n"
                                            "called CheckBox.__init__\n"
+                                           "called PushButton.__init__ with args () {}\n"
                                            "called PushButton.__init__ with args () {}\n"
                                            "called PushButton.__init__ with args () {}\n"
                                            "called PushButton.__init__ with args () {}\n"
@@ -1282,6 +1284,7 @@ class TestAttributesDialogGui:
                                            "called CheckBox.setChecked with arg False\n"
                                            "called CheckBox.setDisabled with arg True\n"
                                            "called CheckBox.setChecked with arg False\n"
+                                           "called PushButton.setDisabled with arg `True`\n"
                                            "called PushButton.setDisabled with arg `True`\n"
                                            "called PushButton.setDisabled with arg `True`\n"
                                            "called PushButton.setDisabled with arg `True`\n"
@@ -1296,13 +1299,15 @@ class TestAttributesDialogGui:
         field_list = (mockqtw.MockComboBox(), mockqtw.MockPushButton(), mockqtw.MockLineEdit(),
                       mockqtw.MockPushButton(), mockqtw.MockCheckBox(), mockqtw.MockCheckBox(),
                       mockqtw.MockPushButton(), mockqtw.MockPushButton(), mockqtw.MockPushButton(),
-                      mockqtw.MockPushButton(), mockqtw.MockPushButton(), mockqtw.MockPushButton())
+                      mockqtw.MockPushButton(), mockqtw.MockPushButton(), mockqtw.MockPushButton(),
+                      mockqtw.MockPushButton())
         assert capsys.readouterr().out == ("called ComboBox.__init__\n"
                                            "called PushButton.__init__ with args () {}\n"
-                                           "called LineEdit.__init__\n"
+                                           "called LineEdit.__init__ with args ()\n"
                                            "called PushButton.__init__ with args () {}\n"
                                            "called CheckBox.__init__\n"
                                            "called CheckBox.__init__\n"
+                                           "called PushButton.__init__ with args () {}\n"
                                            "called PushButton.__init__ with args () {}\n"
                                            "called PushButton.__init__ with args () {}\n"
                                            "called PushButton.__init__ with args () {}\n"
@@ -1318,6 +1323,7 @@ class TestAttributesDialogGui:
                                            "called CheckBox.setChecked with arg False\n"
                                            "called CheckBox.setDisabled with arg True\n"
                                            "called CheckBox.setChecked with arg False\n"
+                                           "called PushButton.setDisabled with arg `True`\n"
                                            "called PushButton.setDisabled with arg `True`\n"
                                            "called PushButton.setDisabled with arg `True`\n"
                                            "called PushButton.setDisabled with arg `True`\n"
@@ -1337,6 +1343,7 @@ class TestAttributesDialogGui:
                                            "called CheckBox.setEnabled with arg True\n"
                                            "called CheckBox.setChecked with arg zzz\n"
                                            "called CheckBox.setEnabled with arg True\n"
+                                           "called PushButton.setDisabled with arg `False`\n"
                                            "called PushButton.setDisabled with arg `False`\n"
                                            "called PushButton.setDisabled with arg `False`\n"
                                            "called PushButton.setDisabled with arg `True`\n"
@@ -1439,7 +1446,7 @@ class TestRestoreDialogGui:
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
         field = mockqtw.MockLineEdit()
-        assert capsys.readouterr().out == "called LineEdit.__init__\n"
+        assert capsys.readouterr().out == "called LineEdit.__init__ with args ()\n"
         testobj.set_focus(field)
         assert capsys.readouterr().out == ("called LineEdit.setFocus\n")
 
@@ -1550,7 +1557,7 @@ class TestDependencyDialogGui:
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
         field = mockqtw.MockLineEdit()
-        assert capsys.readouterr().out == "called LineEdit.__init__\n"
+        assert capsys.readouterr().out == "called LineEdit.__init__ with args ()\n"
         testobj.set_focus(field)
         assert capsys.readouterr().out == ("called LineEdit.setFocus\n")
 
@@ -1692,7 +1699,7 @@ class TestSaveGamesDialogGui:
         assert testobj.row == 1
         assert isinstance(result, testee.qtw.QLineEdit)
         assert capsys.readouterr().out == (
-                "called LineEdit.__init__\n"
+                f"called LineEdit.__init__ with args ({testobj},)\n"
                 "called LineEdit.setText with arg `text`\n"
                 "called LineEdit.setReadOnly with arg `True`\n"
                 "called LineEdit.setMinimumWidth with arg `380`\n"
@@ -1707,7 +1714,7 @@ class TestSaveGamesDialogGui:
         testobj.set_field_text(widget, 'xxx')
         assert capsys.readouterr().out == ("called Label.setText with arg `xxx`\n")
         widget = mockqtw.MockLineEdit()
-        assert capsys.readouterr().out == "called LineEdit.__init__\n"
+        assert capsys.readouterr().out == "called LineEdit.__init__ with args ()\n"
         testobj.set_field_text(widget, 'xxx')
         assert capsys.readouterr().out == ("called LineEdit.setText with arg `xxx`\n")
 
@@ -1716,7 +1723,7 @@ class TestSaveGamesDialogGui:
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
         widget = mockqtw.MockLineEdit()
-        assert capsys.readouterr().out == "called LineEdit.__init__\n"
+        assert capsys.readouterr().out == "called LineEdit.__init__ with args ()\n"
         assert testobj.get_field_text(widget) == ''
         assert capsys.readouterr().out == ("called LineEdit.text\n")
 
@@ -1744,7 +1751,7 @@ class TestSaveGamesDialogGui:
         """
         testobj = self.setup_testobj(monkeypatch, capsys)
         field = mockqtw.MockLineEdit()
-        assert capsys.readouterr().out == "called LineEdit.__init__\n"
+        assert capsys.readouterr().out == "called LineEdit.__init__ with args ()\n"
         testobj.set_focus(field)
         assert capsys.readouterr().out == ("called LineEdit.setFocus\n")
 

@@ -620,10 +620,11 @@ class AttributesDialogGui(tk.Toplevel):
         fields[5].state(['!disabled'])
         fields[6].state(['!disabled'])
         fields[7].state(['!disabled'])
-        fields[8].state(['disabled'])
-        fields[9].state(['!disabled'])
+        fields[8].state(['!disabled'])
+        fields[9].state(['disabled'])
         fields[10].state(['!disabled'])
-        fields[11].configure(state="normal")
+        fields[11].state(['!disabled'])
+        fields[12].configure(state="normal")
 
     def clear_field(self, field):
         "empty a field's (text) contents"

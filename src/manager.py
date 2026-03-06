@@ -63,6 +63,7 @@ class Manager:
         self.directories = set()
         self.screeninfo = {}
         self.revlookup = {}
+        self.complookup = {}
         self.unplotted = []
         self.not_selectable = []
         self.plotted_widgets = {}
@@ -116,6 +117,9 @@ class Manager:
                 'key': self.conf.get_diritem_data(dirname, self.conf.NXSKEY) or '',
                 'txt': self.conf.get_diritem_data(dirname, self.conf.SCRTXT) or ''}
             self.revlookup[self.screeninfo[dirname]['nam']] = dirname
+            # bedacht voor dependents cross reference, maar misschien breder bruikbaar?
+            for component in self.conf.get_diritem_data(dirname, self.conf.COMPS):
+                self.complookup[component] = dirname
 
     def order_widgets(self, selectable_container, dependencies_container, first_time=True):
         """reshuffle the lists and dicts containing the widget info:
@@ -214,6 +218,9 @@ class Manager:
         self.refresh_widget_data()
 
     def get_activated_activatable_mods(self):
+        """return a list of mods that can be selected and have been selected
+        (mods that cannot be selected directly are not of interest here)
+        """
         modnames = []
         for widgetlist in self.unplotted_widgets.values():
             name = self.doit.get_labeltext_if_checked(widgetlist)
@@ -662,6 +669,8 @@ class AttributesDialog:
                                                  enabled=False)
         self.deps_button = self.doit.add_button('View &Dependencies', self.view_dependencies,
                                                 enabled=False)
+        self.depts_button = self.doit.add_button('View De&pendents', self.view_dependents,
+                                                 enabled=False)
         self.change_button, self.add_dep_button = self.doit.add_buttonbox([
             ('&Update', self.update, False), ('&Add dependency', self.add_dep, False),
             ('&Close', self.doit.accept, True)])[:-1]
@@ -678,7 +687,7 @@ class AttributesDialog:
         self.choice = self.doit.get_combobox_value(self.lbox)
         field_list = [self.name, self.clear_name_button, self.text, self.clear_text_button,
                       self.activate_button, self.exempt_button, self.comps_button,
-                      self.deps_button, self.change_button, self.backup_button,
+                      self.deps_button, self.depts_button, self.change_button, self.backup_button,
                       self.restore_button, self.compare_button]
         if self.choice == self.seltext:
             self.doit.reset_all_fields(field_list)
@@ -835,6 +844,37 @@ class AttributesDialog:
                                                                for (x, y) in sorted(depnames))
         gui.show_message(self.doit, message, title='SDVMM mod info')
 
+    def view_dependents(self):
+        "list mods that depend on this mod"
+        # zoek de dirnaam bij de schermnaam
+        modname = self.modnames[self.choice]
+        # zoek de componenten bij de dirnaam en zet deze in een lijst
+        complist = self.conf.list_components_for_dir(modname)
+        # voor alle componenten in de configuratie:
+        userlist = set()
+        for component in self.conf.list_all_components():
+            if component.startswith('YourName'):  # uitzondering voor voorbeeldmods
+                continue
+            # als componentnaam in de bovengenoemde lijst dan overslaan
+            if component in complist:
+                continue
+            deplist = self.conf.get_component_data(component, self.conf.DEPS)
+            # voor alle componenten in de lijst:
+            for comp in complist:
+                # als componentnaam niet voorkomt in 'Deps' dan overslaan
+                if comp in deplist:
+                    # voeg de 'dirname' key aan een set (om te ontdubbelen)
+                    userlist.add(self.parent.master.complookup[component])
+        # herleiden naar schermnamen
+        userlist_screennames = []
+        for item in userlist:
+            userlist_screennames.append(self.conf.get_diritem_data(item, self.conf.SCRNAM))
+        if userlist_screennames:
+            message = '\n'.join([f'Mods depending on {self.choice}:\n'] + userlist_screennames)
+        else:
+            message = f'Mods depending on {self.choice}:\n\nNone'
+        gui.show_message(self.doit, message, title='SDVMM mod info')
+
     def update(self):
         "update screentext in dictionary"
         # self.text.setReadOnly(True)
@@ -888,7 +928,7 @@ class DependencyDialog:
         self.parent = parent
         self.conf = conf
         self.doit = gui.DependencyDialogGui(self, parent)
-        current_mod = self.parent.maingui.modnames[self.parent.maingui.choice]
+        current_mod = self.parent.master.modnames[self.parent.master.choice]
         self.modnames = {}
         for x in conf.list_all_mod_dirs():
             if x != current_mod:
