@@ -908,7 +908,7 @@ class RestoreDialog:
         self.from_previous = self.doit.add_checkbox('&2. Restore from previous version',
                                                     bool(oldlocs))
         self.backup_previous = self.doit.add_checkbox("&Backup previous version's settings",
-                                                      oldlocs and not backup_found)
+                                                      bool(oldlocs) and not backup_found)
         self.doit.add_buttonbox([('&Ok', self.accept), ('&Cancel', self.doit.reject)])
         self.doit.set_focus(self.from_backup)
 
