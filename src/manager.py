@@ -580,7 +580,7 @@ class SettingsDialog:
             self.doit.set_widget_text(self.savepath_text,
                                       filename.replace(os.path.expanduser('~'), '~'))
 
-    def update(self):
+    def update(self, *args):
         "update settings and exit"
         termprog = self.doit.get_widget_text(self.termprog_text)
         if not termprog:
