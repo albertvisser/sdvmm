@@ -28,6 +28,7 @@ def read_defaults(bare=False):
     config = data.get('config', '')
     download = data.get('download', '')
     columns = data.get('columns', 0)
+    terminal = data.get('terminal', '')
     savepath = data.get('savepath', '')
     if not bare:
         modbase = os.path.expanduser(modbase)
@@ -36,13 +37,13 @@ def read_defaults(bare=False):
         download = os.path.expanduser(download)
         if savepath:
             savepath = pathlib.Path(savepath).expanduser()
-    return modbase, config, download, columns, savepath
+    return modbase, config, download, columns, terminal, savepath
 
 
-def save_defaults(modbase, config, download, columns, savepath):
+def save_defaults(modbase, config, download, columns, terminal, savepath):
     "write new/changed default values"
     data = {'modbase': modbase, 'config': config, 'download': download, 'columns': columns,
-            'savepath': savepath}
+            'savepath': savepath, 'terminal': terminal}
     if os.path.exists(DEFAULTS):
         shutil.copyfile(DEFAULTS, DEFAULTS + '~')
     with open(DEFAULTS, 'w') as f:
@@ -442,7 +443,7 @@ class JsonConf:
                     json.dump(contents, f, indent=2)
         elif fromprevious:
             names = arg
-            oldroot = os.path.relpath(names[0], self.modbase).split(os.sep)[0]
+            oldroot = os.path.relpath(names[0], self.modbase).split(os.sep, 1)[0]
             newroot = oldroot[:-1]
             if not os.path.exists(newroot):
                 newroot = newroot[1:]

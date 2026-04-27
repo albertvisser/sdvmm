@@ -384,9 +384,12 @@ class Manager:
         if not roots:
             return [], None, None, [f'{zipfilename}: zipfile appears to be empty']
         if smapi_install:
+            termprog = dmlj.read_defaults()[-2]
+            if not termprog:
+                termprog = 'gnome-terminal'
             installdir = os.path.join('/tmp', roots.pop())
             subprocess.run(['unzip', zipfilename, '-d', '/tmp'], check=True)
-            subprocess.run(['gnome-terminal'], cwd=installdir)  # , capture_output=True)
+            subprocess.run([termprog], cwd=installdir)  # , capture_output=True)
             move_zip_after_installing(zipfilename)
             return [], None, None, ["SMAPI-install is waiting in a terminal window to be finished"
                                     " by executing './install on Linux.sh'"]
@@ -542,8 +545,10 @@ class SettingsDialog:
         self.select_download_button = self.doit.add_browse_button(self.select_download_path)
         self.doit.add_label('Number of columns on screen:')
         self.columns = self.doit.add_spinbox(self.parent.master.dialog_data[3])
+        self.doit.add_label('Terminal program to use:')
+        self.termprog_text = self.doit.add_line_entry(self.parent.master.dialog_data[4])
         self.doit.add_label('Location for save files:')
-        self.savepath_text = self.doit.add_line_entry(self.parent.master.dialog_data[4])
+        self.savepath_text = self.doit.add_line_entry(self.parent.master.dialog_data[5])
         self.select_savepath_button = self.doit.add_browse_button(self.select_savepath)
         self.doit.add_buttonbox([('&Save', self.update), ('&Close', self.doit.reject)])
         self.doit.set_focus(self.modbase_text)
@@ -577,10 +582,15 @@ class SettingsDialog:
 
     def update(self):
         "update settings and exit"
+        termprog = self.doit.get_widget_text(self.termprog_text)
+        if not termprog:
+            gui.show_message(self.doit,
+                             "If you leave this empty you may encounter problems installing SMAPI")
         self.parent.master.dialog_data = (self.doit.get_widget_text(self.modbase_text),
                                           self.doit.get_widget_text(self.config_text),
                                           self.doit.get_widget_text(self.download_text),
                                           int(self.doit.get_widget_text(self.columns)),
+                                          termprog,
                                           self.doit.get_widget_text(self.savepath_text))
         self.doit.confirm()
 

@@ -487,18 +487,18 @@ class TestShowMods:
         assert capsys.readouterr().out == ("called StringVar.set with arg 'xxxx yyy'\n"
                                            "called StringVar.get\n")
         testobj.set_label_text(widgetlist, 'xxxx', 'zz', '')
-        assert widgetlist[3].get() == 'xxxx'
+        assert widgetlist[3].get() == 'xxxx (zz)'
         assert capsys.readouterr().out == (
                 f"called Label.bind with args ('<Button-1>', {testobj.open_browser})\n"
                 "called Label.configure with args {'foreground': 'blue', 'cursor': 'hand2'}\n"
-                "called StringVar.set with arg 'xxxx'\n"
+                "called StringVar.set with arg 'xxxx (zz)'\n"
                 "called StringVar.get\n")
         testobj.set_label_text(widgetlist, 'xxxx', 'zz', 'yyy')
-        assert widgetlist[3].get() == 'xxxx yyy'
+        assert widgetlist[3].get() == 'xxxx (zz) yyy'
         assert capsys.readouterr().out == (
                 f"called Label.bind with args ('<Button-1>', {testobj.open_browser})\n"
                 "called Label.configure with args {'foreground': 'blue', 'cursor': 'hand2'}\n"
-                "called StringVar.set with arg 'xxxx yyy'\n"
+                "called StringVar.set with arg 'xxxx (zz) yyy'\n"
                 "called StringVar.get\n")
 
     def test_set_checkbox_state(self, monkeypatch, capsys):

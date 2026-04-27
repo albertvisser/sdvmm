@@ -7,20 +7,21 @@ from src import jsonconfig as testee
 def test_read_defaults(monkeypatch, tmp_path):
     "unittest for jsonconfig.read_defaults"
     monkeypatch.setattr(testee, 'DEFAULTS', str(tmp_path / 'defaults.json'))
-    assert testee.read_defaults() == ('', '', '', 0, '')
+    assert testee.read_defaults() == ('', '', '', 0, '', '')
     (tmp_path / 'defaults.json').write_text('{"modbase": "xxx", "config": "yyy",'
-                                            '"download": "zzz",' '"columns": 0,'
-                                            '"savepath": "qqq"}')
-    assert testee.read_defaults() == ('xxx', 'xxx/yyy', 'zzz', 0, testee.pathlib.Path('qqq'))
+                                            ' "download": "zzz", "columns": 0,'
+                                            ' "terminal": "ppp", "savepath": "qqq"}')
+    assert testee.read_defaults() == ('xxx', 'xxx/yyy', 'zzz', 0, 'ppp', testee.pathlib.Path('qqq'))
     (tmp_path / 'defaults.json').write_text('{"modbase": "~/xxx", "config": "yyy",'
                                             ' "download": "~/zzz", "columns": 2,'
-                                            ' "savepath": "~/qqq"}')
+                                            ' "terminal": "ppp", "savepath": "~/qqq"}')
     assert testee.read_defaults() == (testee.os.path.expanduser('~/xxx'),
                                       testee.os.path.expanduser('~/xxx/yyy'),
                                       testee.os.path.expanduser('~/zzz'),
                                       2,
+                                      'ppp',
                                       testee.pathlib.Path('~/qqq').expanduser())
-    assert testee.read_defaults(bare=True) == ('~/xxx', 'yyy', '~/zzz', 2, '~/qqq')
+    assert testee.read_defaults(bare=True) == ('~/xxx', 'yyy', '~/zzz', 2, 'ppp', '~/qqq')
 
 
 def test_save_defaults(monkeypatch, tmp_path):
@@ -29,14 +30,14 @@ def test_save_defaults(monkeypatch, tmp_path):
     backuploc = tmp_path / 'defaults.json~'
     monkeypatch.setattr(testee, 'DEFAULTS', str(defaultloc))
     assert not defaultloc.exists()
-    testee.save_defaults('xxx', 'yyy', 'zzz', 0, 'qqq')
+    testee.save_defaults('xxx', 'yyy', 'zzz', 0, 'ppp', 'qqq')
     assert defaultloc.exists()
     assert defaultloc.read_text() == ('{"modbase": "xxx", "config": "yyy", "download": "zzz",'
-                                      ' "columns": 0, "savepath": "qqq"}')
+                                      ' "columns": 0, "savepath": "qqq", "terminal": "ppp"}')
     assert not backuploc.exists()
-    testee.save_defaults('aaa', 'bbb', 'ccc', 2, 'ddd')
+    testee.save_defaults('aaa', 'bbb', 'ccc', 2, 'ppp', 'ddd')
     assert defaultloc.read_text() == ('{"modbase": "aaa", "config": "bbb", "download": "ccc",'
-                                      ' "columns": 2, "savepath": "ddd"}')
+                                      ' "columns": 2, "savepath": "ddd", "terminal": "ppp"}')
     assert backuploc.exists()
 
 

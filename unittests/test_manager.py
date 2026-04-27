@@ -1117,6 +1117,12 @@ class TestManager:
             print('called os.rename with args', args)
         def mock_move(name):
             print('called move_zip_after_installing with arg', name)
+        def mock_read():
+            print('called dmlj.read_defaults')
+            return 'x', 'y', 'z', 'a', '', 'c'
+        def mock_read_2():
+            print('called dmlj.read_defaults')
+            return 'x', 'y', 'z', 'a', 'xxx', 'c'
         monkeypatch.setattr(testee, 'move_zip_after_installing', mock_move)
         monkeypatch.setattr(testee.os, 'rename', mock_rename)
         testobj = self.setup_testobj(monkeypatch, capsys)
@@ -1127,6 +1133,7 @@ class TestManager:
         monkeypatch.setattr(testee, 'check_if_smapi', mock_check_smapi)
         monkeypatch.setattr(testee.os.path, 'exists', lambda *x: True)
         monkeypatch.setattr(testee.shutil, 'rmtree', mock_rm)
+        monkeypatch.setattr(testee.dmlj, 'read_defaults', mock_read)
         testobj.get_data_for_config = mock_get_data
         testobj.add_mod_to_config = mock_add
         zipfilepath = tmp_path / 'zipfile'
@@ -1153,9 +1160,27 @@ class TestManager:
                 "called check_if_active with arg {'root'}\n"
                 "called check_if_smapi with arg {'root'}\n"
                 "called ZipFile.__exit__\n"
+                "called dmlj.read_defaults\n"
                 "called subprocess.run with args"
                 f" (['unzip', {zipfilepath!r}, '-d', '/tmp'],) {{'check': True}}\n"
                 "called subprocess.run with args (['gnome-terminal'],) {'cwd': '/tmp/root'}\n"
+                f"called move_zip_after_installing with arg {zipfilepath}\n")
+        monkeypatch.setattr(testee.dmlj, 'read_defaults', mock_read_2)
+        assert testobj.install_zipfile(zipfilepath) == (
+                [], None, None, ["SMAPI-install is waiting in a terminal window to be finished"
+                                 " by executing './install on Linux.sh'"])
+        assert capsys.readouterr().out == (
+                f"called ZipFile.__init__ with args ({zipfilepath!r},)\n"
+                "called ZipFile.__enter__\n"
+                "called ZipFile.namelist\n"
+                "called get_archive_roots with arg ['name', 'list']\n"
+                "called check_if_active with arg {'root'}\n"
+                "called check_if_smapi with arg {'root'}\n"
+                "called ZipFile.__exit__\n"
+                "called dmlj.read_defaults\n"
+                "called subprocess.run with args"
+                f" (['unzip', {zipfilepath!r}, '-d', '/tmp'],) {{'check': True}}\n"
+                "called subprocess.run with args (['xxx'],) {'cwd': '/tmp/root'}\n"
                 f"called move_zip_after_installing with arg {zipfilepath}\n")
 
         monkeypatch.setattr(testee, 'get_archive_roots', mock_get_2)
@@ -1639,7 +1664,7 @@ class TestSettingsDialog:
         """
         monkeypatch.setattr(testee.gui, 'SettingsDialogGui', MockSettingsGui)
         parent = MockManager()
-        parent.master = types.SimpleNamespace(dialog_data=('xxx', 'yyy', 'zzz', 'qqq', 'rrr'))
+        parent.master = types.SimpleNamespace(dialog_data=('xxx', 'yyy', 'zzz', 'qqq', 'ppp', 'rrr'))
         testobj = testee.SettingsDialog(parent)
         assert testobj.parent == parent
         assert testobj.modbase_text == 'line_entry'
@@ -1648,6 +1673,7 @@ class TestSettingsDialog:
         assert testobj.download_text == 'line_entry'
         assert testobj.select_download_button == 'browser'
         assert testobj.columns == 'spinbox'
+        assert testobj.termprog_text == 'line_entry'
         assert testobj.savepath_text == 'line_entry'
         assert testobj.select_savepath_button == 'browser'
         assert capsys.readouterr().out == expected_output['settings'].format(testobj=testobj)
@@ -1763,6 +1789,9 @@ class TestSettingsDialog:
         def mock_get(*args):
             print('called SettingsDialogGui.get_widget_text with args', args)
             return args[0]
+        def mock_show(*args):
+            print('called show_message with args', args)
+        monkeypatch.setattr(testee.gui, 'show_message', mock_show)
         testobj = self.setup_testobj(monkeypatch, capsys)
         testobj.doit.get_widget_text = mock_get
         testobj.parent = types.SimpleNamespace(master=types.SimpleNamespace())
@@ -1771,10 +1800,28 @@ class TestSettingsDialog:
         testobj.download_text = 'download_text'
         testobj.columns = '11'
         testobj.savepath_text = 'savepath_text'
+        testobj.termprog_text = ''
         testobj.update()
         assert testobj.parent.master.dialog_data == ('modbase_text', 'config_text',
-                                                     'download_text', 11, 'savepath_text')
+                                                     'download_text', 11, '',
+                                                     'savepath_text')
         assert capsys.readouterr().out == (
+                "called SettingsDialogGui.get_widget_text with args ('',)\n"
+                f"called show_message with args ({testobj.doit}, 'If you leave this empty"
+                " you may encounter problems installing SMAPI')\n"
+                "called SettingsDialogGui.get_widget_text with args ('modbase_text',)\n"
+                "called SettingsDialogGui.get_widget_text with args ('config_text',)\n"
+                "called SettingsDialogGui.get_widget_text with args ('download_text',)\n"
+                "called SettingsDialogGui.get_widget_text with args ('11',)\n"
+                "called SettingsDialogGui.get_widget_text with args ('savepath_text',)\n"
+                "called SettingsDialogGui.confirm\n")
+        testobj.termprog_text = 'termprog_text'
+        testobj.update()
+        assert testobj.parent.master.dialog_data == ('modbase_text', 'config_text',
+                                                     'download_text', 11, 'termprog_text',
+                                                     'savepath_text')
+        assert capsys.readouterr().out == (
+                "called SettingsDialogGui.get_widget_text with args ('termprog_text',)\n"
                 "called SettingsDialogGui.get_widget_text with args ('modbase_text',)\n"
                 "called SettingsDialogGui.get_widget_text with args ('config_text',)\n"
                 "called SettingsDialogGui.get_widget_text with args ('download_text',)\n"
@@ -3510,6 +3557,8 @@ called SettingsDialogGui.add_line_entry with args ('zzz',)
 called SettingsDialogGui.add_browse_button with args ({testobj.select_download_path},)
 called SettingsDialogGui.add_label with args ('Number of columns on screen:',)
 called SettingsDialogGui.add_spinbox with args ('qqq',)
+called SettingsDialogGui.add_label with args ('Terminal program to use:',)
+called SettingsDialogGui.add_line_entry with args ('ppp',)
 called SettingsDialogGui.add_label with args ('Location for save files:',)
 called SettingsDialogGui.add_line_entry with args ('rrr',)
 called SettingsDialogGui.add_browse_button with args ({testobj.select_savepath},)
