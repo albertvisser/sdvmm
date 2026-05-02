@@ -1036,7 +1036,7 @@ class SaveGamesDialog:
         if lbox == self.widgets[-1][1]:  # and len(self.widgets) > len(self.prevmods):
             self.add_modselector()
 
-    def remove_mod(self, btn):
+    def remove_mod(self, btn, *args):
         "delete an association between a mod and the save file"
         # print(f'in remove_mod, {btn=}', flush=True)
         for item in self.widgets:

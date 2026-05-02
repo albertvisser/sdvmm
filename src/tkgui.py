@@ -891,6 +891,7 @@ class SaveGamesDialogGui(tk.Toplevel):
     def set_callbacks(self, widgets, callbacks):
         "set the variable callbacks for the fields"
         widgets[0].bind('<<ComboboxSelected>>', callbacks[0])
+        widgets[1].bind('<Button-1>', callbacks[1])
         widgets[1].bind('<Return>', callbacks[1])
 
     def add_buttonbox(self, buttondefs):

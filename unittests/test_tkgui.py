@@ -2530,6 +2530,7 @@ class TestSaveGamesDialogGui:
         testobj.set_callbacks(widgets, callbacks)
         assert capsys.readouterr().out == (
                 f"called ComboBox.bind with args ('<<ComboboxSelected>>', {callback1})\n"
+                f"called Button.bind with args ('<Button-1>', {callback2})\n"
                 f"called Button.bind with args ('<Return>', {callback2})\n")
 
     def test_enable_widget(self, monkeypatch, capsys):
