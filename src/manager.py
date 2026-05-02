@@ -99,10 +99,6 @@ class Manager:
 
     def extract_screeninfo(self):
         """map the config info for a mod to its screen name
-
-        read the 'position' key from the config entries that will be presented and remove them
-        temporarily from the config
-        allows for the key not being present due to the screen never being reorganized
         """
         # dit is waar ik de modname bij in wilthouden zodat ik ondanks schermmnaam wijzigen
         # toch bij de correcte mod kan uitkomen (issue #1106)
@@ -127,15 +123,6 @@ class Manager:
         if first_time:
             # rownum, colnum = 0, 0
             for text, data in self.screeninfo.items():
-                # if data['pos']:
-                #     rownum, colnum = [int(y) for y in data['pos'].split('x', 1)]
-                #     self.plotted_widgets[(rownum, colnum)] = self.add_checkbox(data['sel'])
-                #     self.plotted_positions[(rownum, colnum)] = text, data
-                #     selectable_container.addLayout(self.plotted_widgets[(rownum, colnum)][0],
-                #                                    rownum, colnum)
-                #     self.lastrow, self.lastcol = max((self.lastrow, self.lastcol), (rownum, colnum))
-                # elif data['sel']:
-                # if data['sel']:
                 if data.get('sel', ''):
                     self.unplotted.append(text)
                 else:
@@ -299,11 +286,6 @@ class Manager:
 
     def update_attributes(self, selectable, name, oldname, text, is_exempt):
         "do the updating (called from the dialog each time a mod is modified)"
-        # we kunnen er van uitgaan dat de screeninfo values altijd alle waarden bevatten
-        # zie methode extract_screeninfo
-        # 1106: we gaan hier zorgen dat de key van screeninfo niet meer aangepast hoeft te worden
-        # nieuwe variant
-        # breakpoint()
         dirname = self.revlookup[oldname]
         self.attr_changes[dirname] = oldname
         oldselect = self.screeninfo[dirname]['sel']
@@ -346,8 +328,9 @@ class Manager:
 
     def update_mods(self, names):
         "installeer de aangegeven mod files"
-        save_needed = got_new_mod = False
+        save_needed = False
         report = []
+        new_mod_data = {}
         for zipfilename in names:
             roots, mod_existed, mod_was_active, messages = self.install_zipfile(zipfilename)
             report.extend(messages)
@@ -360,15 +343,17 @@ class Manager:
                 save_needed = save_needed or conf_changed
             else:
                 messages = self.add_mod_to_config(moddir, configdata)
-                save_needed = got_new_mod = True
+                new_mod_data[moddir] = configdata
+                save_needed = True
             report.extend(messages)
             move_zip_after_installing(zipfilename)
         if save_needed:
             self.conf.save()
-        if got_new_mod:
-            self.screeninfo = {}
-            self.extract_screeninfo()
-            self.doit.refresh_widgets()  # not first_time=True)
+        if new_mod_data:
+            # self.screeninfo = {}
+            # self.extract_screeninfo()
+            self.update_screeninfo(new_mod_data)
+            self.doit.refresh_widgets()
         return report
 
     def install_zipfile(self, zipfilename):
@@ -457,6 +442,8 @@ class Manager:
         messages.append('  Change the "Selectable" setting if you want to be able to activate'
                         ' the mod')
         self.conf.set_diritem_value(moddir, self.conf.SEL, False)
+        # self.screeninfo[dirname] = {'nam': screentext, 'sel': False,  'opt': False, 'key': oldid,
+        #                             'txt': ''}
         return messages
 
     def update_mod_settings(self, moddir, configdata):
@@ -492,6 +479,22 @@ class Manager:
                 if conf_changed:
                     self.conf.update_componentdata(component, compdict)
         return messages, conf_changed
+
+    def update_screeninfo(self, new_mod_data):
+        "add new mods to internal datastructures"
+        for moddir, configdata in new_mod_data.items():
+            self.screeninfo[moddir] = {'sel': False, 'opt': False, 'txt': ''}
+            name = key = ''
+            for subdirdata in configdata.values():
+                for component, compdata in subdirdata.items():
+                    name = name or compdata.get('Name', '')
+                    key = key or compdata.get(self.conf.NXSKEY, '')
+                    self.complookup[component] = moddir
+            self.screeninfo[moddir]['nam'] = name
+            self.screeninfo[moddir]['key'] = key
+            # self.revlookup[self.screeninfo[moddir]['nam']] = dirname
+            self.revlookup[name] = moddir
+            self.not_selectable.append(moddir)
 
     def manage_defaults(self):
         """handle dialog for settings several application defaults
@@ -796,7 +799,7 @@ class AttributesDialog:
         else:
             backups = self.conf._data[self.conf.BAK][modname]
             tmpfile = tempfile.mkstemp()[1]
-            for ix, loc in enumerate(newlocs):
+            for loc in newlocs:
                 data = backups[loc]
                 with open(tmpfile, 'w') as f:
                     json.dump(data, f, indent=2)

@@ -36,7 +36,7 @@ class MockConf:
     object mimicking configparser.ConfigParser class
     """
     SCRNAM, NAME, DEPS, COMPS, VRS = 'SCRNAM', 'Name', 'Deps', 'Comps', 'Version'
-    PNAME, FNAME, GDATE, MODS, NXSKEY = 'Pname', 'Fname', 'Gdate', 'Mods', '_NexusKey'
+    PNAME, FNAME, GDATE, MODS, NXSKEY = 'Pname', 'Fname', 'Gdate', 'Mods', '_Nexus'
     OPTOUT, DIR, SEL, SCRPOS, SCRTXT = '_DoNotTouch', 'dirname', 'Sel', 'ScrPos', 'ScrTxt'
     BAK = 'backups'
 
@@ -760,10 +760,6 @@ class TestManager:
         testobj.attr_changes = {}
         testobj.unplotted_widgets = {(1, 1): 'widgetu'}
         testobj.nonsel_widgets = {(1, 1): 'widgetn'}
-        # assert testobj.update_attributes(True, 'xxx', 'xxx', 'yyy', True) == (
-        #         False, 'Tweemaal schermnaam wijzigen van een mod zonder de dialoog af te breken'
-        #         ' en opnieuw te starten is helaas nog niet mogelijk')
-        # assert capsys.readouterr().out == ""
         testobj.screeninfo = {'xxx': {'nam': 'xxx', 'sel': False, 'txt': '', 'opt': False,
                                       'pos': '1x1'}}
         testobj.not_selectable = ['xxx']
@@ -941,8 +937,8 @@ class TestManager:
             print('called move_zip_after_installing with arg', name)
         def mock_rename(*args):
             print('called os.rename with args', args)
-        def mock_extract():
-            print('called Manager.extract_screeninfo')
+        def mock_update(*args):
+            print('called Manager.update_screeninfo with args', args)
         def mock_get(*args):
             print('called Manager.get_data_for_config with args', args)
             return ['done'], False
@@ -965,7 +961,7 @@ class TestManager:
         monkeypatch.setattr(testee.os, 'rename', mock_rename)
         monkeypatch.setattr(testee, 'move_zip_after_installing', mock_move)
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.extract_screeninfo = mock_extract
+        testobj.update_screeninfo = mock_update
         testobj.install_zipfile = mock_install
         testobj.get_data_for_config = mock_get
         testobj.determine_moddir = mock_det
@@ -993,7 +989,7 @@ class TestManager:
             f"called Manager.add_mod_to_config with args ('root', (['done'], False))\n"
             f"called move_zip_after_installing with arg {tmp_path}/xxx\n"
             "called JsonConf.save\n"
-            "called Manager.extract_screeninfo\n"
+            "called Manager.update_screeninfo with args ({'root': (['done'], False)},)\n"
             "called gui.ShowMods.refresh_widgets with args {}\n")
 
         testobj.get_data_for_config = mock_get_2
@@ -1005,7 +1001,7 @@ class TestManager:
             f"called Manager.add_mod_to_config with args ('root', (['done'], True))\n"
             f"called move_zip_after_installing with arg {tmp_path}/yyy\n"
             "called JsonConf.save\n"
-            "called Manager.extract_screeninfo\n"
+            "called Manager.update_screeninfo with args ({'root': (['done'], True)},)\n"
             "called gui.ShowMods.refresh_widgets with args {}\n")
 
         testobj.install_zipfile = mock_install_4
@@ -1415,6 +1411,34 @@ class TestManager:
                                            f" ('moddir', '{testobj.conf.NXSKEY}', 'xx')\n"
                                            "called Conf.set_diritem_value with args"
                                            f" ('moddir', '{testobj.conf.SEL}', False)\n")
+
+    # 486-497
+    def test_update_screeninfo(self, monkeypatch, capsys):
+        """unittest for Manager.update_screeninfo
+        """
+        testobj = self.setup_testobj(monkeypatch, capsys)
+        testobj.screeninfo = {}
+        testobj.revlookup = {}
+        testobj.complookup = {}
+        testobj.not_selectable = []
+        testobj.update_screeninfo({})
+        assert testobj.screeninfo == {}
+        assert testobj.revlookup == {}
+        assert testobj.complookup == {}
+        assert testobj.not_selectable == []
+        assert capsys.readouterr().out == ("")
+        new_mod_data = {'xxx': {'aaa': {'qqq': {'Name': 'Xxx', '_Nexus': '12'},
+                                        'rrr': {'Name': 'ook Xxx'}}},
+                        'yyy': {'bbb': {'sss': {'Name': 'Yyy'}},
+                                'ccc': {'ttt': {'Name': 'ook Yyy', '_Nexus': ''}}}}
+        testobj.update_screeninfo(new_mod_data)
+        assert testobj.screeninfo == {
+                'xxx': {'sel': False, 'opt': False, 'txt': '', 'nam': 'Xxx', 'key': '12'},
+                'yyy': {'sel': False, 'opt': False, 'txt': '', 'nam': 'Yyy', 'key': ''}}
+        assert testobj.revlookup == {'Xxx': 'xxx', 'Yyy': 'yyy'}
+        assert testobj.complookup == {'qqq': 'xxx', 'rrr': 'xxx', 'sss': 'yyy', 'ttt': 'yyy'}
+        assert testobj.not_selectable == ['xxx', 'yyy']
+        assert capsys.readouterr().out == ""
 
     def test_update_mod_settings(self, monkeypatch, capsys):
         """unittest for Manager.update_mod_settings
