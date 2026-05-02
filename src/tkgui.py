@@ -226,8 +226,8 @@ class ShowMods():
 class SettingsDialogGui(tk.Toplevel):
     """Dialog for changing some application defaults
     """
-    def __init__(self, maingui, parent):
-        self.maingui = maingui
+    def __init__(self, dialogmaster, parent):
+        self.dialogmaster = dialogmaster
         self.parent = parent  # DialogGui heeft dezelfde parent als Dialog
         super().__init__(parent.root)
         self.frm = ttk.Frame(self, padding=10)
@@ -372,8 +372,8 @@ class ChoiceDialog(tk.Toplevel):
 class DeleteDialogGui(tk.Toplevel):
     """Dialog for viewing and optionally changing a mod's properties
     """
-    def __init__(self, maingui, parent):
-        self.maingui = maingui
+    def __init__(self, dialogmaster, parent):
+        self.dialogmaster = dialogmaster
         self.parent = parent  # DialogGui heeft dezelfde parent als Dialog
         super().__init__(parent.root)
         self.frm = ttk.Frame(self, padding=10)
@@ -446,8 +446,8 @@ class DeleteDialogGui(tk.Toplevel):
 class AttributesDialogGui(tk.Toplevel):
     """Dialog for viewing and optionally changing a mod's properties
     """
-    def __init__(self, maingui, parent):
-        self.maingui = maingui
+    def __init__(self, dialogmaster, parent):
+        self.dialogmaster = dialogmaster
         self.parent = parent  # DialogGui heeft dezelfde parent als Dialog
         super().__init__(parent.root)
         self.frm = ttk.Frame(self, padding=10)
@@ -463,7 +463,8 @@ class AttributesDialogGui(tk.Toplevel):
         cb = ttk.Combobox(self.frm if items else self.hfrm, values=items, textvariable=textvar)
         cb.state([f'{"!" if editable else ""}readonly', f'{"!" if enabled else ""}disabled'])
         cb.bind('<<ComboboxSelected>>', callback)
-        # if editable:
+        if editable:
+            textvar.trace_add('write', self.monitor_textvar)
         #     cb.editTextChanged.connect(callback)
         cb.grid(row=self.row if items else 0, column=0, sticky=(tk.N, tk.E, tk.S, tk.W))
         self.textvars[cb] = textvar
@@ -573,7 +574,7 @@ class AttributesDialogGui(tk.Toplevel):
 
     def monitor_textvar(self, *args):
         "callback for trace_add"
-        self.maingui.enable_change()
+        self.dialogmaster.enable_change()
 
     def enable_button(self, field, enabled):
         "make a button (un)usable"
@@ -649,8 +650,8 @@ class AttributesDialogGui(tk.Toplevel):
 class RestoreDialogGui(tk.Toplevel):
     """screen for dialog to select restore method
     """
-    def __init__(self, maingui, parent):
-        self.maingui = maingui
+    def __init__(self, dialogmaster, parent):
+        self.dialogmaster = dialogmaster
         self.parent = parent  # DialogGui heeft dezelfde parent als Dialog
         super().__init__(parent)
         self.frm = ttk.Frame(self, padding=10)
@@ -713,8 +714,8 @@ class RestoreDialogGui(tk.Toplevel):
 class DependencyDialogGui(tk.Toplevel):
     """Dialog for manually defining a new dependency
     """
-    def __init__(self, maingui, parent):
-        self.maingui = maingui
+    def __init__(self, dialogmaster, parent):
+        self.dialogmaster = dialogmaster
         self.parent = parent  # DialogGui heeft dezelfde parent als Dialog
         super().__init__(parent)
         self.frm = ttk.Frame(self, padding=10)
@@ -785,8 +786,8 @@ class SaveGamesDialogGui(tk.Toplevel):
     """Dialog for defining and viewing which mods are used for a (to be selected) savefile
     and optionally activating them
     """
-    def __init__(self, maingui, parent):
-        self.maingui = maingui
+    def __init__(self, dialogmaster, parent):
+        self.dialogmaster = dialogmaster
         self.parent = parent  # DialogGui heeft dezelfde parent als Dialog
         super().__init__(parent.root)
         self.frm = ttk.Frame(self, padding=10)
@@ -827,7 +828,7 @@ class SaveGamesDialogGui(tk.Toplevel):
         self.textvars[field].set(value)
         # dit is altijd een modselector checkbox
         # en dan moet ik de wijzig callback met de hand uitvoeren
-        self.maingui.process_mod(field, value)
+        self.dialogmaster.process_mod(field, value)
         self.enable_widget(field, True)
 
     def add_label(self, labeltext):

@@ -734,10 +734,10 @@ class TestSettingsDialogGui:
         monkeypatch.setattr(testee.tk.Toplevel, 'bind_all', mock_bind)
 
         monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
-        maingui = types.SimpleNamespace()
+        dialogmaster = types.SimpleNamespace()
         parent = types.SimpleNamespace(root='root')
-        testobj = testee.SettingsDialogGui(maingui, parent)
-        assert testobj.maingui == maingui
+        testobj = testee.SettingsDialogGui(dialogmaster, parent)
+        assert testobj.dialogmaster == dialogmaster
         assert testobj.parent == parent
         assert isinstance(testobj.frm, testee.ttk.Frame)
         assert capsys.readouterr().out == (
@@ -1066,10 +1066,10 @@ class TestDeleteDialogGui:
         monkeypatch.setattr(testee.tk.Toplevel, 'bind_all', mock_bind)
         monkeypatch.setattr(testee.tk.Toplevel, '__init__', mock_init)
         monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
-        maingui = types.SimpleNamespace()
+        dialogmaster = types.SimpleNamespace()
         parent = types.SimpleNamespace(root='root')
-        testobj = testee.DeleteDialogGui(maingui, parent)
-        assert testobj.maingui == maingui
+        testobj = testee.DeleteDialogGui(dialogmaster, parent)
+        assert testobj.dialogmaster == dialogmaster
         assert testobj.parent == parent
         assert isinstance(testobj.frm, testee.ttk.Frame)
         assert capsys.readouterr().out == (
@@ -1270,10 +1270,10 @@ class TestAttributesDialogGui:
             old_init(self, *kwargs, **kwargs)
         monkeypatch.setattr(testee.tk.Toplevel, '__init__', mock_init)
         monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
-        maingui = types.SimpleNamespace()
+        dialogmaster = types.SimpleNamespace()
         parent = types.SimpleNamespace(root='root')
-        testobj = testee.AttributesDialogGui(maingui, parent)
-        assert testobj.maingui == maingui
+        testobj = testee.AttributesDialogGui(dialogmaster, parent)
+        assert testobj.dialogmaster == dialogmaster
         assert testobj.parent == parent
         assert isinstance(testobj.frm, testee.ttk.Frame)
         assert testobj.row == 0
@@ -1307,6 +1307,7 @@ class TestAttributesDialogGui:
                 f" {{'values': ['y'], 'textvariable': {result.cget('textvariable')}}}\n"
                 "called ComboBox.state with args (['!readonly', '!disabled'],)\n"
                 f"called ComboBox.bind with args ('<<ComboboxSelected>>', {callback})\n"
+                f"called StringVar.trace_add with args ('write', {testobj.monitor_textvar})\n"
                 "called ComboBox.grid with args ()"
                 " {'row': 0, 'column': 0, 'sticky': ('n', 'e', 's', 'w')}\n")
         result = testobj.add_combobox(['x', 'y'], callback, False, False)
@@ -1652,7 +1653,7 @@ class TestAttributesDialogGui:
         def mock_enable():
             print('called AttributesDialog.enable_change')
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.maingui = types.SimpleNamespace(enable_change=mock_enable)
+        testobj.dialogmaster = types.SimpleNamespace(enable_change=mock_enable)
         testobj.monitor_textvar()
         assert capsys.readouterr().out == ("called AttributesDialog.enable_change\n")
 
@@ -1867,9 +1868,9 @@ class TestRestoreDialogGui:
             print('called Toplevel.__init__ with args', args, kwargs)
         monkeypatch.setattr(testee.tk.Toplevel, '__init__', mock_init)
         monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
-        testobj = testee.RestoreDialogGui('maingui', 'parent')
+        testobj = testee.RestoreDialogGui('dialogmaster', 'parent')
         assert testobj.parent == 'parent'
-        assert testobj.maingui == 'maingui'
+        assert testobj.dialogmaster == 'dialogmaster'
         assert isinstance(testobj.frm, testee.ttk.Frame)
         assert testobj.row == 0
         assert testobj.textvars == {}
@@ -2049,10 +2050,10 @@ class TestDependencyDialogGui:
             print('called Toplevel.__init__ with args', args, kwargs)
         monkeypatch.setattr(testee.tk.Toplevel, '__init__', mock_init)
         monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
-        maingui = types.SimpleNamespace()
+        dialogmaster = types.SimpleNamespace()
         parent = types.SimpleNamespace(root='root')
-        testobj = testee.DependencyDialogGui(maingui, parent)
-        assert testobj.maingui == maingui
+        testobj = testee.DependencyDialogGui(dialogmaster, parent)
+        assert testobj.dialogmaster == dialogmaster
         assert testobj.parent == parent
         assert isinstance(testobj.frm, testee.ttk.Frame)
         assert testobj.row == 0
@@ -2248,10 +2249,10 @@ class TestSaveGamesDialogGui:
             old_init(self, *kwargs, **kwargs)
         monkeypatch.setattr(testee.tk.Toplevel, '__init__', mock_init)
         monkeypatch.setattr(testee.ttk, 'Frame', mockttk.MockFrame)
-        maingui = types.SimpleNamespace()
+        dialogmaster = types.SimpleNamespace()
         parent = types.SimpleNamespace(root='root')
-        testobj = testee.SaveGamesDialogGui(maingui, parent)
-        assert testobj.maingui == maingui
+        testobj = testee.SaveGamesDialogGui(dialogmaster, parent)
+        assert testobj.dialogmaster == dialogmaster
         assert testobj.parent == parent
         assert isinstance(testobj.frm, testee.ttk.Frame)
         assert capsys.readouterr().out == (
@@ -2332,7 +2333,7 @@ class TestSaveGamesDialogGui:
                                            "called ComboBox.__init__ with args NoneType ()"
                                            f" {{'textvariable': {wvar}}}\n")
         testobj = self.setup_testobj(monkeypatch, capsys)
-        testobj.maingui = types.SimpleNamespace(process_mod=mock_process)
+        testobj.dialogmaster = types.SimpleNamespace(process_mod=mock_process)
         testobj.textvars = {widget: wvar}
         testobj.set_combobox_value(widget, 'xxx')
         assert capsys.readouterr().out == (
